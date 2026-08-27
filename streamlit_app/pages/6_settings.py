@@ -100,6 +100,33 @@ if not shared.github_sync.ready():
         "자동 감시에 반영하려면 저장소 토큰 설정이 필요합니다."
     )
 
+with st.expander("🔍 Secrets 연동 상태 진단 도우미 (클릭하여 확인)"):
+    st.markdown("**1. Streamlit Cloud의 Secrets에 등록된 키 목록:**")
+    sec_keys = []
+    try:
+        if hasattr(st, "secrets") and st.secrets is not None:
+            sec_keys = list(st.secrets.keys())
+    except Exception as e:
+        sec_keys = [f"조회 에러: {e}"]
+
+    if sec_keys:
+        st.success(f"현재 인식된 Secrets 키 목록: `{', '.join(sec_keys)}`")
+    else:
+        st.warning("현재 Streamlit Secrets가 비어 있습니다! 오른쪽 아래 [Manage app] → [⋮] → [Settings] → [Secrets]에 입력 후 [Save]를 눌러주세요.")
+
+    st.markdown("**2. 각 항목별 실제 감지 여부:**")
+    g_key = shared.config.GEMINI_API_KEY
+    t_tok = shared.config.TELEGRAM_BOT_TOKEN
+    t_cid = shared.config.TELEGRAM_CHAT_ID
+    st.code(
+        f"• GEMINI_API_KEY: {'연동 완료 (' + shared.mask(g_key) + ')' if g_key else '미인식 (None)'}\n"
+        f"• TELEGRAM_BOT_TOKEN: {'연동 완료 (' + shared.mask(t_tok) + ')' if t_tok else '미인식 (None)'}\n"
+        f"• TELEGRAM_CHAT_ID: {'연동 완료 (' + str(t_cid) + ')' if t_cid else '미인식 (None)'}\n"
+        f"• GITHUB_REPO: {'연동 완료 (' + str(shared.config.GITHUB_REPO) + ')' if shared.config.GITHUB_REPO else '미설정 (선택)'}\n"
+        f"• GITHUB_TOKEN: {'연동 완료' if shared.config.GITHUB_TOKEN else '미설정 (선택)'}"
+    )
+
+
 # ---------------------------------------------------------------------------
 shared.section("동작 방식")
 
