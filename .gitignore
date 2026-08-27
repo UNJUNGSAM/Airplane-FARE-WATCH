@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 환경변수/시크릿 (절대 커밋 금지)
+.env
+.streamlit/secrets.toml
+
+# 기타
+*.tmp
+.DS_Store
+.idea/
+.vscode/
+
+# 참고: data/flights.db 는 의도적으로 커밋 대상입니다.
+# Streamlit Cloud 휘발성 파일시스템 대신 GitHub 저장소에 가격 이력을 보존하기 위함입니다.

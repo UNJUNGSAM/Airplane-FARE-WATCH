@@ -1,0 +1,10 @@
+streamlit>=1.37
+pydantic>=2.7
+pandas>=2.0
+requests>=2.31
+python-dotenv>=1.0
+fast-flights>=3.1
+# fast-flights 3.x는 protobuf 6.x gencode를 사용하므로 버전 범위를 고정해야 한다
+protobuf>=6.31,<7
+google-genai>=1.16
+PyGithub>=2.3
