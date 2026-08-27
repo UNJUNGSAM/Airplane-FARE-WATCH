@@ -22,40 +22,52 @@ except ImportError:  # pragma: no cover
 
 
 def get_secret(key: str, default: str | None = None) -> str | None:
-    """환경 변수 및 Streamlit Secrets에서 실시간으로 대소문자 무관하게 키를 조회한다."""
-    # 1. os.environ 조회 (정확한 키, 대문자, 소문자)
+    """환경 변수 및 Streamlit Secrets에서 실시간으로 키를 조회한다."""
+    # 1. os.environ 조회
     for k in (key, key.upper(), key.lower()):
         val = os.environ.get(k)
-        if val and str(val).strip():
+        if val is not None and str(val).strip():
             return str(val).strip()
 
     # 2. Streamlit Secrets 조회
     try:
         import streamlit as st
 
-        if hasattr(st, "secrets") and st.secrets is not None:
-            # 직접 키 조회
-            for k in (key, key.upper(), key.lower()):
-                try:
-                    if k in st.secrets:
-                        v = str(st.secrets[k]).strip()
-                        if v:
-                            return v
-                except Exception:
-                    pass
-
-            # 최상위 딕셔너리 순회 (대소문자 무관)
+        # st.secrets 직접 조회 시도
+        for k in (key, key.upper(), key.lower()):
             try:
-                for k, v in st.secrets.items():
-                    if k.upper() == key.upper() and str(v).strip():
-                        return str(v).strip()
-                    # 하위 섹션(nested table)인 경우 탐색
-                    if isinstance(v, dict):
-                        for sub_k, sub_v in v.items():
-                            if sub_k.upper() == key.upper() and str(sub_v).strip():
-                                return str(sub_v).strip()
+                if k in st.secrets:
+                    val = st.secrets[k]
+                    if val is not None and str(val).strip():
+                        return str(val).strip()
             except Exception:
                 pass
+            try:
+                val = st.secrets.get(k)
+                if val is not None and str(val).strip():
+                    return str(val).strip()
+            except Exception:
+                pass
+
+        # st.secrets 전체 키 순회
+        try:
+            for k in list(st.secrets.keys()):
+                if str(k).strip().upper() == key.upper():
+                    val = st.secrets[k]
+                    if val is not None and str(val).strip():
+                        return str(val).strip()
+                try:
+                    section = st.secrets[k]
+                    if hasattr(section, "keys") and callable(section.keys):
+                        for sub_k in section.keys():
+                            if str(sub_k).strip().upper() == key.upper():
+                                val = section[sub_k]
+                                if val is not None and str(val).strip():
+                                    return str(val).strip()
+                except Exception:
+                    pass
+        except Exception:
+            pass
     except Exception:
         pass
 
