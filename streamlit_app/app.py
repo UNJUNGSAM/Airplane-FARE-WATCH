@@ -50,8 +50,8 @@ with shared.util_bar():
         help="가동 중인 모든 조건의 가격을 지금 다시 조회합니다.",
     )
     f5.markdown(
-        f'<div style="font-size:12.5px;color:#6c7585;padding-bottom:8px;">'
-        f'자동 감시는 GitHub Actions가 {shared.CHECK_INTERVAL_TEXT}마다 수행합니다.</div>',
+        f'<div style="font-size:11.5px;color:#8a94a6;padding-bottom:6px;text-align:right;">'
+        f'자동 감시: GitHub Actions {shared.CHECK_INTERVAL_TEXT} 주기</div>',
         unsafe_allow_html=True,
     )
 

@@ -44,8 +44,9 @@ STOP_OPTIONS = ["전체", "직항만", "직항+1회경유"]
 DEFAULT_DROP, DEFAULT_PCTILE, DEFAULT_COOLDOWN = 15.0, 10.0, 6.0
 LOGO_URL = "https://images.kiwi.com/airlines/64/{code}.png"
 
-PRODUCT_NAME = "FARE WATCH"
+PRODUCT_NAME = "Airplane Fare Watch"
 PRODUCT_SUB = "항공권 가격 감시 콘솔"
+PRODUCT_SHORT = "Airplane Fare Watch"
 CHECK_INTERVAL_TEXT = "30분"
 
 # 상단 헤더 탭 (키, 표시명, 스크립트 경로)
@@ -148,18 +149,16 @@ section[data-testid="stMain"] .block-container,
 .st-key-ap_nav [data-testid="stMarkdown"] { margin: 0 !important; }
 .st-key-ap_nav [data-testid="stMarkdownContainer"] p { margin: 0 !important; }
 
-.ap-brand { display: flex; align-items: center; gap: 8px; }
+.ap-brand { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .ap-mark {
   width: 22px; height: 22px; border-radius: 4px; background: var(--navy);
   display: grid; place-items: center; flex: 0 0 auto;
 }
 .ap-mark svg { width: 14px; height: 14px; }
-.ap-brand-text { line-height: 1.1; display: flex; align-items: baseline; gap: 6px; }
 .ap-brand-name {
-  font-size: 13px; font-weight: 700; color: var(--ink);
-  letter-spacing: .06em; font-family: var(--font-mono);
+  font-size: 13.5px; font-weight: 700; color: var(--ink);
+  letter-spacing: -.01em; white-space: nowrap;
 }
-.ap-brand-sub { font-size: 10.5px; color: var(--ink-3); font-weight: 500; }
 
 .st-key-ap_tabs {
   flex-direction: row !important;
@@ -538,13 +537,15 @@ details.ap-details[open] > summary.ap-row {
   color: var(--ink-2) !important;
   font-weight: 600 !important;
   box-shadow: none !important;
+  min-height: 32px !important;
+  padding: 3px 12px !important;
   transition: border-color .12s ease, background .12s ease;
 }
 .stButton > button:hover, .stFormSubmitButton > button:hover, .stLinkButton > a:hover {
   border-color: #c3cbd6 !important; background: var(--bg) !important; color: var(--ink) !important;
 }
-.stButton > button p, .stFormSubmitButton > button p, .stLinkButton > a p {
-  font-size: 13.5px !important; font-weight: 600 !important;
+.stButton > button p, .stFormSubmitButton > button p, .stLinkButton > a p, .stDownloadButton > button p {
+  font-size: 12px !important; font-weight: 600 !important;
 }
 button[kind="primary"], button[kind="primaryFormSubmit"],
 [data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"] {
@@ -557,12 +558,18 @@ button[kind="primary"]:hover, button[kind="primaryFormSubmit"]:hover,
 
 .stTextInput input, .stTextArea textarea, .stNumberInput input, .stDateInput input {
   border-radius: var(--r-ctl) !important;
+  font-size: 12.5px !important;
 }
-.stNumberInput input, .stDateInput input { font-family: var(--font-mono) !important; }
-[data-baseweb="select"] > div, [data-baseweb="input"] { border-radius: var(--r-ctl) !important; }
+.stTextInput input::placeholder, .stTextArea textarea::placeholder {
+  font-size: 12px !important; color: #a1abb8 !important;
+}
+.stNumberInput input, .stDateInput input { font-family: var(--font-mono) !important; font-size: 12.5px !important; }
+[data-baseweb="select"] > div { border-radius: var(--r-ctl) !important; min-height: 32px !important; font-size: 12.5px !important; }
+[data-baseweb="input"] { border-radius: var(--r-ctl) !important; min-height: 32px !important; font-size: 12.5px !important; }
 [data-testid="stWidgetLabel"] p {
-  font-size: 12.5px !important; font-weight: 600 !important; color: var(--ink-3) !important;
+  font-size: 11px !important; font-weight: 600 !important; color: var(--ink-3) !important; margin-bottom: 2px !important;
 }
+
 
 .stTabs [data-baseweb="tab-list"] { gap: 2px; border-bottom: 1px solid var(--line); }
 .stTabs [data-baseweb="tab"] {
@@ -760,13 +767,11 @@ def render_header(active: str) -> None:
     """상단 고정 헤더 (로고 · 페이지 탭 · 감시 상태 · 사용자)."""
     eng = engine_state()
     with st.container(key="ap_nav"):
-        left, mid, right = st.columns([2.7, 7.0, 2.7], vertical_alignment="center")
+        left, mid, right = st.columns([3.4, 6.0, 2.6], vertical_alignment="center")
         with left:
             st.markdown(
                 f'<div class="ap-brand"><span class="ap-mark">{_MARK_SVG}</span>'
-                f'<span class="ap-brand-text">'
-                f'<span class="ap-brand-name">{PRODUCT_NAME}</span><br>'
-                f'<span class="ap-brand-sub">{PRODUCT_SUB}</span></span></div>',
+                f'<span class="ap-brand-name">{PRODUCT_NAME}</span></div>',
                 unsafe_allow_html=True,
             )
         with mid:
