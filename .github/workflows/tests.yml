@@ -33,5 +33,8 @@ jobs:
       - name: 설정 조회 테스트
         run: python tests/config_test.py
 
+      - name: 표현 계층 헬퍼 테스트
+        run: python tests/ui_helpers_test.py
+
       - name: 도메인 스모크 테스트
         run: python tests/smoke_test.py

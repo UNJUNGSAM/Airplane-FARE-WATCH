@@ -11,6 +11,7 @@ import re
 import secrets
 import sys
 import time
+from contextlib import contextmanager
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -284,6 +285,24 @@ section[data-testid="stMain"] .block-container,
 }
 .st-key-ap_util [data-testid="stHorizontalBlock"] { align-items: flex-end; }
 .st-key-ap_util [data-testid="stElementContainer"] { margin-bottom: 0 !important; }
+
+/* 접히는 필터 묶음 - 모바일에서 입력칸이 세로로 길게 쌓이는 것을 막는다 */
+.st-key-ap_filterbox { margin-bottom: 6px; }
+.st-key-ap_filterbox [data-testid="stExpander"] details {
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: var(--surface) !important;
+}
+.st-key-ap_filterbox [data-testid="stExpander"] summary {
+  padding: 5px 10px !important;
+  min-height: 0 !important;
+}
+.st-key-ap_filterbox [data-testid="stExpander"] summary p,
+.st-key-ap_filterbox [data-testid="stExpander"] summary span {
+  font-size: 12.5px !important; font-weight: 600 !important;
+  color: var(--ink-2) !important; margin: 0 !important;
+}
+.st-key-ap_filterbox [data-testid="stExpander"] details > div { padding: 4px 10px 8px !important; }
 
 /* 지표 타일 (초슬림) --------------------------------------------------- */
 .ap-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
@@ -661,7 +680,9 @@ hr { border-color: var(--line) !important; }
   section[data-testid="stMain"] [data-testid="stColumn"] {
     flex: 1 1 100% !important; width: 100% !important; min-width: 100% !important;
   }
-  .ap-brand-text, .ap-user { display: none; }
+  /* 실제 클래스명은 ap-brand-name 이다. 예전에는 존재하지 않는 ap-brand-text 를
+     숨기고 있어서 모바일에서 브랜드명이 그대로 남아 탭과 겹쳤다. */
+  .ap-brand-name, .ap-user { display: none; }
   .st-key-ap_nav.st-key-ap_nav [data-testid="stHorizontalBlock"] {
     flex-wrap: nowrap !important; gap: 6px;
   }
@@ -1069,6 +1090,42 @@ def page_header(
 def util_bar():
     """타이틀 바에 이어지는 유틸리티 바 컨테이너."""
     return st.container(key="ap_util")
+
+
+def active_filters(values: list[Any], neutral: tuple[str, ...] = ("전체",)) -> list[str]:
+    """실제로 적용 중인 필터 값만 남긴다 (빈 값과 기본값 제외)."""
+    picked: list[str] = []
+    for v in values:
+        text = str(v).strip() if v is not None else ""
+        if text and text not in neutral:
+            picked.append(text)
+    return picked
+
+
+def filter_title(label: str, picked: list[str]) -> str:
+    """접힌 상태에서도 무엇이 걸려 있는지 보이도록 제목에 요약을 붙인다."""
+    return f"🔎 {label}" + (f"  ·  {'  ·  '.join(picked)}" if picked else "")
+
+
+@contextmanager
+def filter_box(*state_keys: str, label: str = "검색 · 필터",
+               neutral: tuple[str, ...] = ("전체",)):
+    """검색·필터 입력을 접어 두는 컨테이너.
+
+    모바일에서는 유틸리티 바의 컬럼이 세로로 쌓여 입력칸만으로 화면 한 장을
+    차지했다. 기본은 접힌 상태로 두고, 적용 중인 필터가 있으면 제목에 요약을
+    붙여 펼친 채로 보여 준다.
+
+    Args:
+        state_keys: 요약에 표시할 위젯 키들 (st.session_state에서 현재 값을 읽는다)
+        neutral: '설정 안 함'으로 볼 값들 (요약에서 제외)
+    """
+    picked = active_filters([st.session_state.get(k) for k in state_keys], neutral)
+    with st.container(key="ap_filterbox"):
+        # 필터가 걸려 있으면 펼친 채로 보여 준다 (숨겨진 필터 때문에 결과를
+        # 오해하는 일이 없도록)
+        with st.expander(filter_title(label, picked), expanded=bool(picked)):
+            yield
 
 
 def section(label: str) -> None:

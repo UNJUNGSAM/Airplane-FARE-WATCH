@@ -43,13 +43,18 @@ shared.page_header(
 )
 
 with shared.util_bar():
-    u1, u2, u3, u4 = st.columns([2.5, 1.8, 2.0, 1.7], vertical_alignment="bottom")
-    sel_search = u1.text_input("검색", placeholder="도시명, 공항, 라벨...", key="trend_search")
-    sel_country = u2.selectbox("국가", ["전체"] + countries, key="trend_country")
-    sel_period = u3.radio("조회 기간", ["7일", "14일", "30일", "전체"], index=2, horizontal=True, key="trend_period")
-    u4.markdown(
-        f'<div style="font-size:12.5px;color:#6c7585;padding-bottom:8px;">'
-        f'점선은 설정한 목표가를 나타냅니다.</div>',
+    # 30일은 기본 조회 기간이라 요약에서는 '설정 안 함'으로 본다
+    with shared.filter_box("trend_search", "trend_country", "trend_period",
+                           neutral=("전체", "30일")):
+        u1, u2, u3 = st.columns([2.5, 1.8, 2.4], vertical_alignment="bottom")
+        sel_search = u1.text_input("검색", placeholder="도시명, 공항, 라벨...", key="trend_search")
+        sel_country = u2.selectbox("국가", ["전체"] + countries, key="trend_country")
+        sel_period = u3.radio("조회 기간", ["7일", "14일", "30일", "전체"], index=2,
+                              horizontal=True, key="trend_period")
+
+    st.markdown(
+        '<div style="font-size:12.5px;color:#6c7585;padding:2px 0 4px;">'
+        '점선은 설정한 목표가를 나타냅니다.</div>',
         unsafe_allow_html=True,
     )
 

@@ -41,10 +41,14 @@ shared.page_header(
 # ---------------------------------------------------------------------------
 countries = sorted({shared.airport_info(w.destination)["country"] for w in watches})
 with shared.util_bar():
-    f1, f2, f3, f4, f5 = st.columns([2.2, 1.6, 1.4, 1.8, 3.0], vertical_alignment="bottom")
-    sel_search = f1.text_input("검색", placeholder="도시명, 공항, 라벨...", key="dash_search")
-    sel_country = f2.selectbox("국가", ["전체"] + countries, key="dash_country")
-    sel_state = f3.selectbox("감시 상태", ["전체", "가동", "중지"], key="dash_state")
+    # 검색·필터는 접어 둔다 (모바일에서 입력칸만으로 화면을 다 차지하던 문제)
+    with shared.filter_box("dash_search", "dash_country", "dash_state"):
+        f1, f2, f3 = st.columns([2.2, 1.6, 1.4], vertical_alignment="bottom")
+        sel_search = f1.text_input("검색", placeholder="도시명, 공항, 라벨...", key="dash_search")
+        sel_country = f2.selectbox("국가", ["전체"] + countries, key="dash_country")
+        sel_state = f3.selectbox("감시 상태", ["전체", "가동", "중지"], key="dash_state")
+
+    f4, f5 = st.columns([1.8, 3.0], vertical_alignment="bottom")
     recheck = f4.button(
         "전체 다시 조회", width="stretch",
         disabled=not any(w.active for w in watches),

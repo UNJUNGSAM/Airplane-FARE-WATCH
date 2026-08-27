@@ -32,10 +32,12 @@ shared.page_header(
 )
 
 with shared.util_bar():
-    a1, a2, a3, a4 = st.columns([2, 2.2, 1.8, 2], vertical_alignment="bottom")
-    sel_route = a1.selectbox("노선 필터", ["전체"] + routes, key="alert_route")
-    sel_kw = a2.text_input("판정 사유/키워드 검색", placeholder="예: 목표가, 하락, 백분위...", key="alert_kw")
+    with shared.filter_box("alert_route", "alert_kw"):
+        a1, a2 = st.columns([2, 2.2], vertical_alignment="bottom")
+        sel_route = a1.selectbox("노선 필터", ["전체"] + routes, key="alert_route")
+        sel_kw = a2.text_input("판정 사유/키워드 검색", placeholder="예: 목표가, 하락, 백분위...", key="alert_kw")
 
+    a3, a4 = st.columns([1.8, 2], vertical_alignment="bottom")
     df_export = pd.DataFrame(notis) if notis else pd.DataFrame()
     if not df_export.empty:
         csv_data = df_export.to_csv(index=False).encode("utf-8-sig")

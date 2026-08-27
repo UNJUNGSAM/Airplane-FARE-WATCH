@@ -45,8 +45,10 @@ shared.page_header(
 )
 
 with shared.util_bar():
-    r1, r2, r3, r4 = st.columns([2.5, 1.3, 1.6, 3.6], vertical_alignment="bottom")
-    sel_search = r1.text_input("검색", placeholder="도시명, 공항, 라벨...", key="watch_search")
+    with shared.filter_box("watch_search"):
+        sel_search = st.text_input("검색", placeholder="도시명, 공항, 라벨...", key="watch_search")
+
+    r2, r3, r4 = st.columns([1.3, 1.6, 3.6], vertical_alignment="bottom")
     if r2.button("전체 초기화", width="stretch"):
         st.session_state["confirm_reset"] = True
         st.rerun()
