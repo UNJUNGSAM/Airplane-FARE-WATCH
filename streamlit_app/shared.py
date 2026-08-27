@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import html
 import re
+import secrets
 import sys
+import time
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -54,6 +56,8 @@ CHECK_INTERVAL_TEXT = "30분"
 NAV: list[tuple[str, str, str]] = [
     ("home", "대시보드", "app.py"),
     ("register", "조건 등록", "pages/2_register.py"),
+    ("watches", "조건 관리", "pages/4_watches.py"),
+    ("flights", "항공편 조회", "pages/1_flights.py"),
     ("trend", "가격 추이", "pages/3_trend.py"),
     ("alerts", "알림 기록", "pages/5_alerts.py"),
     ("settings", "설정", "pages/6_settings.py"),
@@ -712,20 +716,140 @@ def _replace_local_db(data: bytes) -> None:
     tmp.replace(p)
 
 
+SYNC_MAX_ATTEMPTS = 3
+
+
 def edit_with_sync(edit_fn, commit_msg: str) -> None:
-    """원격 DB 최신본 기준으로 편집 후 GitHub에 커밋 (미설정 시 로컬만 수정)."""
-    if github_sync.ready():
-        remote = github_sync.fetch_remote_db_bytes()
-        if remote is not None:
-            _replace_local_db(remote)
+    """원격 DB 최신본 기준으로 편집 후 GitHub에 커밋 (미설정 시 로컬만 수정).
+
+    동시 수정 대응: 받아온 시점의 blob SHA를 커밋에 함께 넘긴다. 그 사이 다른
+    사용자나 Actions 크론이 DB를 커밋했다면 GitHub이 거절하고, 그때는 최신본을
+    다시 받아 편집을 처음부터 재적용한다. (예전에는 커밋 직전 SHA를 새로 읽어
+    항상 성공시켰기 때문에 남의 변경을 조용히 덮어썼다.)
+    """
+    if not github_sync.ready():
+        edit_fn(get_db())  # 로컬 전용 모드
+        return
+
+    for attempt in range(1, SYNC_MAX_ATTEMPTS + 1):
+        remote = github_sync.fetch_remote_db()
+        if remote.data is not None:
+            _replace_local_db(remote.data)
             get_db.clear()
-    edit_fn(get_db())
-    if github_sync.ready():
+
+        edit_fn(get_db())
+
         try:
-            github_sync.commit_db_bytes(Path(config.DB_PATH).read_bytes(), commit_msg)
+            github_sync.commit_db_bytes(
+                Path(config.DB_PATH).read_bytes(), commit_msg, expected_sha=remote.sha
+            )
             st.toast("GitHub 저장소에 동기화하였습니다.")
+            return
+        except github_sync.RemoteChanged:
+            if attempt >= SYNC_MAX_ATTEMPTS:
+                st.warning(
+                    "다른 곳(자동 감시 또는 다른 사용자)에서 동시에 변경이 일어나 "
+                    f"{SYNC_MAX_ATTEMPTS}회 재시도 후에도 반영하지 못하였습니다. "
+                    "잠시 후 다시 시도하여 주십시오."
+                )
+                return
+            st.toast(f"원격이 변경되어 최신본으로 다시 시도합니다. ({attempt}/{SYNC_MAX_ATTEMPTS})")
         except Exception as exc:  # noqa: BLE001
             st.warning(f"GitHub 동기화에 실패하였습니다. 로컬에는 저장되었습니다. ({exc})")
+            return
+
+
+# ---------------------------------------------------------------------------
+# 접근 제어
+# ---------------------------------------------------------------------------
+_AUTH_FLAG = "_authenticated"
+_AUTH_TOKEN = "_auth_token"
+AUTH_TOKEN_TTL_SEC = 12 * 3600
+
+
+@st.cache_resource(show_spinner=False)
+def _auth_tokens() -> dict[str, float]:
+    """발급한 접속 토큰 {토큰: 만료시각}. 프로세스 재시작 시 초기화된다."""
+    return {}
+
+
+def _issue_auth_token() -> str:
+    """로그인 성공 시 발급. 앱 내부 HTML 링크에 실어 세션 유실을 막는다.
+
+    상단 탭은 st.page_link라 클라이언트 라우팅으로 세션이 유지되지만,
+    디자인상 HTML <a>로 만든 링크(로고·조건 수정 등)는 전체 새로고침이 되어
+    세션이 새로 만들어진다. 그때마다 비밀번호를 다시 묻지 않도록 한다.
+    """
+    now = time.time()
+    tokens = _auth_tokens()
+    for k, exp in list(tokens.items()):  # 만료분 청소
+        if exp <= now:
+            tokens.pop(k, None)
+    tok = secrets.token_urlsafe(24)
+    tokens[tok] = now + AUTH_TOKEN_TTL_SEC
+    return tok
+
+
+def _token_valid(tok: str | None) -> bool:
+    if not tok:
+        return False
+    exp = _auth_tokens().get(str(tok))
+    return bool(exp and exp > time.time())
+
+
+def auth_qs(prefix: str = "?") -> str:
+    """앱 내부 HTML 링크 뒤에 붙일 토큰 쿼리스트링 (비밀번호 미설정 시 빈 문자열)."""
+    if not config.auth_enabled():
+        return ""
+    tok = st.session_state.get(_AUTH_TOKEN)
+    return f"{prefix}t={tok}" if tok else ""
+
+
+def authenticated() -> bool:
+    """APP_PASSWORD 미설정이면 항상 True (기존 동작), 설정 시 로그인 여부."""
+    if not config.auth_enabled():
+        return True
+    if st.session_state.get(_AUTH_FLAG):
+        return True
+    # 전체 새로고침으로 세션이 새로 생겼어도 유효한 토큰이면 통과시킨다
+    url_token = st.query_params.get("t")
+    if _token_valid(url_token):
+        st.session_state[_AUTH_FLAG] = True
+        st.session_state[_AUTH_TOKEN] = url_token
+        return True
+    return False
+
+
+def require_auth() -> None:
+    """비밀번호가 설정되어 있으면 로그인 전까지 페이지 렌더를 중단한다.
+
+    공개 URL에 그대로 떠 있으면 누구나 감시 조건을 추가·삭제하고 텔레그램
+    발송까지 시킬 수 있어 최소한의 문지기를 둔다.
+    """
+    if authenticated():
+        return
+
+    st.markdown(
+        '<div style="max-width:380px;margin:14vh auto 0;text-align:center;">'
+        '<div style="font-size:20px;font-weight:800;color:#131b30;">Airplane Fare Watch</div>'
+        '<div style="font-size:13px;color:#6c7585;margin-top:6px;">'
+        '접근하려면 비밀번호를 입력하여 주십시오.</div></div>',
+        unsafe_allow_html=True,
+    )
+    _, mid, _ = st.columns([1, 1.2, 1])
+    with mid:
+        with st.form("login_form", border=False):
+            pw = st.text_input("비밀번호", type="password", label_visibility="collapsed",
+                               placeholder="비밀번호")
+            ok = st.form_submit_button("입장", type="primary", width="stretch")
+        if ok:
+            if config.check_password(pw):
+                st.session_state[_AUTH_FLAG] = True
+                st.session_state[_AUTH_TOKEN] = _issue_auth_token()
+                st.rerun()
+            else:
+                st.error("비밀번호가 올바르지 않습니다.")
+    st.stop()
 
 
 def mask(v: str | None) -> str:
@@ -810,7 +934,10 @@ def render_header(active: str) -> None:
         left, mid, right = st.columns([3.4, 6.0, 2.6], vertical_alignment="center")
         with left:
             st.markdown(
-                f'<a href="/" target="_self" class="ap-brand" style="text-decoration:none;color:inherit;">'
+                # HTML 링크는 전체 새로고침이라 세션이 새로 만들어진다.
+                # auth_qs()로 접속 토큰을 실어 재로그인을 요구하지 않게 한다.
+                f'<a href="/{auth_qs("?")}" target="_self" class="ap-brand" '
+                f'style="text-decoration:none;color:inherit;">'
                 f'<span class="ap-mark">{_MARK_SVG}</span>'
                 f'<span class="ap-brand-name">{PRODUCT_NAME}</span></a>',
                 unsafe_allow_html=True,
@@ -842,6 +969,7 @@ def boot(active: str, page_title: str) -> None:
         initial_sidebar_state="collapsed",
     )
     inject_css()
+    require_auth()  # 비밀번호가 설정된 경우 로그인 전에는 여기서 렌더가 중단된다
     render_header(active)
 
 
@@ -864,8 +992,11 @@ def page_header(
             f'<span class="v mono">{esc(meta_value or "—")}</span></div>'
         )
     if cta_label and cta_href:
-        target = "" if cta_href.startswith("/") else ' target="_blank" rel="noopener"'
-        side_parts.append(f'<a class="ap-cta" href="{cta_href}"{target}>{esc(cta_label)}</a>')
+        internal = cta_href.startswith("/")
+        target = ' target="_self"' if internal else ' target="_blank" rel="noopener"'
+        # 내부 링크는 전체 새로고침이므로 접속 토큰을 함께 실어 재로그인을 막는다
+        href = cta_href + (auth_qs("&" if "?" in cta_href else "?") if internal else "")
+        side_parts.append(f'<a class="ap-cta" href="{href}"{target}>{esc(cta_label)}</a>')
     side_html = f'<div class="ap-titlebar-side">{"".join(side_parts)}</div>' if side_parts else ""
 
     st.markdown(
@@ -1257,7 +1388,8 @@ def watch_expandable_row_html(w: WatchCondition, d: dict[str, Any]) -> str:
     filters_html = (
         f'<div style="display:flex;justify-content:space-between;align-items:center;background:#eceff3;padding:8px 14px;border-radius:6px;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
         f'<div style="font-size:12.5px;color:#363e4d;line-height:1.7;">{" · ".join(filter_tags)}</div>'
-        f'<a href="/?edit={w.id}" target="_self" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#fff;background:#243050;padding:5px 11px;border-radius:4px;text-decoration:none;white-space:nowrap;">✏️ 조건 수정</a>'
+        # 수정 폼은 '조건 관리' 페이지 한 곳에만 둔다 (대시보드 사본은 제거)
+        f'<a href="/watches?edit={w.id}{auth_qs("&")}" target="_self" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#fff;background:#243050;padding:5px 11px;border-radius:4px;text-decoration:none;white-space:nowrap;">✏️ 조건 수정</a>'
         f'</div>'
     )
 

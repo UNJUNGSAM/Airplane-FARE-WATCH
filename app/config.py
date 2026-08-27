@@ -13,13 +13,14 @@ import 시점에 값을 고정하면 Streamlit Cloud처럼 파이썬 프로세�
 """
 from __future__ import annotations
 
+import hmac
 import os
 from pathlib import Path
 from typing import Any
 
 # 배포된 코드가 실제로 프로세스에 반영되었는지 설정 페이지에서 확인하기 위한 표식.
 # app/config.py 를 수정할 때마다 함께 올린다.
-CONFIG_REVISION = "2026-08-27.1"
+CONFIG_REVISION = "2026-08-27.2"
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -36,10 +37,13 @@ _KEYS = (
     "GITHUB_BRANCH",
     "DB_PATH",
     "DEFAULT_CURRENCY",
+    "APP_PASSWORD",
 )
 
 _DEFAULTS = {
-    "GEMINI_MODEL": "gemini-2.5-flash",
+    # 로컬(.env)과 Streamlit Cloud(Secrets) 모두 이 기본값을 쓰도록 통일한다.
+    # 한쪽만 다른 모델을 가리키면 "로컬에서는 되는데 배포에서 다르다"가 생긴다.
+    "GEMINI_MODEL": "gemini-3.6-flash",
     "GITHUB_BRANCH": "main",
     "DEFAULT_CURRENCY": "KRW",
 }
@@ -215,6 +219,28 @@ def telegram_ready() -> bool:
 
 def github_sync_ready() -> bool:
     return bool(get_secret("GITHUB_TOKEN") and get_secret("GITHUB_REPO"))
+
+
+def default_for(key: str) -> str | None:
+    """설정하지 않았을 때 쓰이는 기본값 (없으면 None)."""
+    return _DEFAULTS.get(key.upper())
+
+
+def auth_enabled() -> bool:
+    """APP_PASSWORD가 설정되어 있으면 콘솔 접근에 비밀번호를 요구한다.
+
+    미설정 시에는 (기존 동작대로) 누구나 접근 가능하다. 공개 URL에 배포한다면
+    반드시 설정해야 한다.
+    """
+    return bool(get_secret("APP_PASSWORD"))
+
+
+def check_password(value: str | None) -> bool:
+    """입력한 비밀번호가 APP_PASSWORD와 일치하는지. 타이밍 공격 방지 비교."""
+    expected = get_secret("APP_PASSWORD")
+    if not expected:
+        return True  # 비밀번호를 걸지 않은 경우
+    return hmac.compare_digest(str(value or "").strip(), str(expected))
 
 
 def runtime_info() -> dict[str, str]:

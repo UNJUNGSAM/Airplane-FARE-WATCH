@@ -151,133 +151,17 @@ else:
 
 
 def left_content():
-    edit_param = st.query_params.get("edit")
-    if edit_param:
-        edit_watch = next((w for w in watches if str(w.id) == str(edit_param)), None)
-        if edit_watch:
-            from datetime import date, timedelta
-            today = date.today()
-            # DB에 깨진 날짜가 들어 있어도 페이지 전체가 죽지 않도록 방어한다
-            cur_depart = shared.safe_date(edit_watch.depart_date) or today
-            cur_return = shared.safe_date(edit_watch.return_date)
-            k = f"dash_e{edit_watch.id}_"
-
-            airport_choices = shared.get_airport_choices()
-            orig_choice = shared.choice_from_code(edit_watch.origin)
-            dest_choice = shared.choice_from_code(edit_watch.destination)
-            orig_idx = airport_choices.index(orig_choice) if orig_choice in airport_choices else len(airport_choices) - 1
-            dest_idx = airport_choices.index(dest_choice) if dest_choice in airport_choices else len(airport_choices) - 1
-
-            with st.container(border=True):
-                st.markdown(
-                    f'<div style="font-size:15px;font-weight:700;color:#131b30;margin-bottom:8px;">'
-                    f'✏️ {shared.watch_code(edit_watch)} 감시 조건 수정: {edit_watch.origin} → {edit_watch.destination} ({shared.route_title(edit_watch)})</div>',
-                    unsafe_allow_html=True,
-                )
-                with st.form(f"dash_edit_form_{edit_watch.id}", border=False):
-                    c1, c2 = st.columns(2)
-                    label = c1.text_input("라벨 (구분용 이름)", value=edit_watch.label, key=k + "label")
-                    currency = c2.selectbox("통화", shared.CURRENCIES,
-                                            index=shared.currency_index(edit_watch.currency), key=k + "cur")
-
-                    c3, c4 = st.columns(2)
-                    origin_sel = c3.selectbox("출발 공항", airport_choices, index=orig_idx, key=k + "orig_sel")
-                    dest_sel = c4.selectbox("도착 공항", airport_choices, index=dest_idx, key=k + "dest_sel")
-
-                    c5, c6 = st.columns(2)
-                    trip = c5.radio("여행 유형", ["편도", "왕복"], horizontal=True,
-                                    index=1 if edit_watch.trip_type == "round" else 0, key=k + "trip")
-                    adults = c6.number_input("성인 인원", min_value=1, max_value=9,
-                                             value=max(1, int(edit_watch.adults)), key=k + "adults")
-
-                    c7, c8 = st.columns(2)
-                    depart = c7.date_input("가는 날", value=cur_depart,
-                                           min_value=min(cur_depart, today), key=k + "depart")
-                    ret = c8.date_input(
-                        "오는 날 (왕복만)",
-                        value=cur_return or (cur_depart + timedelta(days=1)),
-                        min_value=min(cur_return or cur_depart, today),
-                        key=k + "return",
-                        disabled=(trip == "편도"),
-                    )
-
-                    t1, t2, t3 = st.columns(3)
-                    dep_from_s = t1.selectbox("출발 시간 (이후)", shared.HOUR_OPTIONS,
-                                              index=shared.hour_index(edit_watch.dep_hour_from), key=k + "df")
-                    dep_to_s = t2.selectbox("출발 시간 (까지)", shared.HOUR_OPTIONS,
-                                            index=shared.hour_index(edit_watch.dep_hour_to), key=k + "dt")
-                    stops_s = t3.selectbox("경유 조건", shared.STOP_OPTIONS,
-                                           index=shared.stops_index(edit_watch.max_stops), key=k + "st")
-
-                    r1c, r2c = st.columns(2)
-                    ret_from_s = r1c.selectbox("귀국 출발 시간 (이후)", shared.HOUR_OPTIONS,
-                                               index=shared.hour_index(edit_watch.ret_hour_from),
-                                               disabled=(trip == "편도"), key=k + "rf")
-                    ret_to_s = r2c.selectbox("귀국 출발 시간 (까지)", shared.HOUR_OPTIONS,
-                                             index=shared.hour_index(edit_watch.ret_hour_to),
-                                             disabled=(trip == "편도"), key=k + "rt")
-
-                    target = st.number_input(
-                        "목표가 (0 입력 시 하락률·백분위 규칙만 적용)", min_value=0.0, step=10000.0,
-                        value=float(edit_watch.target_price or 0), key=k + "target",
-                    )
-
-                    bcol1, bcol2 = st.columns([1.5, 1])
-                    submitted = bcol1.form_submit_button("변경 사항 저장", type="primary", width="stretch")
-                    cancelled = bcol2.form_submit_button("수정 취소", width="stretch")
-
-                if cancelled:
-                    st.query_params.clear()
-                    st.rerun()
-
-                if submitted:
-                    origin = shared.code_from_choice(origin_sel)
-                    dest = shared.code_from_choice(dest_sel)
-                    dep_from_v = shared.hour_value(dep_from_s)
-                    dep_to_v = shared.hour_value(dep_to_s)
-                    stops_v = shared.stops_value(stops_s)
-                    # 모델의 Literal 값은 "one-way"(하이픈)이다. "one_way"로 저장하면
-                    # 이후 WatchCondition 검증에서 터져 목록 전체를 못 읽게 된다.
-                    trip_v = "round" if trip == "왕복" else "one-way"
-                    ret_from_v = shared.hour_value(ret_from_s) if trip_v == "round" else None
-                    ret_to_v = shared.hour_value(ret_to_s) if trip_v == "round" else None
-                    ret_date_v = ret.isoformat() if trip_v == "round" else None
-
-                    # 등록 폼·조건 관리 페이지와 동일한 검증을 여기서도 적용한다
-                    errors = shared.validate_watch_input(
-                        origin, dest, trip, depart, ret,
-                        dep_from_v, dep_to_v, ret_from_v, ret_to_v,
-                    )
-                    if errors:
-                        for e in errors:
-                            st.error(e)
-                    else:
-                        fields = {
-                            "origin": origin,
-                            "destination": dest,
-                            "depart_date": depart.isoformat(),
-                            "return_date": ret_date_v,
-                            "trip_type": trip_v,
-                            "adults": int(adults),
-                            "dep_hour_from": dep_from_v,
-                            "dep_hour_to": dep_to_v,
-                            "ret_hour_from": ret_from_v,
-                            "ret_hour_to": ret_to_v,
-                            "max_stops": stops_v,
-                            "target_price": (float(target) if target > 0 else None),
-                            # label 컬럼은 NOT NULL 기본값 ''이고 모델도 str이라 None을 넣으면 안 된다
-                            "label": label.strip(),
-                            "currency": currency,
-                        }
-                        shared.edit_with_sync(
-                            # Database에 update_watch는 없다. 실제 메서드는 update_watch_fields.
-                            lambda dbase, _id=edit_watch.id, _f=fields:
-                                dbase.update_watch_fields(_id, **_f),
-                            f"feat: {shared.watch_code(edit_watch)} 조건 수정 ({origin}→{dest})",
-                        )
-                        st.query_params.clear()
-                        st.toast(f"{shared.watch_code(edit_watch)} 조건을 수정하였습니다.")
-                        st.rerun()
+    # 조건 수정 폼은 '조건 관리' 페이지 한 곳에만 둔다.
+    # 예전에는 여기에 사본이 하나 더 있었고, 그 사본만 존재하지 않는 메서드를
+    # 호출해 저장할 때마다 죽었다. 이제는 /watches?edit=<id> 로 넘긴다.
+    legacy_edit = st.query_params.get("edit")
+    if legacy_edit:
+        try:  # 세션에 실어 보낸다 (페이지 전환 시 쿼리 파라미터는 보장되지 않음)
+            st.session_state["edit_watch_id"] = int(legacy_edit)
+        except (TypeError, ValueError):
+            pass
+        st.query_params.clear()
+        st.switch_page("pages/4_watches.py")
 
     st.markdown(
         f'<div style="font-size:12.5px;color:#6c7585;margin-bottom:8px;font-weight:600;">'

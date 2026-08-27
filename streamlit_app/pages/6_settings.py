@@ -169,6 +169,13 @@ if not shared.github_sync.ready():
         "자동 감시에 반영하려면 저장소 토큰 설정이 필요합니다."
     )
 
+if not cfg.auth_enabled():
+    st.error(
+        "**접근 비밀번호가 설정되지 않았습니다.** 지금은 이 주소를 아는 누구나 감시 조건을 "
+        "추가·삭제하고 텔레그램 발송까지 시킬 수 있습니다. Secrets에 "
+        "`APP_PASSWORD` 를 추가하여 주십시오."
+    )
+
 with st.expander("🔍 연동 상태 진단 도우미 (클릭하여 확인)"):
     info = cfg.runtime_info()
     st.markdown("**0. 지금 실행 중인 설정 모듈:**")
@@ -190,29 +197,40 @@ with st.expander("🔍 연동 상태 진단 도우미 (클릭하여 확인)"):
     except Exception as e:  # noqa: BLE001
         sec_keys = [f"조회 에러: {e}"]
 
-    if sec_keys:
-        st.success(f"현재 인식된 Secrets 키 목록: `{', '.join(str(k) for k in sec_keys)}`")
-    else:
+    if not sec_keys:
         st.warning(
             "현재 Streamlit Secrets가 비어 있습니다. [Manage app] → [⋮] → [Settings] → "
             "[Secrets]에 입력 후 [Save]를 눌러주세요."
         )
+    elif cfg.auth_enabled():
+        # 비밀번호로 보호된 상태에서만 키 이름을 그대로 보여준다
+        st.success(f"현재 인식된 Secrets 키 목록: `{', '.join(str(k) for k in sec_keys)}`")
+    else:
+        st.info(f"Secrets {len(sec_keys)}개를 인식하였습니다. "
+                "키 이름은 비밀번호(APP_PASSWORD) 설정 후에 표시합니다.")
 
     st.markdown("**2. 각 항목별 실제 감지 여부와 출처:**")
     lines = []
     for key, optional in (
         ("GEMINI_API_KEY", False),
+        ("GEMINI_MODEL", True),
         ("TELEGRAM_BOT_TOKEN", False),
         ("TELEGRAM_CHAT_ID", False),
         ("GITHUB_REPO", True),
         ("GITHUB_TOKEN", True),
+        ("APP_PASSWORD", True),
     ):
         val = cfg.get_secret(key)
         if val:
-            shown = str(val) if key == "TELEGRAM_CHAT_ID" else shared.mask(val)
+            # 모델명은 비밀이 아니라 그대로, Chat ID도 식별을 위해 그대로 보여준다
+            shown = str(val) if key in ("TELEGRAM_CHAT_ID", "GEMINI_MODEL") else shared.mask(val)
             lines.append(f"• {key}: 연동 완료 ({shown}) ← {cfg.secret_source(key)}")
         else:
-            lines.append(f"• {key}: {'미설정 (선택)' if optional else '미인식 (None)'}")
+            default = cfg.default_for(key)
+            if default:
+                lines.append(f"• {key}: 미설정 - 기본값 사용 ({default})")
+            else:
+                lines.append(f"• {key}: {'미설정 (선택)' if optional else '미인식 (None)'}")
     st.code("\n".join(lines))
 
 

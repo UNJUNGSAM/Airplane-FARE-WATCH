@@ -22,6 +22,16 @@ db = shared.get_db()
 watches = db.list_watches(active_only=False)
 active_n = sum(1 for w in watches if w.active)
 inactive = [w for w in watches if not w.active]
+# 대시보드의 "조건 수정" 링크(/watches?edit=<id>)로 들어온 경우도 여기서 받는다.
+# 예전에는 대시보드가 자체 수정 폼을 따로 갖고 있었고, 그 사본만 깨져 있었다.
+_edit_param = st.query_params.get("edit")
+if _edit_param:
+    try:
+        st.session_state["edit_watch_id"] = int(_edit_param)
+    except (TypeError, ValueError):
+        pass
+    st.query_params.clear()
+
 edit_id = st.session_state.get("edit_watch_id")
 
 shared.page_header(

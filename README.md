@@ -135,7 +135,8 @@ git push -u origin main
 2. 저장소 선택 → Branch: `main` → **Main file path: `streamlit_app/app.py`** ← 중요!
 3. Deploy
 4. 앱 설정(⋮) → **Secrets** 에 `.streamlit/secrets.toml.example` 내용을 복사해 붙여넣고
-   실제 키 값으로 채우기 (여기엔 `GITHUB_TOKEN`/`GITHUB_REPO`도 필요)
+   실제 키 값으로 채우기 (`GITHUB_TOKEN`/`GITHUB_REPO`, 그리고 공개 URL이므로
+   접근 비밀번호 `APP_PASSWORD`도 반드시 설정)
 
 이제:
 - 대시보드에서 조건 추가/수정 → GitHub에 자동 커밋 → 다음 크론부터 적용

@@ -21,15 +21,23 @@ from app.models import WatchCondition
 
 logger = logging.getLogger(__name__)
 
-# 설정 모델 실패 시 순차 시도할 대체 모델
+# 설정 모델 실패 시 순차 시도할 대체 모델 (최신 -> 안정 순)
 FALLBACK_MODELS = [
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
     "gemini-2.5-flash",
-    "gemini-2.0-flash",
     "gemini-flash-latest",
-    "gemini-2.5-flash-lite",
 ]
 
-_MAX_ATTEMPTS_PER_MODEL = 3
+_MAX_ATTEMPTS_PER_MODEL = 2  # 3 -> 2. 모델 폴백이 있으므로 같은 모델을 오래 붙들 이유가 없다
+
+# 단일 HTTP 요청 타임아웃(ms). 이게 없으면 응답이 끊기지 않는 한 스트림릿 세션이
+# 무한정 "분석 중" 상태로 멈춘다.
+REQUEST_TIMEOUT_MS = 30_000
+
+# 재시도 + 모델 폴백 전체에 두는 상한(초). 사용자가 버튼을 누르고 기다리는 시간이라
+# 최악의 경우를 예측 가능하게 묶어 둔다.
+MAX_TOTAL_SECONDS = 75.0
 
 
 def _is_retryable(exc: Exception) -> bool:
@@ -211,7 +219,15 @@ class GeminiService:
         if self._client is None or self._client_key != key:
             from google import genai
 
-            self._client = genai.Client(api_key=key)
+            try:
+                # 요청 타임아웃을 걸어 응답이 없을 때 세션이 영구히 멈추지 않게 한다.
+                self._client = genai.Client(
+                    api_key=key,
+                    http_options={"timeout": REQUEST_TIMEOUT_MS},
+                )
+            except Exception as exc:  # noqa: BLE001 - SDK 버전에 따라 옵션명이 다를 수 있다
+                logger.warning("http_options 미지원 SDK로 판단해 기본 설정으로 생성합니다: %s", exc)
+                self._client = genai.Client(api_key=key)
             self._client_key = key
         return self._client
 
@@ -219,14 +235,23 @@ class GeminiService:
     def _generate(self, prompt: str, json_mode: bool = False) -> str:
         """재시도 + 대체 모델 폴백이 적용된 generate_content 래퍼.
 
-        - 재시도 가능 오류(503 혼잡, 429 할당량 등): 모델당 최대 3회 백오프 재시도
+        - 재시도 가능 오류(503 혼잡, 429 할당량 등): 모델당 백오프 재시도
         - 그래도 실패하면 FALLBACK_MODELS를 순차 시도
         - API 키 오류는 즉시 상위로 전달
+        - 전체 소요가 MAX_TOTAL_SECONDS를 넘으면 더 시도하지 않고 중단한다
         """
         models = [config.GEMINI_MODEL] + [m for m in FALLBACK_MODELS if m != config.GEMINI_MODEL]
         last_exc: Exception | None = None
+        started = time.monotonic()
+
+        def _budget_left() -> float:
+            return MAX_TOTAL_SECONDS - (time.monotonic() - started)
 
         for model in models:
+            if _budget_left() <= 0:
+                logger.warning("Gemini 재시도 예산(%.0f초) 소진 - 남은 모델 시도를 중단합니다",
+                               MAX_TOTAL_SECONDS)
+                break
             for attempt in range(1, _MAX_ATTEMPTS_PER_MODEL + 1):
                 try:
                     kwargs: dict[str, Any] = {}
@@ -246,8 +271,9 @@ class GeminiService:
                     last_exc = exc
                     if _is_auth_error(exc):
                         raise RuntimeError(f"Gemini API 키 오류: {exc}") from exc
-                    if _is_retryable(exc) and attempt < _MAX_ATTEMPTS_PER_MODEL:
-                        wait = min(2 ** attempt, 6)
+                    if (_is_retryable(exc) and attempt < _MAX_ATTEMPTS_PER_MODEL
+                            and _budget_left() > 3):
+                        wait = min(2 ** attempt, 4)
                         logger.warning("Gemini %s 일시 오류(시도 %d/%d, %ds 후 재시도): %s",
                                        model, attempt, _MAX_ATTEMPTS_PER_MODEL, wait, exc)
                         time.sleep(wait)

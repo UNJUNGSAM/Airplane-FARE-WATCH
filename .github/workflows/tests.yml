@@ -1,0 +1,37 @@
+name: tests
+
+# 푸시할 때마다 회귀 검사를 돌린다.
+# (존재하지 않는 메서드 호출로 화면이 죽는 부류의 버그를 배포 전에 잡기 위함)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 정적 검사 (없는 속성·금지 리터럴)
+        run: python tests/static_check.py
+
+      - name: 설정 조회 테스트
+        run: python tests/config_test.py
+
+      - name: 도메인 스모크 테스트
+        run: python tests/smoke_test.py

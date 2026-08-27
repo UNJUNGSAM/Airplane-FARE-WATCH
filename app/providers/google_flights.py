@@ -76,7 +76,9 @@ class GoogleFlightsProvider(FlightProvider):
                     watch.id, attempt, self.MAX_RETRIES, exc,
                 )
             if attempt < self.MAX_RETRIES:
-                time.sleep(2 ** attempt)  # 2초 → 4초 백오프
+                # 대시보드의 "전체 다시 조회"는 조건 수만큼 이 루프를 동기로 돈다.
+                # 대기가 길수록 화면이 그대로 멈추므로 1초 → 2초로 낮춘다.
+                time.sleep(2 ** (attempt - 1))
         raise last_exc or FastFlightsError("알 수 없는 조회 오류")
 
     def _search_once(self, watch: WatchCondition) -> list[FlightOffer]:
