@@ -29,9 +29,18 @@ def get_secret(key: str, default: str | None = None) -> str | None:
         if val is not None and str(val).strip():
             return str(val).strip()
 
-    # 2. Streamlit Secrets 조회
+    # 2. Streamlit Session State & Secrets 조회
     try:
         import streamlit as st
+
+        # st.session_state 우선 확인
+        try:
+            if hasattr(st, "session_state"):
+                for k in (key, key.upper(), key.lower()):
+                    if k in st.session_state and st.session_state[k]:
+                        return str(st.session_state[k]).strip()
+        except Exception:
+            pass
 
         # st.secrets 직접 조회 시도
         for k in (key, key.upper(), key.lower()):
