@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import html
+import os
 import re
 import secrets
 import sys
@@ -21,6 +22,22 @@ for _p in (str(_HERE), str(_ROOT)):
     while _p in sys.path:  # 루트가 항상 앞서도록 재정렬
         sys.path.remove(_p)
     sys.path.insert(0, _p)
+
+# ---------------------------------------------------------------------------
+# Streamlit 모듈 감시 범위 확장 (중요)
+#
+# Streamlit의 LocalSourcesWatcher는 "메인 스크립트 폴더(streamlit_app/) 하위"이거나
+# "PYTHONPATH 안에 있는" 모듈만 감시하고, 그 파일이 바뀔 때만 sys.modules에서
+# 지워 다시 임포트한다. app/ 은 streamlit_app/ 의 형제 폴더라 어느 쪽에도 걸리지
+# 않아, 저장소를 새로 pull 해도 프로세스가 살아 있는 한 예전 코드가 그대로 남았다.
+# (Secrets를 저장해도 계속 "미설정"으로 뜨던 장애의 진짜 원인)
+# PYTHONPATH에 저장소 루트를 넣어 app/ 도 감시 대상이 되게 한다.
+# ---------------------------------------------------------------------------
+_pypath = os.environ.get("PYTHONPATH", "")
+if str(_ROOT) not in _pypath.split(os.pathsep):
+    os.environ["PYTHONPATH"] = (
+        f"{_ROOT}{os.pathsep}{_pypath}" if _pypath else str(_ROOT)
+    )
 
 import pandas as pd  # noqa: E402,F401  (페이지에서 재사용)
 import streamlit as st  # noqa: E402
@@ -727,7 +744,8 @@ def edit_with_sync(edit_fn, commit_msg: str) -> None:
     다시 받아 편집을 처음부터 재적용한다. (예전에는 커밋 직전 SHA를 새로 읽어
     항상 성공시켰기 때문에 남의 변경을 조용히 덮어썼다.)
     """
-    if not github_sync.ready():
+    if not github_sync.ready() or not hasattr(github_sync, "fetch_remote_db"):
+        # 두 번째 조건은 예전 github_sync 모듈이 물려 있는 경우의 방어
         edit_fn(get_db())  # 로컬 전용 모드
         return
 
@@ -797,6 +815,16 @@ def _token_valid(tok: str | None) -> bool:
     return bool(exp and exp > time.time())
 
 
+def auth_enabled() -> bool:
+    """비밀번호 게이트 활성 여부 (예전 config가 물려 있으면 False)."""
+    return False if stale_config_reason() else bool(config.auth_enabled())
+
+
+def config_default(key: str) -> str | None:
+    """설정 기본값 (예전 config가 물려 있으면 None)."""
+    return None if stale_config_reason() else config.default_for(key)
+
+
 def auth_qs(prefix: str = "?") -> str:
     """앱 내부 HTML 링크 뒤에 붙일 토큰 쿼리스트링 (비밀번호 미설정 시 빈 문자열)."""
     if not config.auth_enabled():
@@ -805,8 +833,24 @@ def auth_qs(prefix: str = "?") -> str:
     return f"{prefix}t={tok}" if tok else ""
 
 
+# 이 파일이 기대하는 config 모듈의 최소 기능. 없으면 예전 코드가 물려 있는 것이다.
+_REQUIRED_CONFIG_ATTRS = ("auth_enabled", "check_password", "default_for", "runtime_info")
+
+
+def stale_config_reason() -> str | None:
+    """실행 중인 config 모듈이 이 코드와 맞지 않으면 사유 문자열, 맞으면 None.
+
+    Streamlit이 app/ 패키지를 다시 적재하지 못한 상태에서도 페이지가 통째로
+    죽지 않고, 무엇을 해야 하는지 화면에 알려 주기 위한 안전장치다.
+    """
+    missing = [a for a in _REQUIRED_CONFIG_ATTRS if not hasattr(config, a)]
+    return ", ".join(missing) if missing else None
+
+
 def authenticated() -> bool:
     """APP_PASSWORD 미설정이면 항상 True (기존 동작), 설정 시 로그인 여부."""
+    if stale_config_reason():
+        return True  # 잠금 화면에 갇히지 않도록 통과시키고 boot()에서 경고를 띄운다
     if not config.auth_enabled():
         return True
     if st.session_state.get(_AUTH_FLAG):
@@ -969,6 +1013,18 @@ def boot(active: str, page_title: str) -> None:
         initial_sidebar_state="collapsed",
     )
     inject_css()
+
+    stale = stale_config_reason()
+    if stale:
+        st.error(
+            "**실행 중인 설정 모듈이 배포된 코드보다 오래되었습니다.** "
+            f"(누락: `{stale}`)\n\n"
+            "Streamlit Cloud가 새 코드를 받았지만 프로세스를 재시작하지 않아 "
+            "`app/` 패키지가 예전 상태로 남아 있습니다. "
+            "**[Manage app] → [⋮] → [Reboot app]** 으로 완전히 재시작하여 주십시오. "
+            "재시작 전까지는 접근 비밀번호를 포함한 일부 기능이 동작하지 않습니다."
+        )
+
     require_auth()  # 비밀번호가 설정된 경우 로그인 전에는 여기서 렌더가 중단된다
     render_header(active)
 

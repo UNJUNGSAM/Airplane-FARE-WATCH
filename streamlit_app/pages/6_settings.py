@@ -169,7 +169,7 @@ if not shared.github_sync.ready():
         "자동 감시에 반영하려면 저장소 토큰 설정이 필요합니다."
     )
 
-if not cfg.auth_enabled():
+if not shared.auth_enabled():
     st.error(
         "**접근 비밀번호가 설정되지 않았습니다.** 지금은 이 주소를 아는 누구나 감시 조건을 "
         "추가·삭제하고 텔레그램 발송까지 시킬 수 있습니다. Secrets에 "
@@ -202,7 +202,7 @@ with st.expander("🔍 연동 상태 진단 도우미 (클릭하여 확인)"):
             "현재 Streamlit Secrets가 비어 있습니다. [Manage app] → [⋮] → [Settings] → "
             "[Secrets]에 입력 후 [Save]를 눌러주세요."
         )
-    elif cfg.auth_enabled():
+    elif shared.auth_enabled():
         # 비밀번호로 보호된 상태에서만 키 이름을 그대로 보여준다
         st.success(f"현재 인식된 Secrets 키 목록: `{', '.join(str(k) for k in sec_keys)}`")
     else:
@@ -226,7 +226,7 @@ with st.expander("🔍 연동 상태 진단 도우미 (클릭하여 확인)"):
             shown = str(val) if key in ("TELEGRAM_CHAT_ID", "GEMINI_MODEL") else shared.mask(val)
             lines.append(f"• {key}: 연동 완료 ({shown}) ← {cfg.secret_source(key)}")
         else:
-            default = cfg.default_for(key)
+            default = shared.config_default(key)
             if default:
                 lines.append(f"• {key}: 미설정 - 기본값 사용 ({default})")
             else:
