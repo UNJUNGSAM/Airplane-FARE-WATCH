@@ -17,6 +17,22 @@ logger = logging.getLogger(__name__)
 
 API_BASE = "https://api.telegram.org"
 
+# Bot API sendMessage 본문 상한. 초과하면 400 Bad Request로 알림이 통째로 유실된다.
+MAX_TELEGRAM_TEXT = 4096
+
+
+def _truncate(text: str) -> str:
+    """상한을 넘으면 잘라낸다. HTML 태그 중간에서 끊기지 않도록 줄 단위로 자른다."""
+    if len(text) <= MAX_TELEGRAM_TEXT:
+        return text
+    suffix = "\n…(생략)"
+    limit = MAX_TELEGRAM_TEXT - len(suffix)
+    cut = text[:limit]
+    nl = cut.rfind("\n")
+    if nl > limit * 0.5:  # 마지막 줄바꿈이 너무 앞이면 그냥 문자 단위로 자른다
+        cut = cut[:nl]
+    return cut + suffix
+
 
 def send_message(text: str) -> bool:
     """메시지 전송. 미설정/실패 시 False 반환 (감시 사이클은 계속 진행)."""
@@ -26,7 +42,7 @@ def send_message(text: str) -> bool:
     url = f"{API_BASE}/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         "chat_id": config.TELEGRAM_CHAT_ID,
-        "text": text,
+        "text": _truncate(text),
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }
@@ -35,7 +51,9 @@ def send_message(text: str) -> bool:
         resp.raise_for_status()
         return True
     except requests.RequestException as exc:
-        logger.error("텔레그램 전송 실패: %s", exc)
+        # 응답 본문에 원인(잘못된 chat_id, 봇 차단 등)이 들어 있어 함께 남긴다
+        body = getattr(getattr(exc, "response", None), "text", "")
+        logger.error("텔레그램 전송 실패: %s %s", exc, body[:300])
         return False
 
 

@@ -12,7 +12,8 @@ import math
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Optional
+from contextlib import contextmanager
+from typing import Any, Iterator, Optional
 
 from app.models import FlightOffer, WatchCondition
 
@@ -142,13 +143,30 @@ class Database:
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
 
     def connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        # busy_timeout: GitHub Actions 크론과 대시보드가 같은 파일을 동시에 만질 때
+        # 즉시 "database is locked"로 죽지 않고 최대 5초 대기하도록 한다.
+        conn = sqlite3.connect(self.db_path, timeout=5.0)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA busy_timeout = 5000")
         return conn
 
+    @contextmanager
+    def _tx(self) -> Iterator[sqlite3.Connection]:
+        """트랜잭션 커밋/롤백과 커넥션 종료를 함께 보장한다.
+
+        sqlite3 커넥션의 `with` 블록은 커밋·롤백만 하고 close는 하지 않는다.
+        기존 코드는 쿼리마다 새 커넥션을 열고 닫지 않아 GC 타이밍에 의존했다.
+        """
+        conn = self.connect()
+        try:
+            with conn:
+                yield conn
+        finally:
+            conn.close()
+
     def init_schema(self) -> None:
-        with self.connect() as conn:
+        with self._tx() as conn:
             conn.executescript(_SCHEMA)
             # 구버전 DB 마이그레이션: 누락된 컬럼 추가
             cols = {r[1] for r in conn.execute("PRAGMA table_info(watch_conditions)").fetchall()}
@@ -161,7 +179,7 @@ class Database:
     # 감시 조건 CRUD
     # ------------------------------------------------------------------
     def add_watch(self, w: WatchCondition) -> int:
-        with self.connect() as conn:
+        with self._tx() as conn:
             cur = conn.execute(
                 """
                 INSERT INTO watch_conditions (
@@ -184,7 +202,7 @@ class Database:
             return int(cur.lastrowid)
 
     def get_watch(self, watch_id: int) -> Optional[WatchCondition]:
-        with self.connect() as conn:
+        with self._tx() as conn:
             row = conn.execute(
                 f"SELECT {', '.join(_WATCH_COLS)} FROM watch_conditions WHERE id = ?",
                 (watch_id,),
@@ -196,7 +214,7 @@ class Database:
         if active_only:
             q += " WHERE active = 1"
         q += " ORDER BY id"
-        with self.connect() as conn:
+        with self._tx() as conn:
             return [_row_to_watch(r) for r in conn.execute(q).fetchall()]
 
     def update_watch_fields(self, watch_id: int, **fields: Any) -> None:
@@ -205,19 +223,19 @@ class Database:
             return
         sets = ", ".join(f"{c} = ?" for c in cols)
         values = [fields[c] for c in cols] + [watch_id]
-        with self.connect() as conn:
+        with self._tx() as conn:
             conn.execute(f"UPDATE watch_conditions SET {sets} WHERE id = ?", values)
 
     def set_active(self, watch_id: int, active: bool) -> None:
         self.update_watch_fields(watch_id, active=int(active))
 
     def delete_watch(self, watch_id: int) -> None:
-        with self.connect() as conn:
+        with self._tx() as conn:
             conn.execute("DELETE FROM watch_conditions WHERE id = ?", (watch_id,))
 
     def delete_all_watches(self) -> int:
         """모든 감시 조건 삭제 (이력·스냅샷·알림 로그도 CASCADE로 함께 삭제)."""
-        with self.connect() as conn:
+        with self._tx() as conn:
             cur = conn.execute("DELETE FROM watch_conditions")
             return int(cur.rowcount or 0)
 
@@ -231,7 +249,7 @@ class Database:
         checked_at: Optional[str] = None,
         provider_name: str = "google-flights",
     ) -> None:
-        with self.connect() as conn:
+        with self._tx() as conn:
             conn.execute(
                 """
                 INSERT INTO price_history
@@ -249,7 +267,7 @@ class Database:
         cutoff = (datetime.now(KST).replace(tzinfo=None) - timedelta(days=days)).strftime(
             "%Y-%m-%dT%H:%M:%S"
         )
-        with self.connect() as conn:
+        with self._tx() as conn:
             rows = conn.execute(
                 """
                 SELECT watch_id, price, airline, departure, arrival, stops, provider, checked_at
@@ -261,8 +279,19 @@ class Database:
             ).fetchall()
             return [dict(r) for r in rows]
 
-    def price_stats(self, watch_id: int, days: int = 30, percentile: float = 10) -> dict[str, Any]:
-        hist = self.get_history(watch_id, days=days)
+    def price_stats(
+        self,
+        watch_id: int,
+        days: int = 30,
+        percentile: float = 10,
+        history: Optional[list[dict[str, Any]]] = None,
+    ) -> dict[str, Any]:
+        """가격 통계. 이미 조회한 이력이 있으면 history로 넘겨 재조회를 피한다.
+
+        (대시보드는 조건마다 get_history를 부르고 price_stats가 또 같은 쿼리를
+         돌려 조건 수 x 2회의 중복 조회가 발생하고 있었다.)
+        """
+        hist = self.get_history(watch_id, days=days) if history is None else history
         prices = [float(h["price"]) for h in hist]
         if not prices:
             return {"count": 0, "min": None, "max": None, "avg": None,
@@ -282,7 +311,7 @@ class Database:
         cutoff = (datetime.now(KST).replace(tzinfo=None) - timedelta(days=keep_days)).strftime(
             "%Y-%m-%dT%H:%M:%S"
         )
-        with self.connect() as conn:
+        with self._tx() as conn:
             conn.execute("DELETE FROM price_history WHERE checked_at < ?", (cutoff,))
             conn.execute(
                 """
@@ -312,26 +341,31 @@ class Database:
         top_n: int = 5,
     ) -> None:
         checked_at = checked_at or now_str()
-        with self.connect() as conn:
-            for rank, offer in enumerate(offers[:top_n]):
-                conn.execute(
-                    """
-                    INSERT INTO offer_snapshots
-                        (watch_id, price, airline, airline_codes, departure,
-                         arrival, stops, rank, checked_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        watch_id, float(offer.price), offer.airline or "",
-                        json.dumps(offer.airline_codes or [], ensure_ascii=False),
-                        offer.departure or "", offer.arrival or "",
-                        int(offer.stops or 0), rank, checked_at,
-                    ),
-                )
+        rows = [
+            (
+                watch_id, float(offer.price), offer.airline or "",
+                json.dumps(offer.airline_codes or [], ensure_ascii=False),
+                offer.departure or "", offer.arrival or "",
+                int(offer.stops or 0), rank, checked_at,
+            )
+            for rank, offer in enumerate(offers[:top_n])
+        ]
+        if not rows:
+            return
+        with self._tx() as conn:  # 건별 execute 대신 한 번에 (executemany)
+            conn.executemany(
+                """
+                INSERT INTO offer_snapshots
+                    (watch_id, price, airline, airline_codes, departure,
+                     arrival, stops, rank, checked_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
 
     def get_latest_offers(self, watch_id: int) -> list[dict[str, Any]]:
         """가장 최근 조회 시점의 항공편 목록 (가격 오름차순)."""
-        with self.connect() as conn:
+        with self._tx() as conn:
             row = conn.execute(
                 "SELECT MAX(checked_at) AS m FROM offer_snapshots WHERE watch_id = ?",
                 (watch_id,),
@@ -360,7 +394,7 @@ class Database:
 
     def prune_snapshots(self, max_per_watch: int = 60) -> None:
         """감시 조건당 최근 N회 조회분만 유지."""
-        with self.connect() as conn:
+        with self._tx() as conn:
             conn.execute(
                 """
                 DELETE FROM offer_snapshots WHERE id IN (
@@ -382,7 +416,7 @@ class Database:
     # 알림 로그
     # ------------------------------------------------------------------
     def log_notification(self, watch_id: int, price: float, reason: str, message: str) -> None:
-        with self.connect() as conn:
+        with self._tx() as conn:
             conn.execute(
                 """
                 INSERT INTO notifications_log (watch_id, price, reason, message, sent_at)
@@ -392,7 +426,7 @@ class Database:
             )
 
     def list_notifications(self, limit: int = 100) -> list[dict[str, Any]]:
-        with self.connect() as conn:
+        with self._tx() as conn:
             rows = conn.execute(
                 """
                 SELECT n.id, n.watch_id, COALESCE(NULLIF(w.label, ''),

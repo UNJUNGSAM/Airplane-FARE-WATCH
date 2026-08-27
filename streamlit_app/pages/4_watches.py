@@ -357,22 +357,8 @@ def render_status(w, d) -> None:
 
 shared.section("조건 목록")
 
-q = (sel_search or "").strip().lower()
-
-
-def _match_watch(w) -> bool:
-    if not q:
-        return True
-    info = shared.airport_info(w.destination)
-    terms = [
-        w.origin.lower(), w.destination.lower(),
-        (w.label or "").lower(), (w.route_label or "").lower(),
-        (info.get("city") or "").lower(), (info.get("country") or "").lower(),
-    ]
-    return any(q in t for t in terms)
-
-
-filtered_watches = [w for w in watches if _match_watch(w)]
+# 검색 필터는 shared.watch_matches 로 일원화 (페이지별 복사본 제거)
+filtered_watches = [w for w in watches if shared.watch_matches(w, sel_search)]
 
 if not filtered_watches:
     st.info("검색 조건에 일치하는 감시 조건이 없습니다.")

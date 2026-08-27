@@ -6,6 +6,8 @@ python-dotenv>=1.0
 fast-flights>=3.1
 # fast-flights 3.x는 protobuf 6.x gencode를 사용하므로 버전 범위를 고정해야 한다
 protobuf>=6.31,<7
+# google_flights.py가 직접 import하므로 전이 의존성에 기대지 않고 명시한다
+selectolax>=0.3.21
 google-genai>=1.16
 PyGithub>=2.3
 

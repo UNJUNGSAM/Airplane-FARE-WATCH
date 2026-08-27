@@ -729,14 +729,43 @@ def edit_with_sync(edit_fn, commit_msg: str) -> None:
 
 
 def mask(v: str | None) -> str:
+    """비밀값 표시용. 공개 배포 앱이므로 값의 일부도 노출하지 않고 길이만 알린다."""
     if not v:
         return "미설정"
-    return v[:4] + "…" + v[-4:] if len(v) > 10 else "설정됨"
+    return f"설정됨 ({len(str(v))}자)"
 
 
 # ---------------------------------------------------------------------------
 # 서식 헬퍼
 # ---------------------------------------------------------------------------
+def safe_date(value: str | None) -> date | None:
+    """'YYYY-MM-DD' 문자열을 date로. 값이 없거나 형식이 깨졌으면 None."""
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError):
+        return None
+
+
+def watch_matches(w: WatchCondition, query: str | None, country: str | None = "전체") -> bool:
+    """대시보드·추이·조건 관리 페이지가 공유하는 검색/국가 필터.
+
+    같은 규칙이 페이지마다 복사되어 있어 한쪽만 고쳐지는 일이 있었다.
+    """
+    info = airport_info(w.destination)
+    if country and country != "전체" and info["country"] != country:
+        return False
+    q = (query or "").strip().lower()
+    if not q:
+        return True
+    terms = (
+        w.origin, w.destination, w.label or "", w.route_label or "",
+        info.get("city") or "", info.get("country") or "",
+    )
+    return any(q in t.lower() for t in terms)
+
+
 def num(v: Any, digits: int = 0, dash: str = "—") -> str:
     """천단위 구분 숫자 문자열."""
     if v is None:
@@ -888,15 +917,20 @@ def prefill_form(d: dict) -> None:
     st.session_state["f_label"] = d.get("label") or ""
     origin = d.get("origin") or "ICN"
     dest = d.get("destination") or ""
+    # 공항 selectbox의 위젯 키는 f_origin_sel / f_dest_sel 이다.
+    # 예전에는 f_origin / f_dest 에만 넣어서, 이미 한 번 렌더된 selectbox가
+    # 세션에 저장된 옛 값을 그대로 유지해 Gemini 분석 결과가 반영되지 않았다.
     st.session_state["f_origin"] = origin
-    st.session_state["f_origin_choice"] = choice_from_code(origin)
     st.session_state["f_dest"] = dest
-    st.session_state["f_dest_choice"] = choice_from_code(dest)
+    st.session_state["f_origin_sel"] = choice_from_code(origin)
+    st.session_state["f_dest_sel"] = choice_from_code(dest)
     st.session_state["f_trip"] = "왕복" if d.get("trip_type") == "round" else "편도"
-    if d.get("depart_date"):
-        st.session_state["f_depart"] = datetime.strptime(d["depart_date"], "%Y-%m-%d").date()
-    if d.get("return_date"):
-        st.session_state["f_return"] = datetime.strptime(d["return_date"], "%Y-%m-%d").date()
+    dep_d = safe_date(d.get("depart_date"))
+    if dep_d:
+        st.session_state["f_depart"] = dep_d
+    ret_d = safe_date(d.get("return_date"))
+    if ret_d:
+        st.session_state["f_return"] = ret_d
     st.session_state["f_adults"] = d.get("adults") or 1
     st.session_state["f_currency"] = d.get("currency") or "KRW"
     st.session_state["f_target"] = float(d.get("target_price") or 0)
@@ -1331,7 +1365,8 @@ def offer_row_html(o: dict[str, Any], currency: str, search_url: str, rank: int,
 def load_watch_data(db: Database, w: WatchCondition) -> dict[str, Any]:
     """감시 조건 1건의 통계·이력·딜 상태·최근 오퍼를 묶어 반환."""
     hist = db.get_history(w.id, days=30)
-    stats = db.price_stats(w.id, days=30, percentile=w.percentile)
+    # 이미 읽은 이력을 넘겨 동일 쿼리 재실행을 막는다 (조건 수만큼 절약)
+    stats = db.price_stats(w.id, days=30, percentile=w.percentile, history=hist)
     return {
         "stats": stats,
         "history": hist,

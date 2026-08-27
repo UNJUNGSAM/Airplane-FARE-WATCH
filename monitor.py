@@ -12,7 +12,7 @@ import logging
 import sys
 from pathlib import Path
 
-# 프로젝트 루트를 임포트 경에 추가 (어느 위치에서 실행해도 동작)
+# 프로젝트 루트를 임포트 경로에 추가 (어느 위치에서 실행해도 동작)
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

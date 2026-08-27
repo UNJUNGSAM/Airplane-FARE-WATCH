@@ -6,14 +6,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-# 레벨별 배지 스타일 (대시보드 CSS 클래스)
-BADGE_CLASS = {
-    "best": "badge-hot",
-    "good": "badge-on",
-    "normal": "badge-off",
-    "high": "badge-warn",
-    "unknown": "badge-off",
-}
+# (제거) BADGE_CLASS: 표현 계층은 shared.LEVEL_STYLE 을 쓰므로 아무도 참조하지 않던
+# 데드 코드였다. 도메인 모듈이 CSS 클래스를 아는 것 자체가 계층 위반이기도 하다.
 
 
 def deal_status(

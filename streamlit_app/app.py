@@ -93,29 +93,14 @@ active_n = sum(1 for w in watches if w.active)
 best_n = sum(1 for d in data.values() if d["deal"]["level"] == "best")
 checked_n = shared.today_checked(watches)
 
-q = (sel_search or "").strip().lower()
-
-
-def _match_search(w) -> bool:
-    if not q:
-        return True
-    info = shared.airport_info(w.destination)
-    terms = [
-        w.origin.lower(), w.destination.lower(),
-        (w.label or "").lower(), (w.route_label or "").lower(),
-        (info.get("city") or "").lower(), (info.get("country") or "").lower(),
-    ]
-    return any(q in t for t in terms)
-
-
+# 검색·국가 필터는 페이지마다 같은 규칙이어야 하므로 shared.watch_matches 하나로 통일한다
+# (기존에는 app / 3_trend / 4_watches 에 같은 함수가 세 벌 복사되어 있었다)
 shown = [
     w for w in watches
-    if (sel_country == "전체"
-        or shared.airport_info(w.destination)["country"] == sel_country)
+    if shared.watch_matches(w, sel_search, sel_country)
     and (sel_state == "전체"
          or (sel_state == "가동" and w.active)
          or (sel_state == "중지" and not w.active))
-    and _match_search(w)
 ]
 
 shared.tiles([
@@ -172,8 +157,9 @@ def left_content():
         if edit_watch:
             from datetime import date, timedelta
             today = date.today()
-            cur_depart = date.fromisoformat(edit_watch.depart_date)
-            cur_return = date.fromisoformat(edit_watch.return_date) if edit_watch.return_date else None
+            # DB에 깨진 날짜가 들어 있어도 페이지 전체가 죽지 않도록 방어한다
+            cur_depart = shared.safe_date(edit_watch.depart_date) or today
+            cur_return = shared.safe_date(edit_watch.return_date)
             k = f"dash_e{edit_watch.id}_"
 
             airport_choices = shared.get_airport_choices()
@@ -250,34 +236,48 @@ def left_content():
                     dep_from_v = shared.hour_value(dep_from_s)
                     dep_to_v = shared.hour_value(dep_to_s)
                     stops_v = shared.stops_value(stops_s)
-                    trip_v = "round" if trip == "왕복" else "one_way"
+                    # 모델의 Literal 값은 "one-way"(하이픈)이다. "one_way"로 저장하면
+                    # 이후 WatchCondition 검증에서 터져 목록 전체를 못 읽게 된다.
+                    trip_v = "round" if trip == "왕복" else "one-way"
                     ret_from_v = shared.hour_value(ret_from_s) if trip_v == "round" else None
                     ret_to_v = shared.hour_value(ret_to_s) if trip_v == "round" else None
                     ret_date_v = ret.isoformat() if trip_v == "round" else None
 
-                    def _update(dbase, _w=edit_watch):
-                        dbase.update_watch(
-                            _w.id,
-                            origin=origin,
-                            destination=dest,
-                            depart_date=depart.isoformat(),
-                            return_date=ret_date_v,
-                            trip_type=trip_v,
-                            adults=int(adults),
-                            dep_hour_from=dep_from_v,
-                            dep_hour_to=dep_to_v,
-                            ret_hour_from=ret_from_v,
-                            ret_hour_to=ret_to_v,
-                            max_stops=stops_v,
-                            target_price=(float(target) if target > 0 else None),
-                            label=(label.strip() or None),
-                            currency=currency,
+                    # 등록 폼·조건 관리 페이지와 동일한 검증을 여기서도 적용한다
+                    errors = shared.validate_watch_input(
+                        origin, dest, trip, depart, ret,
+                        dep_from_v, dep_to_v, ret_from_v, ret_to_v,
+                    )
+                    if errors:
+                        for e in errors:
+                            st.error(e)
+                    else:
+                        fields = {
+                            "origin": origin,
+                            "destination": dest,
+                            "depart_date": depart.isoformat(),
+                            "return_date": ret_date_v,
+                            "trip_type": trip_v,
+                            "adults": int(adults),
+                            "dep_hour_from": dep_from_v,
+                            "dep_hour_to": dep_to_v,
+                            "ret_hour_from": ret_from_v,
+                            "ret_hour_to": ret_to_v,
+                            "max_stops": stops_v,
+                            "target_price": (float(target) if target > 0 else None),
+                            # label 컬럼은 NOT NULL 기본값 ''이고 모델도 str이라 None을 넣으면 안 된다
+                            "label": label.strip(),
+                            "currency": currency,
+                        }
+                        shared.edit_with_sync(
+                            # Database에 update_watch는 없다. 실제 메서드는 update_watch_fields.
+                            lambda dbase, _id=edit_watch.id, _f=fields:
+                                dbase.update_watch_fields(_id, **_f),
+                            f"feat: {shared.watch_code(edit_watch)} 조건 수정 ({origin}→{dest})",
                         )
-
-                    shared.edit_with_sync(_update, f"feat: {shared.watch_code(edit_watch)} 조건 수정 ({origin}→{dest})")
-                    st.query_params.clear()
-                    st.toast(f"{shared.watch_code(edit_watch)} 조건을 수정하였습니다.")
-                    st.rerun()
+                        st.query_params.clear()
+                        st.toast(f"{shared.watch_code(edit_watch)} 조건을 수정하였습니다.")
+                        st.rerun()
 
     st.markdown(
         f'<div style="font-size:12.5px;color:#6c7585;margin-bottom:8px;font-weight:600;">'
