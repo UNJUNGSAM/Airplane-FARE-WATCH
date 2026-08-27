@@ -11,6 +11,7 @@ for _p in (str(HERE), str(ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+import pandas as pd
 import streamlit as st
 
 import shared

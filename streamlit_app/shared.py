@@ -117,10 +117,21 @@ header[data-testid="stHeader"],
 [data-testid="stSidebarCollapsedControl"],
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
 
+/* Streamlit 기본 헤더 및 최상단 빈 여백 완전 제거 */
+header[data-testid="stHeader"],
+[data-testid="stDecoration"] {
+  display: none !important;
+}
+
 section[data-testid="stMain"] .block-container,
-[data-testid="stMainBlockContainer"] {
-  padding: 84px 26px 64px !important;
-  max-width: 1460px !important;
+[data-testid="stMainBlockContainer"],
+.block-container {
+  padding-top: 8px !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+  padding-bottom: 24px !important;
+  max-width: 1440px !important;
+  margin-top: 0 !important;
 }
 
 .mono {
@@ -128,12 +139,6 @@ section[data-testid="stMain"] .block-container,
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   word-break: keep-all;
-}
-
-.block-container {
-  padding-top: 0.8rem !important;
-  padding-bottom: 1.5rem !important;
-  max-width: 1440px !important;
 }
 
 /* 상단 네비게이션 바 ---------------------------------------------------- */
