@@ -775,8 +775,9 @@ def render_header(active: str) -> None:
         left, mid, right = st.columns([3.4, 6.0, 2.6], vertical_alignment="center")
         with left:
             st.markdown(
-                f'<div class="ap-brand"><span class="ap-mark">{_MARK_SVG}</span>'
-                f'<span class="ap-brand-name">{PRODUCT_NAME}</span></div>',
+                f'<a href="/" target="_self" class="ap-brand" style="text-decoration:none;color:inherit;">'
+                f'<span class="ap-mark">{_MARK_SVG}</span>'
+                f'<span class="ap-brand-name">{PRODUCT_NAME}</span></a>',
                 unsafe_allow_html=True,
             )
         with mid:
@@ -1214,9 +1215,10 @@ def watch_expandable_row_html(w: WatchCondition, d: dict[str, Any]) -> str:
         f"<b>목표가:</b> {num(w.target_price)} {w.currency}" if w.target_price else "<b>목표가:</b> 미설정",
     ]
     filters_html = (
-        f'<div style="font-size:12.5px;color:#363e4d;background:#eceff3;padding:8px 14px;border-radius:6px;margin-bottom:12px;line-height:1.7;">'
-        + " · ".join(filter_tags)
-        + '</div>'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;background:#eceff3;padding:8px 14px;border-radius:6px;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+        f'<div style="font-size:12.5px;color:#363e4d;line-height:1.7;">{" · ".join(filter_tags)}</div>'
+        f'<a href="/?edit={w.id}" target="_self" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#fff;background:#243050;padding:5px 11px;border-radius:4px;text-decoration:none;white-space:nowrap;">✏️ 조건 수정</a>'
+        f'</div>'
     )
 
     # 3. 항공편 조회 결과 목록

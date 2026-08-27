@@ -165,6 +165,119 @@ else:
 
 
 def left_content():
+    edit_param = st.query_params.get("edit")
+    if edit_param:
+        edit_watch = next((w for w in watches if str(w.id) == str(edit_param)), None)
+        if edit_watch:
+            from datetime import date, timedelta
+            today = date.today()
+            cur_depart = date.fromisoformat(edit_watch.depart_date)
+            cur_return = date.fromisoformat(edit_watch.return_date) if edit_watch.return_date else None
+            k = f"dash_e{edit_watch.id}_"
+
+            airport_choices = shared.get_airport_choices()
+            orig_choice = shared.choice_from_code(edit_watch.origin)
+            dest_choice = shared.choice_from_code(edit_watch.destination)
+            orig_idx = airport_choices.index(orig_choice) if orig_choice in airport_choices else len(airport_choices) - 1
+            dest_idx = airport_choices.index(dest_choice) if dest_choice in airport_choices else len(airport_choices) - 1
+
+            with st.container(border=True):
+                st.markdown(
+                    f'<div style="font-size:15px;font-weight:700;color:#131b30;margin-bottom:8px;">'
+                    f'✏️ {shared.watch_code(edit_watch)} 감시 조건 수정: {edit_watch.origin} → {edit_watch.destination} ({shared.route_title(edit_watch)})</div>',
+                    unsafe_allow_html=True,
+                )
+                with st.form(f"dash_edit_form_{edit_watch.id}", border=False):
+                    c1, c2 = st.columns(2)
+                    label = c1.text_input("라벨 (구분용 이름)", value=edit_watch.label, key=k + "label")
+                    currency = c2.selectbox("통화", shared.CURRENCIES,
+                                            index=shared.currency_index(edit_watch.currency), key=k + "cur")
+
+                    c3, c4 = st.columns(2)
+                    origin_sel = c3.selectbox("출발 공항", airport_choices, index=orig_idx, key=k + "orig_sel")
+                    dest_sel = c4.selectbox("도착 공항", airport_choices, index=dest_idx, key=k + "dest_sel")
+
+                    c5, c6 = st.columns(2)
+                    trip = c5.radio("여행 유형", ["편도", "왕복"], horizontal=True,
+                                    index=1 if edit_watch.trip_type == "round" else 0, key=k + "trip")
+                    adults = c6.number_input("성인 인원", min_value=1, max_value=9,
+                                             value=max(1, int(edit_watch.adults)), key=k + "adults")
+
+                    c7, c8 = st.columns(2)
+                    depart = c7.date_input("가는 날", value=cur_depart,
+                                           min_value=min(cur_depart, today), key=k + "depart")
+                    ret = c8.date_input(
+                        "오는 날 (왕복만)",
+                        value=cur_return or (cur_depart + timedelta(days=1)),
+                        min_value=min(cur_return or cur_depart, today),
+                        key=k + "return",
+                        disabled=(trip == "편도"),
+                    )
+
+                    t1, t2, t3 = st.columns(3)
+                    dep_from_s = t1.selectbox("출발 시간 (이후)", shared.HOUR_OPTIONS,
+                                              index=shared.hour_index(edit_watch.dep_hour_from), key=k + "df")
+                    dep_to_s = t2.selectbox("출발 시간 (까지)", shared.HOUR_OPTIONS,
+                                            index=shared.hour_index(edit_watch.dep_hour_to), key=k + "dt")
+                    stops_s = t3.selectbox("경유 조건", shared.STOP_OPTIONS,
+                                           index=shared.stops_index(edit_watch.max_stops), key=k + "st")
+
+                    r1c, r2c = st.columns(2)
+                    ret_from_s = r1c.selectbox("귀국 출발 시간 (이후)", shared.HOUR_OPTIONS,
+                                               index=shared.hour_index(edit_watch.ret_hour_from),
+                                               disabled=(trip == "편도"), key=k + "rf")
+                    ret_to_s = r2c.selectbox("귀국 출발 시간 (까지)", shared.HOUR_OPTIONS,
+                                             index=shared.hour_index(edit_watch.ret_hour_to),
+                                             disabled=(trip == "편도"), key=k + "rt")
+
+                    target = st.number_input(
+                        "목표가 (0 입력 시 하락률·백분위 규칙만 적용)", min_value=0.0, step=10000.0,
+                        value=float(edit_watch.target_price or 0), key=k + "target",
+                    )
+
+                    bcol1, bcol2 = st.columns([1.5, 1])
+                    submitted = bcol1.form_submit_button("변경 사항 저장", type="primary", width="stretch")
+                    cancelled = bcol2.form_submit_button("수정 취소", width="stretch")
+
+                if cancelled:
+                    st.query_params.clear()
+                    st.rerun()
+
+                if submitted:
+                    origin = shared.code_from_choice(origin_sel)
+                    dest = shared.code_from_choice(dest_sel)
+                    dep_from_v = shared.hour_value(dep_from_s)
+                    dep_to_v = shared.hour_value(dep_to_s)
+                    stops_v = shared.stops_value(stops_s)
+                    trip_v = "round" if trip == "왕복" else "one_way"
+                    ret_from_v = shared.hour_value(ret_from_s) if trip_v == "round" else None
+                    ret_to_v = shared.hour_value(ret_to_s) if trip_v == "round" else None
+                    ret_date_v = ret.isoformat() if trip_v == "round" else None
+
+                    def _update(dbase, _w=edit_watch):
+                        dbase.update_watch(
+                            _w.id,
+                            origin=origin,
+                            destination=dest,
+                            depart_date=depart.isoformat(),
+                            return_date=ret_date_v,
+                            trip_type=trip_v,
+                            adults=int(adults),
+                            dep_hour_from=dep_from_v,
+                            dep_hour_to=dep_to_v,
+                            ret_hour_from=ret_from_v,
+                            ret_hour_to=ret_to_v,
+                            max_stops=stops_v,
+                            target_price=(float(target) if target > 0 else None),
+                            label=(label.strip() or None),
+                            currency=currency,
+                        )
+
+                    shared.edit_with_sync(_update, f"feat: {shared.watch_code(edit_watch)} 조건 수정 ({origin}→{dest})")
+                    st.query_params.clear()
+                    st.toast(f"{shared.watch_code(edit_watch)} 조건을 수정하였습니다.")
+                    st.rerun()
+
     st.markdown(
         f'<div style="font-size:12.5px;color:#6c7585;margin-bottom:8px;font-weight:600;">'
         f'💡 감시 조건 행(노선, 일정, 가격 등)을 <b>클릭</b>하면 최근 항공편 목록과 가격 요약이 그 자리에서 펼쳐집니다.</div>',
