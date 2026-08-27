@@ -16,6 +16,49 @@ import shared
 
 shared.boot("settings", "설정")
 
+# ---------------------------------------------------------------------------
+# 브라우저 UI에서 직접 키 입력 및 즉시 적용 폼
+# ---------------------------------------------------------------------------
+with st.expander("⚙️ 웹 화면에서 직접 키 입력하여 즉시 연동하기 (가장 쉬운 방법)", expanded=not (shared.config.gemini_ready() and shared.config.telegram_ready())):
+    st.markdown(
+        '<div style="font-size:13px;color:#4a5568;margin-bottom:12px;">'
+        'Streamlit Cloud Secrets를 열 필요 없이, 아래 칸에 키를 직접 붙여넣고 <b>[저장 및 즉시 연동]</b>을 누르시면 즉시 초록불이 켜지고 작동합니다!</div>',
+        unsafe_allow_html=True,
+    )
+    with st.form("quick_keys_form", border=False):
+        k1, k2 = st.columns(2)
+        in_gemini = k1.text_input("Gemini API 키 (AIza...)", value=shared.config.get_secret("GEMINI_API_KEY") or "", type="password", help="https://aistudio.google.com/apikey 에서 발급받은 키")
+        in_tg_tok = k2.text_input("텔레그램 봇 토큰 (123456:ABC...)", value=shared.config.get_secret("TELEGRAM_BOT_TOKEN") or "", type="password", help="@BotFather에게 발급받은 토큰")
+        
+        k3, k4 = st.columns(2)
+        in_tg_cid = k3.text_input("텔레그램 Chat ID (숫자)", value=str(shared.config.get_secret("TELEGRAM_CHAT_ID") or ""), help="getUpdates에서 확인한 숫자 ID")
+        in_gh_repo = k4.text_input("GitHub 저장소 (아이디/저장소명)", value=shared.config.get_secret("GITHUB_REPO") or "UNJUNGSAM/Airplane-FARE-WATCH", help="예: UNJUNGSAM/Airplane-FARE-WATCH")
+
+        in_gh_tok = st.text_input("GitHub Classic 토큰 (선택, ghp_...)", value=shared.config.get_secret("GITHUB_TOKEN") or "", type="password", help="GitHub Personal Access Token (classic, repo 권한)")
+        
+        btn_save = st.form_submit_button("💾 설정 저장 및 즉시 연동", type="primary", width="stretch")
+        
+    if btn_save:
+        import os
+        if in_gemini.strip():
+            os.environ["GEMINI_API_KEY"] = in_gemini.strip()
+            st.session_state["GEMINI_API_KEY"] = in_gemini.strip()
+        if in_tg_tok.strip():
+            os.environ["TELEGRAM_BOT_TOKEN"] = in_tg_tok.strip()
+            st.session_state["TELEGRAM_BOT_TOKEN"] = in_tg_tok.strip()
+        if in_tg_cid.strip():
+            os.environ["TELEGRAM_CHAT_ID"] = in_tg_cid.strip()
+            st.session_state["TELEGRAM_CHAT_ID"] = in_tg_cid.strip()
+        if in_gh_repo.strip():
+            os.environ["GITHUB_REPO"] = in_gh_repo.strip()
+            st.session_state["GITHUB_REPO"] = in_gh_repo.strip()
+        if in_gh_tok.strip():
+            os.environ["GITHUB_TOKEN"] = in_gh_tok.strip()
+            st.session_state["GITHUB_TOKEN"] = in_gh_tok.strip()
+        
+        st.success("설정이 저장되었습니다! 연동 상태를 확인합니다.")
+        st.rerun()
+
 eng = shared.engine_state()
 
 shared.page_header(
@@ -94,48 +137,7 @@ with c3:
         unsafe_allow_html=True,
     )
 
-# ---------------------------------------------------------------------------
-# 브라우저 UI에서 직접 키 입력 및 즉시 적용 폼
-# ---------------------------------------------------------------------------
-with st.expander("⚙️ 웹 화면에서 직접 키 입력하여 즉시 연동하기 (가장 쉬운 방법)", expanded=not (shared.config.gemini_ready() and shared.config.telegram_ready())):
-    st.markdown(
-        '<div style="font-size:13px;color:#4a5568;margin-bottom:12px;">'
-        'Streamlit Cloud Secrets를 열 필요 없이, 아래 칸에 키를 직접 붙여넣고 <b>[저장 및 즉시 연동]</b>을 누르시면 즉시 초록불이 켜지고 작동합니다!</div>',
-        unsafe_allow_html=True,
-    )
-    with st.form("quick_keys_form", border=False):
-        k1, k2 = st.columns(2)
-        in_gemini = k1.text_input("Gemini API 키 (AIza...)", value=shared.config.get_secret("GEMINI_API_KEY") or "", type="password", help="https://aistudio.google.com/apikey 에서 발급받은 키")
-        in_tg_tok = k2.text_input("텔레그램 봇 토큰 (123456:ABC...)", value=shared.config.get_secret("TELEGRAM_BOT_TOKEN") or "", type="password", help="@BotFather에게 발급받은 토큰")
-        
-        k3, k4 = st.columns(2)
-        in_tg_cid = k3.text_input("텔레그램 Chat ID (숫자)", value=str(shared.config.get_secret("TELEGRAM_CHAT_ID") or ""), help="getUpdates에서 확인한 숫자 ID")
-        in_gh_repo = k4.text_input("GitHub 저장소 (아이디/저장소명)", value=shared.config.get_secret("GITHUB_REPO") or "UNJUNGSAM/Airplane-FARE-WATCH", help="예: UNJUNGSAM/Airplane-FARE-WATCH")
 
-        in_gh_tok = st.text_input("GitHub Classic 토큰 (선택, ghp_...)", value=shared.config.get_secret("GITHUB_TOKEN") or "", type="password", help="GitHub Personal Access Token (classic, repo 권한)")
-        
-        btn_save = st.form_submit_button("💾 설정 저장 및 즉시 연동", type="primary", width="stretch")
-        
-    if btn_save:
-        import os
-        if in_gemini.strip():
-            os.environ["GEMINI_API_KEY"] = in_gemini.strip()
-            st.session_state["GEMINI_API_KEY"] = in_gemini.strip()
-        if in_tg_tok.strip():
-            os.environ["TELEGRAM_BOT_TOKEN"] = in_tg_tok.strip()
-            st.session_state["TELEGRAM_BOT_TOKEN"] = in_tg_tok.strip()
-        if in_tg_cid.strip():
-            os.environ["TELEGRAM_CHAT_ID"] = in_tg_cid.strip()
-            st.session_state["TELEGRAM_CHAT_ID"] = in_tg_cid.strip()
-        if in_gh_repo.strip():
-            os.environ["GITHUB_REPO"] = in_gh_repo.strip()
-            st.session_state["GITHUB_REPO"] = in_gh_repo.strip()
-        if in_gh_tok.strip():
-            os.environ["GITHUB_TOKEN"] = in_gh_tok.strip()
-            st.session_state["GITHUB_TOKEN"] = in_gh_tok.strip()
-        
-        st.success("설정이 저장되었습니다! 연동 상태를 확인합니다.")
-        st.rerun()
 
 if not shared.github_sync.ready():
     st.info(
