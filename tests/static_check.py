@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import ast
+import re
 import sys
 from pathlib import Path
 
@@ -106,6 +107,33 @@ def check_forbidden_literals() -> None:
                     )
 
 
+def check_shared_revision() -> None:
+    """페이지가 요구하는 shared 버전(_NEEDS_SHARED)이 실제 SHARED_REVISION 이하인지.
+
+    shared.py에 새 함수를 추가하고 페이지에서 쓰면서 표식을 안 올리면,
+    배포 후 모듈이 갱신되지 않았을 때 안내 대신 AttributeError가 난다.
+    """
+    shared_py = (ROOT / "streamlit_app" / "shared.py").read_text(encoding="utf-8")
+    m = re.search(r'SHARED_REVISION\s*=\s*"([^"]+)"', shared_py)
+    if not m:
+        failures.append("streamlit_app/shared.py 에 SHARED_REVISION 이 없습니다")
+        return
+    current = m.group(1)
+
+    pages = [ROOT / "streamlit_app" / "app.py"]
+    pages += sorted((ROOT / "streamlit_app" / "pages").glob("*.py"))
+    for page in pages:
+        text = page.read_text(encoding="utf-8")
+        pm = re.search(r'_NEEDS_SHARED\s*=\s*"([^"]+)"', text)
+        if not pm:
+            failures.append(f"{page.relative_to(ROOT)} 에 _NEEDS_SHARED 가드가 없습니다")
+        elif pm.group(1) > current:
+            failures.append(
+                f"{page.relative_to(ROOT)} 가 요구하는 shared {pm.group(1)} 이 "
+                f"실제 SHARED_REVISION({current})보다 높습니다"
+            )
+
+
 def main() -> int:
     db_tree = _parse(ROOT / "app" / "database.py")
     check_attribute_usage("Database", DB_VARS, _class_members(db_tree, "Database"))
@@ -126,13 +154,14 @@ def main() -> int:
     check_attribute_usage("config 모듈", {"config", "cfg"}, cfg_allowed)
 
     check_forbidden_literals()
+    check_shared_revision()
 
     if failures:
         print(f"FAIL - {len(failures)}건\n")
         for f in failures:  # 콘솔 인코딩(cp949) 호환을 위해 ASCII 불릿을 쓴다
             print("  -", f)
         return 1
-    print("PASS - 정적 검사 통과 (Database / shared / config 속성, 금지 리터럴)")
+    print("PASS - 정적 검사 통과 (Database / shared / config 속성, 금지 리터럴, shared 버전)")
     return 0
 
 

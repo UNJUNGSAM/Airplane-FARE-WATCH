@@ -59,6 +59,12 @@ from app.services.deal import deal_status  # noqa: E402
 from app.services.gemini_service import GeminiService  # noqa: E402
 from app.providers.google_flights import GoogleFlightsProvider  # noqa: E402
 
+# 각 페이지가 "이 버전 이상의 shared 가 필요하다"고 선언할 때 쓰는 표식.
+# shared.py에 새 함수를 추가하면 이 값을 올리고, 페이지의 _NEEDS_SHARED 도 함께 올린다.
+# (Streamlit Cloud는 페이지 스크립트만 디스크에서 다시 읽고 import된 모듈은
+#  프로세스에 남겨 두는 일이 있어, 버전이 어긋나면 원인 모를 AttributeError가 난다)
+SHARED_REVISION = "2026-08-28.1"
+
 CURRENCIES = ["KRW", "USD", "JPY", "EUR", "TWD", "THB", "SGD", "HKD", "AUD", "GBP"]
 HOUR_OPTIONS = ["제한없음"] + [f"{h:02d}시" for h in range(24)]
 STOP_OPTIONS = ["전체", "직항만", "직항+1회경유"]
