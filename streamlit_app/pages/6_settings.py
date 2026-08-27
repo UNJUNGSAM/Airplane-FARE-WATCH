@@ -7,8 +7,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 HERE = Path(__file__).resolve().parent.parent
 for _p in (str(HERE), str(ROOT)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+    while _p in sys.path:  # 루트가 항상 앞서도록 재정렬
+        sys.path.remove(_p)
+    sys.path.insert(0, _p)
 
 import streamlit as st
 
@@ -17,46 +18,69 @@ import shared
 shared.boot("settings", "설정")
 
 # ---------------------------------------------------------------------------
-# 브라우저 UI에서 직접 키 입력 및 즉시 적용 폼
+# 브라우저 UI에서 직접 키 입력 (이번 세션에만 적용되는 임시 오버라이드)
 # ---------------------------------------------------------------------------
-with st.expander("⚙️ 웹 화면에서 직접 키 입력하여 즉시 연동하기 (가장 쉬운 방법)", expanded=not (shared.config.gemini_ready() and shared.config.telegram_ready())):
+cfg = shared.config
+
+_ready_all = cfg.gemini_ready() and cfg.telegram_ready()
+with st.expander("⚙️ 이 브라우저 세션에서만 키를 임시로 적용하기", expanded=not _ready_all):
     st.markdown(
         '<div style="font-size:13px;color:#4a5568;margin-bottom:12px;">'
-        'Streamlit Cloud Secrets를 열 필요 없이, 아래 칸에 키를 직접 붙여넣고 <b>[저장 및 즉시 연동]</b>을 누르시면 즉시 초록불이 켜지고 작동합니다!</div>',
+        '아래 입력값은 <b>지금 이 브라우저 세션에서만</b> 사용됩니다. 창을 닫거나 앱이 재시작하면 사라지므로, '
+        '상시 운영에는 Streamlit Cloud의 <b>Secrets</b> 또는 로컬 <code>.env</code>를 사용하여 주십시오. '
+        '(보안상 이미 저장된 키는 이 칸에 다시 표시하지 않습니다.)</div>',
         unsafe_allow_html=True,
     )
+
+    def _ph(key: str) -> str:
+        return "이미 설정됨 - 바꿀 때만 입력" if cfg.get_secret(key) else "미설정 - 여기에 붙여넣기"
+
     with st.form("quick_keys_form", border=False):
         k1, k2 = st.columns(2)
-        in_gemini = k1.text_input("Gemini API 키 (AIza...)", value=shared.config.get_secret("GEMINI_API_KEY") or "", type="password", help="https://aistudio.google.com/apikey 에서 발급받은 키")
-        in_tg_tok = k2.text_input("텔레그램 봇 토큰 (123456:ABC...)", value=shared.config.get_secret("TELEGRAM_BOT_TOKEN") or "", type="password", help="@BotFather에게 발급받은 토큰")
-        
-        k3, k4 = st.columns(2)
-        in_tg_cid = k3.text_input("텔레그램 Chat ID (숫자)", value=str(shared.config.get_secret("TELEGRAM_CHAT_ID") or ""), help="getUpdates에서 확인한 숫자 ID")
-        in_gh_repo = k4.text_input("GitHub 저장소 (아이디/저장소명)", value=shared.config.get_secret("GITHUB_REPO") or "UNJUNGSAM/Airplane-FARE-WATCH", help="예: UNJUNGSAM/Airplane-FARE-WATCH")
+        in_gemini = k1.text_input("Gemini API 키 (AIza...)", value="", type="password",
+                                  placeholder=_ph("GEMINI_API_KEY"),
+                                  help="https://aistudio.google.com/apikey 에서 발급받은 키")
+        in_tg_tok = k2.text_input("텔레그램 봇 토큰 (123456:ABC...)", value="", type="password",
+                                  placeholder=_ph("TELEGRAM_BOT_TOKEN"),
+                                  help="@BotFather에게 발급받은 토큰")
 
-        in_gh_tok = st.text_input("GitHub Classic 토큰 (선택, ghp_...)", value=shared.config.get_secret("GITHUB_TOKEN") or "", type="password", help="GitHub Personal Access Token (classic, repo 권한)")
-        
-        btn_save = st.form_submit_button("💾 설정 저장 및 즉시 연동", type="primary", width="stretch")
-        
+        k3, k4 = st.columns(2)
+        in_tg_cid = k3.text_input("텔레그램 Chat ID (숫자)", value="",
+                                  placeholder=_ph("TELEGRAM_CHAT_ID"),
+                                  help="getUpdates에서 확인한 숫자 ID")
+        in_gh_repo = k4.text_input("GitHub 저장소 (아이디/저장소명)", value="",
+                                   placeholder=_ph("GITHUB_REPO") + " (예: UNJUNGSAM/Airplane-FARE-WATCH)",
+                                   help="예: UNJUNGSAM/Airplane-FARE-WATCH")
+
+        in_gh_tok = st.text_input("GitHub Classic 토큰 (선택, ghp_...)", value="", type="password",
+                                  placeholder=_ph("GITHUB_TOKEN"),
+                                  help="GitHub Personal Access Token (classic, repo 권한)")
+
+        b1, b2 = st.columns([3, 1])
+        btn_save = b1.form_submit_button("💾 이 세션에 임시 적용", type="primary", width="stretch")
+        btn_clear = b2.form_submit_button("임시값 해제", width="stretch")
+
     if btn_save:
-        import os
-        if in_gemini.strip():
-            os.environ["GEMINI_API_KEY"] = in_gemini.strip()
-            st.session_state["GEMINI_API_KEY"] = in_gemini.strip()
-        if in_tg_tok.strip():
-            os.environ["TELEGRAM_BOT_TOKEN"] = in_tg_tok.strip()
-            st.session_state["TELEGRAM_BOT_TOKEN"] = in_tg_tok.strip()
-        if in_tg_cid.strip():
-            os.environ["TELEGRAM_CHAT_ID"] = in_tg_cid.strip()
-            st.session_state["TELEGRAM_CHAT_ID"] = in_tg_cid.strip()
-        if in_gh_repo.strip():
-            os.environ["GITHUB_REPO"] = in_gh_repo.strip()
-            st.session_state["GITHUB_REPO"] = in_gh_repo.strip()
-        if in_gh_tok.strip():
-            os.environ["GITHUB_TOKEN"] = in_gh_tok.strip()
-            st.session_state["GITHUB_TOKEN"] = in_gh_tok.strip()
-        
-        st.success("설정이 저장되었습니다! 연동 상태를 확인합니다.")
+        applied = []
+        for label, key, raw in (
+            ("Gemini", "GEMINI_API_KEY", in_gemini),
+            ("텔레그램 토큰", "TELEGRAM_BOT_TOKEN", in_tg_tok),
+            ("텔레그램 Chat ID", "TELEGRAM_CHAT_ID", in_tg_cid),
+            ("GitHub 저장소", "GITHUB_REPO", in_gh_repo),
+            ("GitHub 토큰", "GITHUB_TOKEN", in_gh_tok),
+        ):
+            if raw.strip():
+                cfg.set_session_override(key, raw)
+                applied.append(label)
+        if applied:
+            st.success("이번 세션에 적용하였습니다: " + ", ".join(applied))
+            st.rerun()
+        else:
+            st.info("입력된 값이 없습니다.")
+
+    if btn_clear:
+        cfg.clear_session_overrides()
+        st.success("세션 임시값을 모두 해제하였습니다.")
         st.rerun()
 
 eng = shared.engine_state()
@@ -145,33 +169,51 @@ if not shared.github_sync.ready():
         "자동 감시에 반영하려면 저장소 토큰 설정이 필요합니다."
     )
 
-with st.expander("🔍 Secrets 연동 상태 진단 도우미 (클릭하여 확인)"):
-    st.markdown("**1. Streamlit Cloud의 Secrets에 등록된 키 목록:**")
+with st.expander("🔍 연동 상태 진단 도우미 (클릭하여 확인)"):
+    info = cfg.runtime_info()
+    st.markdown("**0. 지금 실행 중인 설정 모듈:**")
+    st.code(
+        f"config 리비전 : {info['revision']}\n"
+        f"config 파일   : {info['file']}\n"
+        f"작업 디렉터리 : {info['cwd']}"
+    )
+    st.caption(
+        "리비전이 저장소의 최신 값과 다르면 Streamlit Cloud가 예전 코드를 메모리에 물고 있는 것입니다. "
+        "[Manage app] → [⋮] → [Reboot app]으로 완전히 재시작하여 주십시오."
+    )
+
+    st.markdown("**1. Streamlit Secrets에 등록된 키 목록:**")
     sec_keys = []
     try:
         if hasattr(st, "secrets") and st.secrets is not None:
             sec_keys = list(st.secrets.keys())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         sec_keys = [f"조회 에러: {e}"]
 
     if sec_keys:
-        st.success(f"현재 인식된 Secrets 키 목록: `{', '.join(sec_keys)}`")
+        st.success(f"현재 인식된 Secrets 키 목록: `{', '.join(str(k) for k in sec_keys)}`")
     else:
-        st.warning("현재 Streamlit Secrets가 비어 있습니다! 오른쪽 아래 [Manage app] → [⋮] → [Settings] → [Secrets]에 입력 후 [Save]를 눌러주세요.")
+        st.warning(
+            "현재 Streamlit Secrets가 비어 있습니다. [Manage app] → [⋮] → [Settings] → "
+            "[Secrets]에 입력 후 [Save]를 눌러주세요."
+        )
 
-    st.markdown("**2. 각 항목별 실제 감지 여부:**")
-    g_key = shared.config.get_secret("GEMINI_API_KEY")
-    t_tok = shared.config.get_secret("TELEGRAM_BOT_TOKEN")
-    t_cid = shared.config.get_secret("TELEGRAM_CHAT_ID")
-    gh_repo = shared.config.get_secret("GITHUB_REPO")
-    gh_tok = shared.config.get_secret("GITHUB_TOKEN")
-    st.code(
-        f"• GEMINI_API_KEY: {'연동 완료 (' + shared.mask(g_key) + ')' if g_key else '미인식 (None)'}\n"
-        f"• TELEGRAM_BOT_TOKEN: {'연동 완료 (' + shared.mask(t_tok) + ')' if t_tok else '미인식 (None)'}\n"
-        f"• TELEGRAM_CHAT_ID: {'연동 완료 (' + str(t_cid) + ')' if t_cid else '미인식 (None)'}\n"
-        f"• GITHUB_REPO: {'연동 완료 (' + str(gh_repo) + ')' if gh_repo else '미설정 (선택)'}\n"
-        f"• GITHUB_TOKEN: {'연동 완료' if gh_tok else '미설정 (선택)'}"
-    )
+    st.markdown("**2. 각 항목별 실제 감지 여부와 출처:**")
+    lines = []
+    for key, optional in (
+        ("GEMINI_API_KEY", False),
+        ("TELEGRAM_BOT_TOKEN", False),
+        ("TELEGRAM_CHAT_ID", False),
+        ("GITHUB_REPO", True),
+        ("GITHUB_TOKEN", True),
+    ):
+        val = cfg.get_secret(key)
+        if val:
+            shown = str(val) if key == "TELEGRAM_CHAT_ID" else shared.mask(val)
+            lines.append(f"• {key}: 연동 완료 ({shown}) ← {cfg.secret_source(key)}")
+        else:
+            lines.append(f"• {key}: {'미설정 (선택)' if optional else '미인식 (None)'}")
+    st.code("\n".join(lines))
 
 
 # ---------------------------------------------------------------------------

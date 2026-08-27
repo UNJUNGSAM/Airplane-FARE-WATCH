@@ -16,8 +16,9 @@ _HERE = Path(__file__).resolve().parent
 _ROOT = _HERE.parent
 # ROOT가 HERE보다 먼저 검색되어야 `import app`이 루트의 app/ 패키지를 가리킵니다
 for _p in (str(_HERE), str(_ROOT)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+    while _p in sys.path:  # 루트가 항상 앞서도록 재정렬
+        sys.path.remove(_p)
+    sys.path.insert(0, _p)
 
 import pandas as pd  # noqa: E402,F401  (페이지에서 재사용)
 import streamlit as st  # noqa: E402
@@ -685,9 +686,14 @@ def get_db() -> Database:
     return db
 
 
-@st.cache_resource
-def get_gemini() -> GeminiService:
+@st.cache_resource(show_spinner=False)
+def _gemini_for(api_key: str) -> GeminiService:
+    """API 키별로 인스턴스를 분리해 캐시한다 (키가 바뀌면 새 인스턴스)."""
     return GeminiService()
+
+
+def get_gemini() -> GeminiService:
+    return _gemini_for(config.GEMINI_API_KEY or "")
 
 
 @st.cache_resource

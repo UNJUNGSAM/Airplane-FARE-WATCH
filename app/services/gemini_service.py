@@ -196,6 +196,7 @@ class GeminiService:
 
     def __init__(self) -> None:
         self._client = None
+        self._client_key: str | None = None
 
     @property
     def available(self) -> bool:
@@ -203,12 +204,15 @@ class GeminiService:
 
     @property
     def client(self):
-        if self._client is None:
-            if not self.available:
-                raise RuntimeError("GEMINI_API_KEY가 설정되지 않았습니다.")
+        key = config.GEMINI_API_KEY
+        if not key:
+            raise RuntimeError("GEMINI_API_KEY가 설정되지 않았습니다.")
+        # 키가 바뀌면(설정 페이지에서 새로 입력 등) 클라이언트를 다시 만든다
+        if self._client is None or self._client_key != key:
             from google import genai
 
-            self._client = genai.Client(api_key=config.GEMINI_API_KEY)
+            self._client = genai.Client(api_key=key)
+            self._client_key = key
         return self._client
 
     # ------------------------------------------------------------------

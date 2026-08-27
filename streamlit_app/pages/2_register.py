@@ -8,8 +8,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 HERE = Path(__file__).resolve().parent.parent
 for _p in (str(HERE), str(ROOT)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+    while _p in sys.path:  # 루트가 항상 앞서도록 재정렬
+        sys.path.remove(_p)
+    sys.path.insert(0, _p)
 
 import pandas as pd
 import streamlit as st
