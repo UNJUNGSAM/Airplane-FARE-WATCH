@@ -67,6 +67,28 @@ def main() -> int:
     check("빈 값도 None", shared.safe_date(""), None)
     check("정상 날짜는 파싱", str(shared.safe_date("2026-09-23")), "2026-09-23")
 
+    # --- 텔레그램 본문 상한 (4096자 초과 시 400으로 알림 유실 방지) ---
+    from app.services.notifier import MAX_TELEGRAM_TEXT, _truncate
+    check("상한 이하는 그대로", _truncate("짧은 알림"), "짧은 알림")
+    long_msg = "\n".join(f"라인 {i}: " + "가" * 80 for i in range(80))
+    cut = _truncate(long_msg)
+    check("상한 초과는 4096자 이내로 절단", len(cut) <= MAX_TELEGRAM_TEXT, True)
+    check("절단 표식이 붙는다", cut.endswith("…(생략)"), True)
+    check("줄 중간이 아니라 줄 단위로 자른다",
+          cut[: -len("\n…(생략)")].rstrip("가").endswith(": ") or "\n" in cut, True)
+
+    # --- 동기화 계층 계약 (수동 조회 커밋이 기대는 API) ---
+    from app import github_sync
+    check("RemoteChanged 예외 존재", issubclass(github_sync.RemoteChanged, RuntimeError), True)
+    rd = github_sync.RemoteDB(b"x", "sha123")
+    check("RemoteDB는 (data, sha) 쌍", (rd.data, rd.sha), (b"x", "sha123"))
+    check("sync_note: 충돌은 안내 문구",
+          "반영되지 않았습니다" in (shared.sync_note("conflict") or ""), True)
+    check("sync_note: 성공·로컬은 안내 없음",
+          (shared.sync_note("ok"), shared.sync_note("local")), (None, None))
+    check("sync_note: 오류는 원인 포함",
+          "boom" in (shared.sync_note("error: boom") or ""), True)
+
     print()
     if failed:
         print(f"실패 {failed}건 / 전체 {passed + failed}건")

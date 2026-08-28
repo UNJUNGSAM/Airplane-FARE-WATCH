@@ -21,6 +21,11 @@ jobs:
       - name: 저장소 체크아웃
         uses: actions/checkout@v4
 
+      # 감시 실행 전의 DB blob 해시를 기록해 둔다. push 충돌 시 원격 DB가
+      # 그 사이 바뀌었는지(=대시보드에서 조건을 편집했는지) 판별하는 기준이 된다.
+      - name: 기준 DB 해시 기록
+        run: echo "BASE_DB=$(git rev-parse HEAD:data/flights.db)" >> "$GITHUB_ENV"
+
       - name: Python 설치
         uses: actions/setup-python@v5
         with:
@@ -39,14 +44,35 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python monitor.py
 
+      # push 는 낙관적 잠금으로 보호한다. 대시보드도 SHA 잠금으로 커밋하므로,
+      # 크론 쪽만 무방비면 겹치는 순간 워크플로가 실패하며 이번 주기 데이터가
+      # 통째로 사라진다.
+      #   - 원격이 그 사이 움직였지만 DB는 그대로(코드 커밋 등) → 그 위에 다시 커밋
+      #   - 원격 DB 자체가 바뀌었음(대시보드에서 조건 편집) → 사용자 편집이 우선.
+      #     이번 주기 가격은 포기하고 정상 종료한다 (다음 주기에 다시 수집됨).
       - name: DB 변경사항 커밋 및 푸시
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/flights.db
-          if git diff --cached --quiet; then
+          if git diff --quiet -- data/flights.db; then
             echo "변경된 데이터가 없어 커밋을 생략합니다."
-          else
-            git commit -m "chore: 항공권 가격 데이터 갱신 [skip ci]"
-            git push
+            exit 0
           fi
+          cp data/flights.db "$RUNNER_TEMP/new_flights.db"
+          for attempt in 1 2 3; do
+            git add data/flights.db
+            git commit -m "chore: 항공권 가격 데이터 갱신 [skip ci]"
+            if git push; then
+              exit 0
+            fi
+            echo "push 실패 (시도 $attempt/3) - 원격 변경 사항을 확인합니다."
+            git fetch origin main
+            if [ "$(git rev-parse origin/main:data/flights.db)" != "$BASE_DB" ]; then
+              echo "원격 DB가 그 사이 변경되었습니다 (대시보드 편집). 사용자 변경을 보존하기 위해 이번 주기 데이터는 커밋하지 않습니다."
+              exit 0
+            fi
+            git reset --hard origin/main
+            cp "$RUNNER_TEMP/new_flights.db" data/flights.db
+          done
+          echo "3회 재시도 후에도 push에 실패했습니다."
+          exit 1

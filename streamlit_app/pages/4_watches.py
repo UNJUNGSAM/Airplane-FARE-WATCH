@@ -19,7 +19,7 @@ import shared
 # 실행 중인 shared 모듈이 이 페이지가 기대하는 버전인지 확인한다.
 # (배포 직후 Streamlit이 페이지만 새로 읽고 모듈은 예전 것을 물고 있는 경우
 #  원인 모를 AttributeError 대신 무엇을 해야 하는지 알려 준다)
-_NEEDS_SHARED = "2026-08-28.1"
+_NEEDS_SHARED = "2026-08-28.2"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -41,7 +41,12 @@ if _edit_param:
         st.session_state["edit_watch_id"] = int(_edit_param)
     except (TypeError, ValueError):
         pass
-    st.query_params.clear()
+    # clear()는 인증 토큰(?t=...)까지 지워 새로고침 시 재로그인을 요구하게 된다.
+    # edit 파라미터만 제거한다.
+    try:
+        del st.query_params["edit"]
+    except KeyError:
+        pass
 
 edit_id = st.session_state.get("edit_watch_id")
 
@@ -123,8 +128,9 @@ if not watches:
 def render_edit_form(w) -> None:
     """등록된 조건 1건의 수정 폼. 저장 시 변경 필드만 갱신합니다."""
     today = date.today()
-    cur_depart = date.fromisoformat(w.depart_date)
-    cur_return = date.fromisoformat(w.return_date) if w.return_date else None
+    # DB에 깨진 날짜가 들어 있어도 폼이 죽지 않도록 방어한다 (대시보드와 동일 규칙)
+    cur_depart = shared.safe_date(w.depart_date) or today
+    cur_return = shared.safe_date(w.return_date)
     k = f"e{w.id}_"
 
     airport_choices = shared.get_airport_choices()
@@ -262,18 +268,29 @@ def render_edit_form(w) -> None:
     msg = f"{shared.watch_code(w)} 조건을 저장하였습니다."
     ok = True
     if do_check:
+        # 원격 최신본(방금 저장한 수정 포함) 위에서 조회하고, 결과도 커밋한다.
+        # 로컬에만 기록하면 클라우드에서는 다음 재배포 때 이력이 사라진다.
+        base_sha = shared.sync_begin()
         fresh_db = shared.get_db()
         fresh = fresh_db.get_watch(w.id)
-        with st.spinner("변경한 조건으로 조회하고 있습니다."):
-            res = shared.check_watch(fresh_db, shared.get_provider(),
-                                     shared.get_gemini(), fresh)
-        if res["ok"]:
-            msg += f" 최저가는 {res['price']:,.0f} {fresh.currency}입니다."
-            if res["notified"]:
-                msg += " 핫딜로 판정하여 텔레그램 알림을 발송하였습니다."
-        else:
+        if fresh is None:
             ok = False
-            msg += f" 다만 조회에 실패하였습니다. ({res.get('error') or '원인 불명'})"
+            msg += " 다만 조건을 다시 읽지 못해 조회는 건너뛰었습니다."
+        else:
+            with st.spinner("변경한 조건으로 조회하고 있습니다."):
+                res = shared.check_watch(fresh_db, shared.get_provider(),
+                                         shared.get_gemini(), fresh)
+            if res["ok"]:
+                msg += f" 최저가는 {res['price']:,.0f} {fresh.currency}입니다."
+                if res["notified"]:
+                    msg += " 핫딜로 판정하여 텔레그램 알림을 발송하였습니다."
+                note = shared.sync_note(shared.sync_commit(
+                    f"chore: 수동 가격 조회 [{shared.watch_code(fresh)}]", base_sha))
+                if note:
+                    msg += " " + note
+            else:
+                ok = False
+                msg += f" 다만 조회에 실패하였습니다. ({res.get('error') or '원인 불명'})"
 
     st.session_state["watch_flash"] = {"ok": ok, "msg": msg}
     st.session_state.pop("edit_watch_id", None)
@@ -321,15 +338,23 @@ def render_status(w, d) -> None:
             unsafe_allow_html=True,
         )
         if st.button("지금 다시 조회", key=f"check_{w.id}", type="primary", width="stretch"):
+            # 원격 최신본 위에서 조회하고 결과를 커밋한다 (클라우드 이력 유실 방지)
+            base_sha = shared.sync_begin()
+            fresh_db = shared.get_db()
+            fresh = fresh_db.get_watch(w.id) or w
             with st.spinner("구글 항공권을 조회하고 있습니다."):
-                res = shared.check_watch(db, shared.get_provider(),
-                                         shared.get_gemini(), w)
+                res = shared.check_watch(fresh_db, shared.get_provider(),
+                                         shared.get_gemini(), fresh)
             if res["ok"]:
-                msg = f"최저가는 {res['price']:,.0f} {w.currency}입니다."
+                msg = f"최저가는 {res['price']:,.0f} {fresh.currency}입니다."
                 if res["notified"]:
                     msg += " 핫딜로 판정하여 텔레그램 알림을 발송하였습니다."
                 elif res.get("error"):
                     msg += f" ({res['error']})"
+                note = shared.sync_note(shared.sync_commit(
+                    f"chore: 수동 가격 조회 [{shared.watch_code(fresh)}]", base_sha))
+                if note:
+                    msg += " " + note
                 st.session_state["watch_flash"] = {"ok": True, "msg": msg}
             else:
                 st.session_state["watch_flash"] = {

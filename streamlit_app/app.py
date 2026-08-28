@@ -24,7 +24,7 @@ import shared
 # 실행 중인 shared 모듈이 이 페이지가 기대하는 버전인지 확인한다.
 # (배포 직후 Streamlit이 페이지만 새로 읽고 모듈은 예전 것을 물고 있는 경우
 #  원인 모를 AttributeError 대신 무엇을 해야 하는지 알려 준다)
-_NEEDS_SHARED = "2026-08-28.1"
+_NEEDS_SHARED = "2026-08-28.2"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -72,7 +72,12 @@ with shared.util_bar():
     )
 
 if recheck:
-    active_watches = [w for w in watches if w.active]
+    # 원격 최신 DB 위에서 조회하고 결과를 커밋한다. 클라우드의 로컬 파일은
+    # 재배포 때마다 저장소 내용으로 교체되므로, 커밋하지 않으면 수동 조회
+    # 이력이 통째로 사라진다.
+    base_sha = shared.sync_begin()
+    db = shared.get_db()
+    active_watches = [w for w in db.list_watches(active_only=True)]
     total_w = len(active_watches)
     prog_bar = st.progress(0, text=f"가동 중인 조건 {total_w}건 조회를 시작합니다...")
     ok_cnt, noti_cnt = 0, 0
@@ -89,14 +94,20 @@ if recheck:
         if res.get("notified"):
             noti_cnt += 1
     prog_bar.empty()
-    st.session_state["dash_cycle"] = {"total": total_w, "ok": ok_cnt, "notified": noti_cnt}
+    sync = shared.sync_commit("chore: 수동 전체 가격 조회", base_sha) if ok_cnt else "local"
+    st.session_state["dash_cycle"] = {
+        "total": total_w, "ok": ok_cnt, "notified": noti_cnt, "sync": sync,
+    }
     st.rerun()
 
 cycle = st.session_state.pop("dash_cycle", None)
 if cycle:
     msg = (f"전체 {cycle['total']:,}건 중 {cycle['ok']:,}건을 조회하였습니다."
            f" 핫딜 알림 {cycle['notified']:,}건을 발송하였습니다.")
-    (st.success if cycle["ok"] == cycle["total"] else st.warning)(msg)
+    note = shared.sync_note(cycle.get("sync", "local"))
+    if note:
+        msg += " " + note
+    (st.success if cycle["ok"] == cycle["total"] and not note else st.warning)(msg)
 
 # ---------------------------------------------------------------------------
 # 데이터 적재
@@ -175,7 +186,10 @@ def left_content():
             st.session_state["edit_watch_id"] = int(legacy_edit)
         except (TypeError, ValueError):
             pass
-        st.query_params.clear()
+        try:  # 인증 토큰(?t=)은 남겨 두고 edit 만 지운다
+            del st.query_params["edit"]
+        except KeyError:
+            pass
         st.switch_page("pages/4_watches.py")
 
     st.markdown(

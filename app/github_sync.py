@@ -59,11 +59,6 @@ def fetch_remote_db() -> RemoteDB:
         return RemoteDB(None, None)
 
 
-def fetch_remote_db_bytes() -> bytes | None:
-    """하위 호환용 - 내용만 필요할 때."""
-    return fetch_remote_db().data
-
-
 def commit_db_bytes(data: bytes, message: str, expected_sha: str | None = None) -> bool:
     """flights.db 를 원격 저장소에 커밋. 성공 시 True.
 

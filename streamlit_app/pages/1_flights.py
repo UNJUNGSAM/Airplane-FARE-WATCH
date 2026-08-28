@@ -18,7 +18,7 @@ import shared
 # 실행 중인 shared 모듈이 이 페이지가 기대하는 버전인지 확인한다.
 # (배포 직후 Streamlit이 페이지만 새로 읽고 모듈은 예전 것을 물고 있는 경우
 #  원인 모를 AttributeError 대신 무엇을 해야 하는지 알려 준다)
-_NEEDS_SHARED = "2026-08-28.1"
+_NEEDS_SHARED = "2026-08-28.2"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -108,6 +108,10 @@ with left:
 # 우측 결과
 # ---------------------------------------------------------------------------
 if refresh:
+    # 원격 최신본 위에서 조회하고 결과를 커밋한다 (클라우드 이력 유실 방지)
+    base_sha = shared.sync_begin()
+    db = shared.get_db()
+    w = db.get_watch(wid) or w
     with st.spinner("구글 항공권을 조회하고 있습니다."):
         res = shared.check_watch(db, shared.get_provider(), shared.get_gemini(), w)
     with right:
@@ -115,7 +119,11 @@ if refresh:
             msg = f"조회를 완료하였습니다. 최저가 {res['price']:,.0f} {w.currency}입니다."
             if res["notified"]:
                 msg += " 핫딜로 판정하여 텔레그램 알림을 발송하였습니다."
-            st.success(msg)
+            note = shared.sync_note(shared.sync_commit(
+                f"chore: 수동 가격 조회 [{shared.watch_code(w)}]", base_sha))
+            if note:
+                msg += " " + note
+            (st.success if not note else st.warning)(msg)
             d = shared.load_watch_data(db, w)
             deal, stats = d["deal"], d["stats"]
         else:

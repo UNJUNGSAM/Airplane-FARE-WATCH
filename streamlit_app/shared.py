@@ -63,7 +63,9 @@ from app.providers.google_flights import GoogleFlightsProvider  # noqa: E402
 # shared.py에 새 함수를 추가하면 이 값을 올리고, 페이지의 _NEEDS_SHARED 도 함께 올린다.
 # (Streamlit Cloud는 페이지 스크립트만 디스크에서 다시 읽고 import된 모듈은
 #  프로세스에 남겨 두는 일이 있어, 버전이 어긋나면 원인 모를 AttributeError가 난다)
-SHARED_REVISION = "2026-08-28.1"
+# 비교는 문자열 사전순이므로 반드시 "YYYY-MM-DD.N" 꼴을 유지하고, 하루에 10회를
+# 넘길 일이 생기면 N을 01, 02 처럼 두 자리로 적는다 (".10" < ".9" 함정 방지).
+SHARED_REVISION = "2026-08-28.2"
 
 CURRENCIES = ["KRW", "USD", "JPY", "EUR", "TWD", "THB", "SGD", "HKD", "AUD", "GBP"]
 HOUR_OPTIONS = ["제한없음"] + [f"{h:02d}시" for h in range(24)]
@@ -781,6 +783,13 @@ def edit_with_sync(edit_fn, commit_msg: str) -> None:
         if remote.data is not None:
             _replace_local_db(remote.data)
             get_db.clear()
+        elif attempt > 1:
+            # 재시도인데 원격 최신본을 받지 못했다면 여기서 멈춰야 한다.
+            # 이전 회차의 편집이 로컬에 남아 있으므로, 그 위에 edit_fn을 또
+            # 실행하면 INSERT류 편집이 이중으로 적용된다(조건 중복 등록 등).
+            st.warning("원격 저장소를 다시 읽지 못해 동기화를 중단하였습니다. "
+                       "잠시 후 다시 시도하여 주십시오.")
+            return
 
         edit_fn(get_db())
 
@@ -802,6 +811,64 @@ def edit_with_sync(edit_fn, commit_msg: str) -> None:
         except Exception as exc:  # noqa: BLE001
             st.warning(f"GitHub 동기화에 실패하였습니다. 로컬에는 저장되었습니다. ({exc})")
             return
+
+
+# ---------------------------------------------------------------------------
+# 수동 가격 조회의 저장소 동기화
+#
+# 클라우드의 로컬 파일시스템은 재배포 때마다 저장소 내용으로 교체된다.
+# "지금 조회" 류 버튼이 로컬 DB에만 기록하면 그 이력은 다음 배포에서 사라지므로
+# (사용자 입장에서는 "분명히 확인했는데 이력에 없다"는 모순), 수동 조회도
+# 원격 최신본 위에서 실행하고 결과를 SHA 잠금으로 커밋한다.
+#
+# 편집(edit_with_sync)과 달리 재시도하지 않는다 - 조회는 건당 수 초가 걸리는
+# 비싼 작업이라, 충돌 시 정직하게 알리고 다음 자동 주기에 맡기는 편이 낫다.
+# ---------------------------------------------------------------------------
+def sync_begin() -> str | None:
+    """수동 조회 전에 원격 최신 DB로 로컬을 맞추고 기준 SHA를 반환한다.
+
+    로컬 모드(동기화 미설정)면 None. 원격 파일이 아직 없어도 None이며,
+    이때 sync_commit은 신규 생성 경로를 탄다.
+    """
+    if not github_sync.ready():
+        return None
+    remote = github_sync.fetch_remote_db()
+    if remote.data is not None:
+        _replace_local_db(remote.data)
+        get_db.clear()
+    return remote.sha
+
+
+def sync_commit(commit_msg: str, base_sha: str | None) -> str:
+    """수동 조회 결과 DB를 저장소에 커밋한다.
+
+    Returns:
+        "ok"       - 커밋 완료
+        "local"    - 동기화 미설정 (로컬에만 저장)
+        "conflict" - 그 사이 원격이 변경됨 (자동 감시와 겹침) - 커밋 포기
+        "error: …" - 그 외 실패
+    """
+    if not github_sync.ready():
+        return "local"
+    try:
+        github_sync.commit_db_bytes(
+            Path(config.DB_PATH).read_bytes(), commit_msg, expected_sha=base_sha
+        )
+        return "ok"
+    except github_sync.RemoteChanged:
+        return "conflict"
+    except Exception as exc:  # noqa: BLE001
+        return f"error: {exc}"
+
+
+def sync_note(code: str) -> str | None:
+    """sync_commit 결과를 사용자 메시지에 덧붙일 문장으로 바꾼다 (없으면 None)."""
+    if code == "conflict":
+        return ("다만 자동 감시와 시점이 겹쳐 이번 조회 이력은 저장소에 반영되지 "
+                f"않았습니다. 다음 자동 주기({CHECK_INTERVAL_TEXT})에 다시 수집됩니다.")
+    if code.startswith("error"):
+        return f"다만 저장소 반영에는 실패하였습니다. ({code[7:]})"
+    return None  # ok / local 은 별도 안내 불필요
 
 
 # ---------------------------------------------------------------------------
@@ -915,8 +982,16 @@ def require_auth() -> None:
             ok = st.form_submit_button("입장", type="primary", width="stretch")
         if ok:
             if config.check_password(pw):
+                tok = _issue_auth_token()
                 st.session_state[_AUTH_FLAG] = True
-                st.session_state[_AUTH_TOKEN] = _issue_auth_token()
+                st.session_state[_AUTH_TOKEN] = tok
+                try:
+                    # URL에도 실어 둔다. 브라우저 새로고침(F5)은 새 세션을 만들기
+                    # 때문에, URL 토큰이 없으면 새로고침할 때마다 재로그인을
+                    # 요구하게 된다.
+                    st.query_params["t"] = tok
+                except Exception:  # noqa: BLE001 - 구버전 API 등
+                    pass
                 st.rerun()
             else:
                 st.error("비밀번호가 올바르지 않습니다.")

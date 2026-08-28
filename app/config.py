@@ -20,7 +20,7 @@ from typing import Any
 
 # 배포된 코드가 실제로 프로세스에 반영되었는지 설정 페이지에서 확인하기 위한 표식.
 # app/config.py 를 수정할 때마다 함께 올린다.
-CONFIG_REVISION = "2026-08-27.3"
+CONFIG_REVISION = "2026-08-28.1"
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -104,11 +104,6 @@ def clear_session_overrides() -> None:
     bucket = _session_bucket()
     if bucket is not None:
         bucket.clear()
-
-
-def has_session_override(key: str) -> bool:
-    bucket = _session_bucket()
-    return bool(bucket and key.upper() in bucket)
 
 
 # ---------------------------------------------------------------------------

@@ -5,6 +5,8 @@ name: tests
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "data/**"   # 대시보드의 조건 편집·수동 조회 커밋은 DB만 바꾸므로 검사 불필요
   pull_request:
   workflow_dispatch:
 
