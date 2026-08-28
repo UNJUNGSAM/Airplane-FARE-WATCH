@@ -217,6 +217,26 @@ def main() -> int:
     n = db.delete_all_watches()
     check("전체 초기화", n >= 2 and db.list_watches() == [])
 
+    # ---------- 출발일 경과 조건 자동 종료 ----------
+    from app.services.checker import retire_expired_watches
+    past_id = db.add_watch(WatchCondition(origin="ICN", destination="NRT",
+                                          depart_date="2020-01-01"))
+    future_id = db.add_watch(WatchCondition(origin="ICN", destination="NRT",
+                                            depart_date="2099-01-01"))
+    retired = retire_expired_watches(db)  # 텔레그램 미설정 환경이라 발송은 건너뜀
+    check("과거 출발일만 종료", [w.id for w in retired] == [past_id])
+    check("종료된 조건은 비활성", db.get_watch(past_id).active is False)
+    check("미래 조건은 그대로 가동", db.get_watch(future_id).active is True)
+    check("두 번째 호출은 종료 대상 없음", retire_expired_watches(db) == [])
+
+    # ---------- 알림 로그 상한 ----------
+    for i in range(30):
+        db.log_notification(future_id, 1000.0 + i, "테스트", "m")
+    db.prune_notifications(max_rows=10)
+    kept = db.list_notifications(limit=100)
+    check("알림 로그 10건만 유지", len(kept) == 10)
+    check("최신 알림이 남는다", kept[0]["price"] == 1029.0)
+
     # ---------- Gemini 미설정 동작 ----------
     g = GeminiService()
     if not g.available:

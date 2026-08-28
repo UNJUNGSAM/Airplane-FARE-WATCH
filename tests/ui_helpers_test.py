@@ -89,6 +89,26 @@ def main() -> int:
     check("sync_note: 오류는 원인 포함",
           "boom" in (shared.sync_note("error: boom") or ""), True)
 
+    # --- 무상태 인증 토큰 (재배포로 프로세스가 죽어도 유효해야 한다) ---
+    import os
+    from datetime import date, timedelta
+    os.environ["APP_PASSWORD"] = "test-8144"
+    try:
+        tok = shared._issue_auth_token()
+        check("같은 날 발급 토큰은 항상 동일 (무상태)",
+              tok == shared._issue_auth_token(), True)
+        check("발급 토큰은 유효", shared._token_valid(tok), True)
+        check("전일 토큰도 유효 (자정 직후 대비)",
+              shared._token_valid(shared._window_token(date.today() - timedelta(days=1))), True)
+        check("이틀 전 토큰은 무효",
+              shared._token_valid(shared._window_token(date.today() - timedelta(days=2))), False)
+        check("엉뚱한 토큰은 무효", shared._token_valid("abcd1234"), False)
+        prev = tok
+        os.environ["APP_PASSWORD"] = "changed"
+        check("비밀번호를 바꾸면 기존 토큰 즉시 무효", shared._token_valid(prev), False)
+    finally:
+        os.environ.pop("APP_PASSWORD", None)
+
     print()
     if failed:
         print(f"실패 {failed}건 / 전체 {passed + failed}건")

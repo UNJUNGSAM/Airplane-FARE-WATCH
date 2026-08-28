@@ -6,9 +6,10 @@ monitor.py(GitHub Actions 크론)와 Streamlit 대시보드의
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any
 
-from app.database import Database, now_str
+from app.database import KST, Database, now_str
 from app.models import WatchCondition
 from app.providers.base import FlightProvider
 from app.services import notifier
@@ -82,8 +83,29 @@ def check_watch(
     return result
 
 
+def retire_expired_watches(db: Database) -> list[WatchCondition]:
+    """출발일이 지난 활성 조건을 감시 중지로 전환하고 그 목록을 반환한다.
+
+    이게 없으면 여행이 끝난 조건도 30분마다 과거 날짜로 구글을 조회(실패 시
+    3회 백오프 포함)하며 영원히 남는다. 출발 당일까지는 감시를 유지한다.
+    """
+    today = datetime.now(KST).strftime("%Y-%m-%d")
+    expired = [w for w in db.list_watches(active_only=True) if w.depart_date < today]
+    for w in expired:
+        db.set_active(w.id, False)
+        logger.info("[%s] 출발일(%s) 경과 - 감시를 종료합니다", w.id, w.depart_date)
+    if expired:
+        lines = "\n".join(f"• {w.label or w.route_label} ({w.depart_date})" for w in expired)
+        notifier.send_message(
+            f"🏁 <b>감시 종료 안내</b>\n\n출발일이 지나 아래 조건의 감시를 "
+            f"종료하였습니다.\n{lines}\n\n조건 관리에서 날짜를 바꾸면 다시 가동할 수 있습니다."
+        )
+    return expired
+
+
 def run_full_cycle(db: Database, provider: FlightProvider, gemini: GeminiService) -> dict[str, int]:
     """모든 활성 감시 조건을 순회 확인하고 요약 통계를 반환한다."""
+    retire_expired_watches(db)
     watches = db.list_watches(active_only=True)
     logger.info("감시 대상 %d개 조건 확인 시작", len(watches))
 
@@ -97,6 +119,7 @@ def run_full_cycle(db: Database, provider: FlightProvider, gemini: GeminiService
 
     db.prune_history()
     db.prune_snapshots()
+    db.prune_notifications()
     summary = {"total": len(watches), "ok": ok_count, "notified": notified_count}
     logger.info("사이클 완료 - 전체 %(total)d / 성공 %(ok)d / 알림 %(notified)d건", summary)
     return summary

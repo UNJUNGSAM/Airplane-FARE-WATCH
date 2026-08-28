@@ -5,14 +5,14 @@
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import html
 import os
 import re
-import secrets
 import sys
-import time
 from contextlib import contextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +65,7 @@ from app.providers.google_flights import GoogleFlightsProvider  # noqa: E402
 #  프로세스에 남겨 두는 일이 있어, 버전이 어긋나면 원인 모를 AttributeError가 난다)
 # 비교는 문자열 사전순이므로 반드시 "YYYY-MM-DD.N" 꼴을 유지하고, 하루에 10회를
 # 넘길 일이 생기면 N을 01, 02 처럼 두 자리로 적는다 (".10" < ".9" 함정 방지).
-SHARED_REVISION = "2026-08-28.2"
+SHARED_REVISION = "2026-08-28.3"
 
 CURRENCIES = ["KRW", "USD", "JPY", "EUR", "TWD", "THB", "SGD", "HKD", "AUD", "GBP"]
 HOUR_OPTIONS = ["제한없음"] + [f"{h:02d}시" for h in range(24)]
@@ -876,37 +876,34 @@ def sync_note(code: str) -> str | None:
 # ---------------------------------------------------------------------------
 _AUTH_FLAG = "_authenticated"
 _AUTH_TOKEN = "_auth_token"
-AUTH_TOKEN_TTL_SEC = 12 * 3600
 
 
-@st.cache_resource(show_spinner=False)
-def _auth_tokens() -> dict[str, float]:
-    """발급한 접속 토큰 {토큰: 만료시각}. 프로세스 재시작 시 초기화된다."""
-    return {}
+def _window_token(day: date) -> str:
+    """해당 날짜에 유효한 접속 토큰. APP_PASSWORD로부터 결정적으로 파생된다.
+
+    무상태여야 하는 이유: 크론이 30분마다 DB를 커밋하면 Streamlit Cloud가
+    재배포되어 프로세스가 재시작된다. 예전처럼 발급한 토큰을 메모리에 저장하면
+    30분마다 전부 증발해 "새로고침해도 로그인 유지"가 사실상 동작하지 않았다.
+    HMAC 파생 토큰은 저장이 필요 없어 재시작과 무관하게 유효하다.
+    """
+    pw = config.get_secret("APP_PASSWORD") or ""
+    return hmac.new(pw.encode(), f"afw-auth:{day.isoformat()}".encode(),
+                    hashlib.sha256).hexdigest()[:24]
 
 
 def _issue_auth_token() -> str:
-    """로그인 성공 시 발급. 앱 내부 HTML 링크에 실어 세션 유실을 막는다.
-
-    상단 탭은 st.page_link라 클라이언트 라우팅으로 세션이 유지되지만,
-    디자인상 HTML <a>로 만든 링크(로고·조건 수정 등)는 전체 새로고침이 되어
-    세션이 새로 만들어진다. 그때마다 비밀번호를 다시 묻지 않도록 한다.
-    """
-    now = time.time()
-    tokens = _auth_tokens()
-    for k, exp in list(tokens.items()):  # 만료분 청소
-        if exp <= now:
-            tokens.pop(k, None)
-    tok = secrets.token_urlsafe(24)
-    tokens[tok] = now + AUTH_TOKEN_TTL_SEC
-    return tok
+    """로그인 성공 시 URL(?t=)에 실을 토큰. 당일+전일 유효(24~48시간)."""
+    return _window_token(date.today())
 
 
 def _token_valid(tok: str | None) -> bool:
     if not tok:
         return False
-    exp = _auth_tokens().get(str(tok))
-    return bool(exp and exp > time.time())
+    t = str(tok)
+    return any(
+        hmac.compare_digest(t, _window_token(date.today() - timedelta(days=off)))
+        for off in (0, 1)
+    )
 
 
 def auth_enabled() -> bool:
@@ -941,6 +938,21 @@ def stale_config_reason() -> str | None:
     return ", ".join(missing) if missing else None
 
 
+def _keep_token_in_url() -> None:
+    """인증된 세션은 URL에 항상 토큰을 유지한다.
+
+    상단 탭(st.page_link) 이동으로 URL에서 ?t= 가 빠진 채로 재배포(크론 커밋
+    때문에 30분마다 일어난다)를 맞으면 세션이 죽고 재로그인을 요구하게 된다.
+    URL에 토큰이 살아 있으면 브라우저 재접속 시 자동으로 다시 인증된다.
+    """
+    tok = st.session_state.get(_AUTH_TOKEN)
+    if tok and "t" not in st.query_params:
+        try:
+            st.query_params["t"] = tok
+        except Exception:  # noqa: BLE001 - URL 갱신 실패는 치명적이지 않다
+            pass
+
+
 def authenticated() -> bool:
     """APP_PASSWORD 미설정이면 항상 True (기존 동작), 설정 시 로그인 여부."""
     if stale_config_reason():
@@ -948,6 +960,7 @@ def authenticated() -> bool:
     if not config.auth_enabled():
         return True
     if st.session_state.get(_AUTH_FLAG):
+        _keep_token_in_url()
         return True
     # 전체 새로고침으로 세션이 새로 생겼어도 유효한 토큰이면 통과시킨다
     url_token = st.query_params.get("t")

@@ -20,7 +20,7 @@ import shared
 # 실행 중인 shared 모듈이 이 페이지가 기대하는 버전인지 확인한다.
 # (배포 직후 Streamlit이 페이지만 새로 읽고 모듈은 예전 것을 물고 있는 경우
 #  원인 모를 AttributeError 대신 무엇을 해야 하는지 알려 준다)
-_NEEDS_SHARED = "2026-08-28.2"
+_NEEDS_SHARED = "2026-08-28.3"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -32,6 +32,21 @@ shared.boot("register", "조건 등록")
 
 db = shared.get_db()
 registered = db.list_watches(active_only=False)
+
+
+def _watch_key(origin, dest, depart, trip, ret):
+    """같은 감시로 볼 조건의 식별자 (노선·날짜·유형). 반복 사용 시 같은 조건을
+    잊고 또 등록하면 크론이 이중 조회하고 알림도 두 번 오게 된다."""
+    return (origin, dest, depart, trip, ret if trip == "round" else None)
+
+
+def _find_same(origin, dest, depart, trip, ret):
+    key = _watch_key(origin, dest, depart, trip, ret)
+    for ex in registered:
+        if _watch_key(ex.origin, ex.destination, ex.depart_date,
+                      ex.trip_type, ex.return_date) == key:
+            return ex
+    return None
 
 shared.page_header(
     eyebrow="Watch registration",
@@ -133,13 +148,29 @@ if drafts:
             width="stretch",
             disabled=not selected_drafts,
         ):
-            def _bulk(dbase, _drafts=tuple(selected_drafts)):
-                for d in _drafts:
-                    dbase.add_watch(shared.draft_to_watch(d))
+            # 이미 등록된 조건, 그리고 이번 목록 안의 중복은 건너뛴다
+            fresh, skipped, seen = [], [], set()
+            for d in selected_drafts:
+                key = _watch_key(d["origin"], d["destination"], d["depart_date"],
+                                 d.get("trip_type") or "one-way", d.get("return_date"))
+                dup = _find_same(*key[:4], key[4])
+                if dup is not None or key in seen:
+                    skipped.append(d.get("label") or f"{d['origin']}→{d['destination']}")
+                else:
+                    seen.add(key)
+                    fresh.append(d)
 
-            shared.edit_with_sync(_bulk, f"feat: 자연어로 감시 조건 {len(selected_drafts)}건 일괄 추가")
+            if fresh:
+                def _bulk(dbase, _drafts=tuple(fresh)):
+                    for d in _drafts:
+                        dbase.add_watch(shared.draft_to_watch(d))
+
+                shared.edit_with_sync(_bulk, f"feat: 자연어로 감시 조건 {len(fresh)}건 일괄 추가")
             st.session_state.pop("nl_drafts", None)
-            st.toast(f"조건 {len(selected_drafts):,}건을 등록하였습니다.")
+            msg = f"조건 {len(fresh):,}건을 등록하였습니다."
+            if skipped:
+                msg += f" (이미 등록되어 건너뜀: {', '.join(skipped)})"
+            st.toast(msg)
             st.rerun()
 
         if bcol2.button("목록 지우기", key="clear_drafts", width="stretch"):
@@ -273,6 +304,14 @@ if submitted:
     ret_to_v = shared.hour_value(ret_to_s)
     errors = shared.validate_watch_input(origin, dest, trip, depart, ret,
                                          dep_from_v, dep_to_v, ret_from_v, ret_to_v)
+    _trip_v = "round" if trip == "왕복" else "one-way"
+    _dup = _find_same(origin, dest, depart.isoformat(), _trip_v,
+                      ret.isoformat() if (trip == "왕복" and ret) else None)
+    if _dup is not None:
+        errors.append(
+            f"같은 노선·날짜의 조건이 이미 있습니다: {shared.watch_code(_dup)} "
+            f"({_dup.label or _dup.route_label}). 조건 관리에서 수정하여 주십시오."
+        )
     if errors:
         for e in errors:
             st.error(e)

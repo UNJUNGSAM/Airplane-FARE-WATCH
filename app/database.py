@@ -306,8 +306,12 @@ class Database:
             "pct_value": _percentile(sorted(prices), percentile),
         }
 
-    def prune_history(self, keep_days: int = 90, max_rows_per_watch: int = 1000) -> None:
-        """오래된 이력 정리 - 저장소 커밋 크기 무한 증가 방지."""
+    def prune_history(self, keep_days: int = 90, max_rows_per_watch: int = 1600) -> None:
+        """오래된 이력 정리 - 저장소 커밋 크기 무한 증가 방지.
+
+        행 상한은 30분 크론(하루 48회) 기준 33일치다. 1000행(≈21일)이던 때는
+        price_stats의 30일 창이 조용히 21일로 잘려 '최근 30일' 표기와 모순이었다.
+        """
         cutoff = (datetime.now(KST).replace(tzinfo=None) - timedelta(days=keep_days)).strftime(
             "%Y-%m-%dT%H:%M:%S"
         )
@@ -423,6 +427,23 @@ class Database:
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 (watch_id, float(price), reason, message, now_str()),
+            )
+
+    def prune_notifications(self, max_rows: int = 1000) -> None:
+        """알림 로그 상한 유지 - 유일하게 정리 없이 무한히 쌓이던 테이블이다."""
+        with self._tx() as conn:
+            conn.execute(
+                """
+                DELETE FROM notifications_log WHERE id IN (
+                    SELECT id FROM (
+                        SELECT id,
+                               ROW_NUMBER() OVER (ORDER BY sent_at DESC, id DESC) AS rn
+                        FROM notifications_log
+                    )
+                    WHERE rn > ?
+                )
+                """,
+                (max_rows,),
             )
 
     def list_notifications(self, limit: int = 100) -> list[dict[str, Any]]:

@@ -18,7 +18,7 @@ import shared
 # 실행 중인 shared 모듈이 이 페이지가 기대하는 버전인지 확인한다.
 # (배포 직후 Streamlit이 페이지만 새로 읽고 모듈은 예전 것을 물고 있는 경우
 #  원인 모를 AttributeError 대신 무엇을 해야 하는지 알려 준다)
-_NEEDS_SHARED = "2026-08-28.2"
+_NEEDS_SHARED = "2026-08-28.3"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
