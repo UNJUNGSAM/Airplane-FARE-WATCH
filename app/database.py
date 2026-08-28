@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS watch_conditions (
     created_at TEXT,
     last_checked_at TEXT,
     last_notified_at TEXT,
+    last_notified_price REAL,
     first_seen_price REAL,
     dep_hour_from INTEGER,
     dep_hour_to INTEGER,
@@ -91,7 +92,7 @@ _WATCH_COLS = [
     "id", "label", "origin", "destination", "trip_type", "depart_date",
     "return_date", "adults", "currency", "target_price", "drop_percent",
     "percentile", "cooldown_hours", "active", "created_at",
-    "last_checked_at", "last_notified_at", "first_seen_price",
+    "last_checked_at", "last_notified_at", "last_notified_price", "first_seen_price",
     "dep_hour_from", "dep_hour_to", "ret_hour_from", "ret_hour_to", "max_stops",
 ]
 
@@ -99,7 +100,7 @@ _UPDATABLE_COLS = {
     "label", "origin", "destination", "trip_type", "depart_date", "return_date",
     "adults", "currency", "target_price", "drop_percent", "percentile",
     "cooldown_hours", "active", "last_checked_at", "last_notified_at",
-    "first_seen_price", "dep_hour_from", "dep_hour_to",
+    "last_notified_price", "first_seen_price", "dep_hour_from", "dep_hour_to",
     "ret_hour_from", "ret_hour_to", "max_stops",
 }
 
@@ -170,10 +171,11 @@ class Database:
             conn.executescript(_SCHEMA)
             # 구버전 DB 마이그레이션: 누락된 컬럼 추가
             cols = {r[1] for r in conn.execute("PRAGMA table_info(watch_conditions)").fetchall()}
-            for col in ("dep_hour_from", "dep_hour_to", "ret_hour_from",
-                        "ret_hour_to", "max_stops"):
+            for col, col_type in (("dep_hour_from", "INTEGER"), ("dep_hour_to", "INTEGER"),
+                                  ("ret_hour_from", "INTEGER"), ("ret_hour_to", "INTEGER"),
+                                  ("max_stops", "INTEGER"), ("last_notified_price", "REAL")):
                 if col not in cols:
-                    conn.execute(f"ALTER TABLE watch_conditions ADD COLUMN {col} INTEGER")
+                    conn.execute(f"ALTER TABLE watch_conditions ADD COLUMN {col} {col_type}")
 
     # ------------------------------------------------------------------
     # 감시 조건 CRUD

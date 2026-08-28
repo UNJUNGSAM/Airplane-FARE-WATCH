@@ -42,6 +42,7 @@ class WatchCondition(BaseModel):
     created_at: Optional[str] = None
     last_checked_at: Optional[str] = None
     last_notified_at: Optional[str] = None
+    last_notified_price: Optional[float] = None  # 재알림 억제 기준가
     first_seen_price: Optional[float] = None
 
     @property

@@ -69,7 +69,8 @@ def check_watch(
         analysis = gemini.analyze_deal(watch, best.price, stats)
         message = notifier.format_hot_deal(watch, best, decision, analysis)
         if notifier.send_message(message):
-            db.update_watch_fields(watch.id, last_notified_at=now)
+            db.update_watch_fields(watch.id, last_notified_at=now,
+                                   last_notified_price=best.price)
             db.log_notification(watch.id, best.price, " | ".join(decision.reasons), message)
             result["notified"] = True
         else:

@@ -39,6 +39,13 @@ def main() -> int:
     if not watches:
         logger.info("활성 감시 조건이 없습니다. Streamlit 대시보드에서 조건을 등록하세요.")
         return 0
+    if len(watches) > 20:
+        # 20건 × 48회/일 ≈ 1,000회 조회. 구글이 요청을 차단하기 시작할 수 있는 규모다.
+        logger.warning(
+            "활성 조건이 %d건입니다. 하루 %d회 조회는 차단 위험이 있으니 "
+            ".github/workflows/monitor.yml 의 cron 을 '0 * * * *'(1시간)로 늘리는 것을 권장합니다.",
+            len(watches), len(watches) * 48,
+        )
 
     provider = GoogleFlightsProvider()
     gemini = GeminiService()

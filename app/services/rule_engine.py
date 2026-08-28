@@ -66,4 +66,16 @@ def evaluate_deal(
                 detail=f"쿨다운 중 - {remaining:.1f}시간 후 재알림 가능",
             )
 
+    # 재알림 억제 - 직전에 알린 가격보다 낮아졌을 때만 다시 알린다.
+    # 가격이 저점에 며칠 머무르면 쿨다운이 지날 때마다 같은 알림이 반복되어
+    # (6시간 기준 하루 4통) 알림 자체를 무시하게 되는 피로를 막는다.
+    if (watch.last_notified_price is not None
+            and current_price >= watch.last_notified_price):
+        return DealDecision(
+            should_notify=False,
+            reasons=reasons,
+            detail=(f"직전 알림가 {fmt(watch.last_notified_price)}{cur} 이하로 "
+                    f"더 내려가면 다시 알립니다"),
+        )
+
     return DealDecision(should_notify=True, reasons=reasons)

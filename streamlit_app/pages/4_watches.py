@@ -212,8 +212,9 @@ def render_edit_form(w) -> None:
         o1, o2 = st.columns(2)
         do_check = o1.checkbox("저장 후 바로 조회", value=True, key=k + "check")
         reset_base = o2.checkbox(
-            "첫 관측가 기준 초기화", value=False, key=k + "reset",
-            help="노선이나 일정을 바꾼 경우, 하락률 판정의 기준이 되는 첫 관측가를 비웁니다.",
+            "알림·판정 기준 초기화", value=False, key=k + "reset",
+            help="노선이나 일정을 바꾼 경우, 하락률 판정 기준(첫 관측가)과 "
+                 "재알림 기준(직전 알림가)을 함께 비웁니다.",
         )
         submitted = st.form_submit_button("변경 사항 저장", type="primary", width="stretch")
 
@@ -259,6 +260,7 @@ def render_edit_form(w) -> None:
     }
     if reset_base:
         fields["first_seen_price"] = None
+        fields["last_notified_price"] = None  # 재알림 억제 기준도 함께 초기화
 
     shared.edit_with_sync(
         lambda dbase, _id=w.id, _f=fields: dbase.update_watch_fields(_id, **_f),

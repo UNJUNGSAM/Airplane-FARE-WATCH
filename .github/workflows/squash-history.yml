@@ -1,0 +1,55 @@
+name: squash-history
+
+# 저장소 이력 압축 (수동 실행 전용).
+#
+# 30분 크론이 flights.db를 커밋하므로 이력이 연 1만 커밋 이상 쌓여
+# clone·checkout·재배포가 점점 느려진다. 이 워크플로는 현재 상태 그대로를
+# 단일 루트 커밋으로 만들어 force-push 한다 (파일 내용은 하나도 바뀌지 않음).
+#
+# 실행 방법: GitHub 저장소 → Actions 탭 → squash-history → Run workflow
+# (몇 달에 한 번, 저장소가 무거워졌다고 느낄 때면 충분하다)
+#
+# ⚠️ 실행 후 로컬 작업 사본은 이력이 어긋나므로 반드시 아래를 실행할 것:
+#     git fetch origin && git reset --hard origin/main
+# (커밋하지 않은 로컬 변경이 있다면 그 전에 git stash 로 보관)
+#
+# 자동 스케줄을 걸지 않는 이유: 예고 없이 돌면 로컬 저장소가 소리 없이
+# 어긋나 다음 push가 원인 모를 충돌로 실패한다. 사람이 아는 상태에서 누른다.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 감시 크론과 같은 그룹으로 묶어 서로 겹치지 않게 한다
+concurrency:
+  group: flight-monitor
+  cancel-in-progress: false
+
+jobs:
+  squash:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 이력을 단일 커밋으로 압축 후 force-push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            BASE=$(git rev-parse origin/main)
+            TREE=$(git rev-parse "$BASE^{tree}")
+            # 같은 트리(파일 내용 동일)를 가리키는 부모 없는 커밋 = 이력 1개로 압축
+            NEW=$(git commit-tree "$TREE" -m "chore: 저장소 이력 압축 (30분 주기 가격 커밋 누적 정리)")
+            if git push --force-with-lease=main:"$BASE" origin "$NEW":refs/heads/main; then
+              echo "이력 압축 완료: $BASE -> $NEW"
+              echo "로컬 사본에서는 'git fetch origin && git reset --hard origin/main' 을 실행하세요."
+              exit 0
+            fi
+            echo "그 사이 새 커밋 발생 (감시 크론 등) - 최신 기준으로 재시도 ($attempt/3)"
+          done
+          echo "3회 재시도 후에도 실패했습니다. 잠시 후 다시 실행하세요."
+          exit 1

@@ -184,6 +184,17 @@ def main() -> int:
     d4 = evaluate_deal(watch_old, 400000, stats)
     check("쿨다운 경과 후 재발동", d4.should_notify)
 
+    # 재알림 억제: 직전 알림가보다 낮아졌을 때만 다시 알린다
+    db.update_watch_fields(wid, last_notified_at=old, last_notified_price=400000.0)
+    watch_re = db.get_watch(wid)
+    d4a = evaluate_deal(watch_re, 400000, stats)
+    check("같은 가격이면 재알림 억제", not d4a.should_notify and "직전 알림가" in d4a.detail)
+    d4b = evaluate_deal(watch_re, 410000, stats)
+    check("더 비싸져도 재알림 억제", not d4b.should_notify)
+    d4c = evaluate_deal(watch_re, 399000, stats)
+    check("직전 알림가보다 낮아지면 재알림", d4c.should_notify)
+    db.update_watch_fields(wid, last_notified_price=None)  # 이후 테스트에 영향 없도록 원복
+
     # 백분위 규칙: 관측 부족 시 비활성
     d5 = evaluate_deal(watch_old, 480000, {"count": 3, "pct_value": 500000})
     check("관측 3회면 백분위 규칙 미적용", all("백분위" not in r for r in d5.reasons))
