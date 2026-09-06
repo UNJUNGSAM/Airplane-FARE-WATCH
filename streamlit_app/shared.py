@@ -525,6 +525,29 @@ details.ap-details[open] > summary.ap-row {
   background: #fff; object-fit: contain;
 }
 
+/* 왕복 항공권 결과 카드 (출국/귀국 2줄 레이아웃) ----------------------- */
+.ap-offer-round {
+  display: grid; grid-template-columns: 48px minmax(0, 1fr) 150px;
+  align-items: center; gap: 14px; padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.ap-legs-box { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ap-leg-item { display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap; }
+.ap-leg-tag {
+  font-size: 11px; font-weight: 700; padding: 2px 7px;
+  border-radius: 4px; white-space: nowrap; flex: 0 0 auto;
+}
+.ap-leg-tag.dep { background: rgba(36,48,80,.09); color: #243050; }
+.ap-leg-tag.ret { background: rgba(44,127,118,.12); color: #2c7f76; }
+.ap-air-mini { display: inline-flex; align-items: center; gap: 6px; min-width: 110px; flex: 0 0 auto; }
+.ap-air-mini .nm { font-size: 12.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.ap-offer-round .ap-times { font-size: 16px; font-weight: 700; }
+.ap-offer-round .d { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-3); margin-top: 0; }
+.ap-leg-stops { margin-left: auto; }
+.ap-flight-round { display: flex; flex-direction: column; gap: 2px; }
+.ap-flight-round .ap-fl-row { display: flex; align-items: center; gap: 6px; }
+
+
 /* 좌측 필터 패널 · 차트 카드 -------------------------------------------- */
 .st-key-ap_chart {
   background: var(--surface); border: 1px solid var(--line);
@@ -707,6 +730,7 @@ hr { border-color: var(--line) !important; }
   .ap-c-spark, .ap-c-verdict { display: none !important; }
   .ap-offer { grid-template-columns: 36px 130px minmax(0, 1fr) 120px; gap: 8px; padding: 10px 12px; }
   .ap-offer .ap-c-stops { display: none !important; }
+  .ap-offer-round { grid-template-columns: 36px minmax(0, 1fr) 120px; gap: 8px; padding: 10px 12px; }
   .ap-times { font-size: 15px; }
 }
 @media (max-width: 640px) {
@@ -716,6 +740,8 @@ hr { border-color: var(--line) !important; }
   .ap-c-route, .ap-c-spark, .ap-c-verdict { display: none !important; }
   .ap-offer { grid-template-columns: minmax(0, 1fr) 105px; }
   .ap-offer > *:first-child, .ap-offer .ap-c-stops { display: none !important; }
+  .ap-offer-round { grid-template-columns: minmax(0, 1fr) 105px; }
+  .ap-offer-round > *:first-child { display: none !important; }
 }
 
 </style>
@@ -1515,27 +1541,54 @@ def watch_table_header() -> str:
             '<div class="ap-c-link" style="text-align:right;">링크</div></div>')
 
 
+def _fmt_leg_time(dep_str: str, arr_str: str) -> tuple[str, str, str]:
+    """(출발시간 HH:MM, 도착시간 HH:MM, +N일 뱃지HTML) 반환 (24시간제 기준)."""
+    dep_t = dep_str[-5:] if len(dep_str) >= 5 else "--:--"
+    arr_t = arr_str[-5:] if len(arr_str) >= 5 else "--:--"
+    plus_html = ""
+    if len(dep_str) >= 10 and len(arr_str) >= 10 and dep_str[:10] != arr_str[:10]:
+        try:
+            days = (date.fromisoformat(arr_str[:10]) - date.fromisoformat(dep_str[:10])).days
+            if days > 0:
+                plus_html = f'<span class="pd" style="color:#d93025;font-weight:700;margin-left:2px;font-size:10.5px;">+{days}</span>'
+        except ValueError:
+            pass
+    return dep_t, arr_t, plus_html
+
+
 def flight_time_html(offers: list[dict[str, Any]], w: WatchCondition) -> str:
-    """최근 조회에서 최저가였던 항공편의 출·도착 시각."""
+    """최근 조회에서 최저가였던 항공편의 출·도착 시각 (편도 및 왕복 지원)."""
     esc = html.escape
     o = offers[0] if offers else None
     dep = str((o or {}).get("departure") or "")
     if not o or len(dep) < 5:
         return '<div class="ap-flight"><span class="ap-nodata">운항 시각 정보 없음</span></div>'
-    arr = str(o.get("arrival") or "")
-    dep_t = dep[-5:]
-    arr_t = arr[-5:] if len(arr) >= 5 else "--:--"
-    plus = ""
-    if len(dep) >= 10 and len(arr) >= 10 and dep[:10] != arr[:10]:
-        try:
-            days = (date.fromisoformat(arr[:10]) - date.fromisoformat(dep[:10])).days
-            if days > 0:
-                plus = f'<span class="pd">+{days}</span>'
-        except ValueError:
-            pass
-    lead = "최저가편"
+
+    dep_t, arr_t, plus = _fmt_leg_time(dep, str(o.get("arrival") or ""))
     airline = esc(str(o.get("airline") or "").strip())
     air = f'<span class="air">{airline}</span>' if airline else ""
+
+    # 귀국편 정보 확인 (왕복 조건)
+    ret_dep = str(o.get("return_departure") or "")
+    if w.trip_type == "round" and len(ret_dep) >= 5:
+        ret_dep_t, ret_arr_t, ret_plus = _fmt_leg_time(ret_dep, str(o.get("return_arrival") or ""))
+        ret_airline = esc(str(o.get("return_airline") or "").strip())
+        ret_air = f'<span class="air">{ret_airline}</span>' if ret_airline else ""
+
+        return (
+            f'<div class="ap-flight ap-flight-round">'
+            f'<div class="ap-fl-row">'
+            f'<span class="lb">가는편</span>'
+            f'<span class="tm mono">{esc(dep_t)}<span class="arw">→</span>{esc(arr_t)}{plus}</span>{air}'
+            f'</div>'
+            f'<div class="ap-fl-row">'
+            f'<span class="lb" style="background:rgba(44,127,118,.12);color:#2c7f76;">오는편</span>'
+            f'<span class="tm mono">{esc(ret_dep_t)}<span class="arw">→</span>{esc(ret_arr_t)}{ret_plus}</span>{ret_air}'
+            f'</div>'
+            f'</div>'
+        )
+
+    lead = "최저가편"
     return (f'<div class="ap-flight"><span class="lb">{lead}</span>'
             f'<span class="tm mono">{esc(dep_t)}<span class="arw">→</span>'
             f'{esc(arr_t)}{plus}</span>{air}</div>')
@@ -1661,12 +1714,11 @@ def watch_expandable_row_html(w: WatchCondition, d: dict[str, Any]) -> str:
 
 
 def offer_row_html(o: dict[str, Any], currency: str, search_url: str, rank: int, sky_url: str = "") -> str:
-    """항공편 1건을 결과 행으로 렌더링."""
+    """항공편 1건을 결과 행으로 렌더링 (편도 및 왕복 2단 지원)."""
     esc = html.escape
     dep = str(o.get("departure") or "-")
     arr = str(o.get("arrival") or "-")
-    dep_time = dep[-5:] if len(dep) >= 5 else dep
-    arr_time = arr[-5:] if len(arr) >= 5 else arr
+    dep_t, arr_t, plus = _fmt_leg_time(dep, arr)
     dep_date = dep[:10] if len(dep) >= 10 else ""
     stops = int(o.get("stops") or 0)
     stops_badge = ('<span class="ap-badge ok"><span class="ap-dot dot-ok"></span>직항</span>'
@@ -1681,11 +1733,57 @@ def offer_row_html(o: dict[str, Any], currency: str, search_url: str, rank: int,
         links.append(f'<a class="ap-link" href="{esc(sky_url)}" target="_blank" rel="noopener">스카이스캐너 ↗</a>')
     links_html = " · ".join(links)
 
+    # 왕복인 경우 (return_departure 또는 return_airline 이 존재)
+    ret_dep = str(o.get("return_departure") or "")
+    if len(ret_dep) >= 5 or o.get("return_airline"):
+        ret_arr = str(o.get("return_arrival") or "-")
+        ret_dep_t, ret_arr_t, ret_plus = _fmt_leg_time(ret_dep, ret_arr)
+        ret_date = ret_dep[:10] if len(ret_dep) >= 10 else ""
+        ret_stops = int(o.get("return_stops") or 0)
+        ret_stops_badge = ('<span class="ap-badge ok" style="padding:2px 7px;font-size:11px;"><span class="ap-dot dot-ok"></span>직항</span>'
+                           if ret_stops == 0 else
+                           f'<span class="ap-badge warn" style="padding:2px 7px;font-size:11px;"><span class="ap-dot dot-warn"></span>'
+                           f'경유 {ret_stops}회</span>')
+        out_stops_badge = ('<span class="ap-badge ok" style="padding:2px 7px;font-size:11px;"><span class="ap-dot dot-ok"></span>직항</span>'
+                           if stops == 0 else
+                           f'<span class="ap-badge warn" style="padding:2px 7px;font-size:11px;"><span class="ap-dot dot-warn"></span>'
+                           f'경유 {stops}회</span>')
+
+        return f"""
+<div class="ap-offer ap-offer-round">
+  {rank_badge}
+  <div class="ap-legs-box">
+    <!-- 가는 편 -->
+    <div class="ap-leg-item">
+      <span class="ap-leg-tag dep">가는편</span>
+      <div class="ap-air-mini">{logos_html(o.get('airline_codes') or [], size=20)}
+        <span class="nm">{esc(o.get('airline') or '항공사 미상')}</span></div>
+      <div class="ap-times mono">{esc(dep_t)}<span class="arw">→</span>{esc(arr_t)}{plus}</div>
+      <div class="d">{esc(dep_date)}</div>
+      <div class="ap-leg-stops">{out_stops_badge}</div>
+    </div>
+    <!-- 오는 편 -->
+    <div class="ap-leg-item">
+      <span class="ap-leg-tag ret">오는편</span>
+      <div class="ap-air-mini">{logos_html(o.get('return_airline_codes') or [], size=20)}
+        <span class="nm">{esc(o.get('return_airline') or '항공사 미상')}</span></div>
+      <div class="ap-times mono">{esc(ret_dep_t)}<span class="arw">→</span>{esc(ret_arr_t)}{ret_plus}</div>
+      <div class="d">{esc(ret_date)}</div>
+      <div class="ap-leg-stops">{ret_stops_badge}</div>
+    </div>
+  </div>
+  <div class="ap-cell-price">
+    <div class="ap-price">{num(o.get('price'))}<span class="cur">{esc(currency)}</span></div>
+    <div style="margin-top:5px;font-size:12px;">{links_html}</div>
+  </div>
+</div>"""
+
+    # 편도인 경우
     return f"""
 <div class="ap-offer">
   {rank_badge}
   <div>
-    <div class="ap-times">{esc(dep_time)}<span class="arw">→</span>{esc(arr_time)}</div>
+    <div class="ap-times">{esc(dep_t)}<span class="arw">→</span>{esc(arr_t)}{plus}</div>
     <div class="d">{esc(dep_date)}</div>
   </div>
   <div class="ap-air">{logos_html(o.get('airline_codes') or [], size=24)}

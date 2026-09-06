@@ -86,7 +86,78 @@ class GoogleFlightsProvider(FlightProvider):
         js = self._extract_data_js(html)
         offers = self._tolerant_parse(js, currency=(watch.currency or "KRW").upper())
         offers.sort(key=lambda o: o.price)
+
+        # 왕복(round)인 경우, 귀국편(Inbound) 스케줄도 조회하여 오퍼에 결합
+        if watch.trip_type == "round" and watch.return_date and offers:
+            try:
+                ret_offers = self._fetch_inbound_offers(watch)
+                if ret_offers:
+                    self._attach_inbound_flights(offers, ret_offers)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("[%s] 귀국편 조회 실패 (출발편 유지): %s", watch.id, exc)
+
         return offers
+
+    def _fetch_inbound_offers(self, watch: WatchCondition) -> list[FlightOffer]:
+        """왕복 여정의 귀국편(Inbound) 항공편 목록을 조회한다."""
+        from fast_flights import FlightQuery, Passengers, create_query, fetch_flights_html
+
+        origin = watch.destination.upper()
+        destination = watch.origin.upper()
+
+        ret_kwargs: dict[str, Any] = {}
+        if watch.max_stops is not None:
+            ret_kwargs["max_stops"] = watch.max_stops
+        if watch.ret_hour_from is not None:
+            ret_kwargs["earliest_departure_hour"] = watch.ret_hour_from
+        if watch.ret_hour_to is not None:
+            ret_kwargs["latest_departure_hour"] = watch.ret_hour_to
+
+        query = create_query(
+            flights=[
+                FlightQuery(
+                    date=watch.return_date, from_airport=origin,
+                    to_airport=destination, **ret_kwargs,
+                )
+            ],
+            seat="economy",
+            trip="one-way",
+            passengers=Passengers(adults=max(1, watch.adults)),
+            currency=(watch.currency or "KRW").upper(),
+            language="ko",
+        )
+        html = fetch_flights_html(query)
+        js = self._extract_data_js(html)
+        ret_offers = self._tolerant_parse(js, currency=(watch.currency or "KRW").upper())
+        # 직항 우선, 그 다음 가격 순 정렬
+        ret_offers.sort(key=lambda o: (o.stops, o.price))
+        return ret_offers
+
+    @staticmethod
+    def _attach_inbound_flights(offers: list[FlightOffer], ret_offers: list[FlightOffer]) -> None:
+        """각 출발편 오퍼에 가장 적합한 귀국편 스케줄을 매칭하여 결합한다."""
+        if not ret_offers:
+            return
+
+        for o in offers:
+            matched = None
+            out_codes = set(o.airline_codes)
+            if out_codes:
+                for r in ret_offers:
+                    if set(r.airline_codes) & out_codes:
+                        matched = r
+                        break
+
+            if not matched:
+                matched = ret_offers[0]
+
+            o.return_airline = matched.airline
+            o.return_airline_codes = list(matched.airline_codes)
+            o.return_departure = matched.departure
+            o.return_arrival = matched.arrival
+            o.return_stops = matched.stops
+            o.return_layovers = matched.layovers
+
 
     # ------------------------------------------------------------------
     def _fetch_html(self, watch: WatchCondition) -> str:

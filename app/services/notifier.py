@@ -91,17 +91,24 @@ def format_hot_deal(
         lines.append(f"🔁 복귀: {esc(watch.return_date)}")
     lines.append("")
     lines.append(f"💰 최저가: <b>{offer.price:,.0f} {offer.currency}</b>")
-    if offer.airline:
-        lines.append(f"🏷 항공사: {esc(offer.airline)}")
-    if offer.departure:
-        lines.append(f"🛫 출발: {esc(offer.departure)}")
-    if offer.arrival:
-        lines.append(f"🛬 도착: {esc(offer.arrival)}")
-    if offer.stops:
-        layover = f" ({esc(offer.layovers)})" if offer.layovers else ""
-        lines.append(f"⏸ 경유: {offer.stops}회{layover}")
+    if offer.return_departure:
+        lines.append(f"🛫 가는편: {esc(offer.departure)} ~ {esc(offer.arrival)}" + (f" ({esc(offer.airline)})" if offer.airline else ""))
+        lines.append(f"🛬 오는편: {esc(offer.return_departure)} ~ {esc(offer.return_arrival)}" + (f" ({esc(offer.return_airline)})" if offer.return_airline else ""))
+        ret_stop_str = f"경유 {offer.return_stops}회" if offer.return_stops else "직항"
+        out_stop_str = f"경유 {offer.stops}회" if offer.stops else "직항"
+        lines.append(f"⏸ 운항: 가는편 {out_stop_str} · 오는편 {ret_stop_str}")
     else:
-        lines.append("⏸ 직항")
+        if offer.airline:
+            lines.append(f"🏷 항공사: {esc(offer.airline)}")
+        if offer.departure:
+            lines.append(f"🛫 출발: {esc(offer.departure)}")
+        if offer.arrival:
+            lines.append(f"🛬 도착: {esc(offer.arrival)}")
+        if offer.stops:
+            layover = f" ({esc(offer.layovers)})" if offer.layovers else ""
+            lines.append(f"⏸ 경유: {offer.stops}회{layover}")
+        else:
+            lines.append("⏸ 직항")
 
     lines.append("")
     lines.append("<b>알림 사유</b>")

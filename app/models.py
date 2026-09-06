@@ -66,6 +66,14 @@ class FlightOffer(BaseModel):
     layovers: Optional[str] = None
     is_best: bool = False
 
+    # 왕복일 때 귀국편(Inbound) 정보
+    return_airline: str = ""
+    return_airline_codes: List[str] = Field(default_factory=list)
+    return_departure: str = ""
+    return_arrival: str = ""
+    return_stops: int = 0
+    return_layovers: Optional[str] = None
+
 
 class DealDecision(BaseModel):
     """규칙 엔진의 핫딜 판정 결과."""

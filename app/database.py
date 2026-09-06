@@ -80,7 +80,12 @@ CREATE TABLE IF NOT EXISTS offer_snapshots (
     arrival TEXT DEFAULT '',
     stops INTEGER DEFAULT 0,
     rank INTEGER DEFAULT 0,
-    checked_at TEXT NOT NULL
+    checked_at TEXT NOT NULL,
+    return_airline TEXT DEFAULT '',
+    return_airline_codes TEXT DEFAULT '[]',
+    return_departure TEXT DEFAULT '',
+    return_arrival TEXT DEFAULT '',
+    return_stops INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_history_watch ON price_history(watch_id, checked_at);
@@ -176,6 +181,18 @@ class Database:
                                   ("max_stops", "INTEGER"), ("last_notified_price", "REAL")):
                 if col not in cols:
                     conn.execute(f"ALTER TABLE watch_conditions ADD COLUMN {col} {col_type}")
+
+            # offer_snapshots 귀국편 컬럼 마이그레이션
+            snap_cols = {r[1] for r in conn.execute("PRAGMA table_info(offer_snapshots)").fetchall()}
+            for col, col_type in (
+                ("return_airline", "TEXT DEFAULT ''"),
+                ("return_airline_codes", "TEXT DEFAULT '[]'"),
+                ("return_departure", "TEXT DEFAULT ''"),
+                ("return_arrival", "TEXT DEFAULT ''"),
+                ("return_stops", "INTEGER DEFAULT 0"),
+            ):
+                if col not in snap_cols:
+                    conn.execute(f"ALTER TABLE offer_snapshots ADD COLUMN {col} {col_type}")
 
     # ------------------------------------------------------------------
     # 감시 조건 CRUD
@@ -353,6 +370,10 @@ class Database:
                 json.dumps(offer.airline_codes or [], ensure_ascii=False),
                 offer.departure or "", offer.arrival or "",
                 int(offer.stops or 0), rank, checked_at,
+                offer.return_airline or "",
+                json.dumps(offer.return_airline_codes or [], ensure_ascii=False),
+                offer.return_departure or "", offer.return_arrival or "",
+                int(offer.return_stops or 0),
             )
             for rank, offer in enumerate(offers[:top_n])
         ]
@@ -363,8 +384,10 @@ class Database:
                 """
                 INSERT INTO offer_snapshots
                     (watch_id, price, airline, airline_codes, departure,
-                     arrival, stops, rank, checked_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     arrival, stops, rank, checked_at,
+                     return_airline, return_airline_codes, return_departure,
+                     return_arrival, return_stops)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
@@ -381,7 +404,9 @@ class Database:
             rows = conn.execute(
                 """
                 SELECT price, airline, airline_codes, departure, arrival, stops,
-                       rank, checked_at
+                       rank, checked_at,
+                       return_airline, return_airline_codes, return_departure,
+                       return_arrival, return_stops
                 FROM offer_snapshots
                 WHERE watch_id = ? AND checked_at = ?
                 ORDER BY rank ASC
@@ -395,6 +420,10 @@ class Database:
                 d["airline_codes"] = json.loads(d.get("airline_codes") or "[]")
             except (TypeError, ValueError):
                 d["airline_codes"] = []
+            try:
+                d["return_airline_codes"] = json.loads(d.get("return_airline_codes") or "[]")
+            except (TypeError, ValueError):
+                d["return_airline_codes"] = []
             out.append(d)
         return out
 
