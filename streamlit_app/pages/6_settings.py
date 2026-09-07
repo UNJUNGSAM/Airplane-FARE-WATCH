@@ -13,7 +13,20 @@ for _p in (str(HERE), str(ROOT)):
 
 import streamlit as st
 
+import importlib
 import shared
+try:
+    importlib.reload(shared)
+except Exception:
+    pass
+
+_NEEDS_SHARED = "2026-09-07.01"
+if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
+    st.error(
+        "**배포된 새 코드가 아직 적용되지 않았습니다.** "
+        "**[Manage app] → [⋮] → [Reboot app]** 으로 앱을 완전히 재시작하여 주십시오."
+    )
+    st.stop()
 
 # 실행 중인 shared 모듈이 이 페이지가 기대하는 버전인지 확인한다.
 # (배포 직후 Streamlit이 페이지만 새로 읽고 모듈은 예전 것을 물고 있는 경우

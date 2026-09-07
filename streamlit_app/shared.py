@@ -65,7 +65,7 @@ from app.providers.google_flights import GoogleFlightsProvider  # noqa: E402
 #  프로세스에 남겨 두는 일이 있어, 버전이 어긋나면 원인 모를 AttributeError가 난다)
 # 비교는 문자열 사전순이므로 반드시 "YYYY-MM-DD.N" 꼴을 유지하고, 하루에 10회를
 # 넘길 일이 생기면 N을 01, 02 처럼 두 자리로 적는다 (".10" < ".9" 함정 방지).
-SHARED_REVISION = "2026-08-28.3"
+SHARED_REVISION = "2026-09-07.01"
 
 CURRENCIES = ["KRW", "USD", "JPY", "EUR", "TWD", "THB", "SGD", "HKD", "AUD", "GBP"]
 HOUR_OPTIONS = ["제한없음"] + [f"{h:02d}시" for h in range(24)]
