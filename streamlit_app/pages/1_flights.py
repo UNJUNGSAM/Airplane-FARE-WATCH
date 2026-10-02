@@ -20,7 +20,7 @@ try:
 except Exception:
     pass
 
-_NEEDS_SHARED = "2026-09-07.01"
+_NEEDS_SHARED = "2026-10-02.01"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -40,7 +40,13 @@ if not watches:
         desc="조회할 감시 조건이 없습니다.",
         attached=False,
     )
-    st.info("먼저 조건 등록 페이지에서 감시 조건을 만들어 주십시오.")
+    shared.render_empty_state(
+        title="등록된 감시 조건이 없습니다",
+        desc="항공편을 조회할 감시 조건이 아직 없습니다. 조건 등록 페이지에서 원하는 일정을 추가해 주세요.",
+        icon="🛫",
+        cta_label="감시 조건 등록하기",
+        cta_page="pages/2_register.py",
+    )
     st.stop()
 
 # 선택 상태는 위젯 키로 보관하여 타이틀 바에서도 참조합니다
@@ -50,7 +56,7 @@ picked = st.session_state.get("flt_watch")
 if picked not in opts:
     picked = labels[0]
 wid = opts[picked]
-w = next(x for x in watches if x.id == wid)
+w = next((x for x in watches if x.id == wid), watches[0])
 d = shared.load_watch_data(db, w)
 deal, stats = d["deal"], d["stats"]
 
@@ -115,7 +121,10 @@ if refresh:
     db = shared.get_db()
     w = db.get_watch(wid) or w
     with st.spinner("구글 항공권을 조회하고 있습니다."):
-        res = shared.check_watch(db, shared.get_provider(), shared.get_gemini(), w)
+        try:
+            res = shared.check_watch(db, shared.get_provider(), shared.get_gemini(), w)
+        except Exception as exc:
+            res = {"ok": False, "error": str(exc)}
     with right:
         if res["ok"]:
             msg = f"조회를 완료하였습니다. 최저가 {res['price']:,.0f} {w.currency}입니다."

@@ -109,6 +109,47 @@ def main() -> int:
     finally:
         os.environ.pop("APP_PASSWORD", None)
 
+    # 신규 복제 및 지역 프리셋 헬퍼 테스트
+    presets = shared.get_popular_region_presets()
+    check("인기 여행지 프리셋 존재", len(presets) >= 5, True)
+    check("베트남 프리셋 포함", "베트남 주요 (다낭/나트랑/푸꾸옥/하노이)" in presets, True)
+    check("다낭(DAD) 포함", "DAD" in presets["베트남 주요 (다낭/나트랑/푸꾸옥/하노이)"], True)
+
+    countries = shared.get_country_list()
+    check("국가 목록 반환", "베트남" in countries and "일본" in countries, True)
+
+    # 라벨 스마트 치환 테스트
+    check("라벨 도시명 치환 (다낭 -> 나트랑)",
+          shared.suggest_cloned_label("추석 다낭 휴가", "ICN", "DAD", "CXR"), "추석 나트랑 휴가")
+    check("라벨 도시명 치환 (다낭 -> 방콕)",
+          shared.suggest_cloned_label("골든위크 다낭", "ICN", "DAD", "BKK"), "골든위크 방콕")
+    check("라벨 IATA 치환 (DAD -> FUK)",
+          shared.suggest_cloned_label("여름 DAD 투어", "ICN", "DAD", "FUK"), "여름 FUK 투어")
+    check("라벨 빈값일 때",
+          shared.suggest_cloned_label("", "ICN", "DAD", "CXR"), "나트랑 감시")
+    check("라벨에 도시명이 없을 때 접미사 추가",
+          shared.suggest_cloned_label("가족여행", "ICN", "DAD", "CXR"), "가족여행 · 나트랑")
+
+    # 복제 조건 객체 생성 및 중복 검사 테스트
+    from app.models import WatchCondition
+    base_w = WatchCondition(
+        id=1, label="휴가 다낭", origin="ICN", destination="DAD", trip_type="round",
+        depart_date="2026-10-03", return_date="2026-10-07", target_price=450000.0,
+        dep_hour_from=20, dep_hour_to=23, ret_hour_from=18, ret_hour_to=None, max_stops=0,
+    )
+    cloned_w = shared.clone_watch_for_destination(base_w, "CXR")
+    check("복제된 목적지 코드", cloned_w.destination, "CXR")
+    check("복제된 라벨", cloned_w.label, "휴가 나트랑")
+    check("복제된 여행 기간 일치", cloned_w.depart_date == base_w.depart_date and cloned_w.return_date == base_w.return_date, True)
+    check("복제된 시간대 조건 일치", cloned_w.dep_hour_from == 20 and cloned_w.ret_hour_from == 18, True)
+    check("복제된 목표가 일치", cloned_w.target_price, 450000.0)
+
+    # 중복 검사
+    check("동일 조건 중복 발견",
+          shared.find_duplicate_watch([base_w], "ICN", "DAD", "2026-10-03", "round", "2026-10-07") is not None, True)
+    check("다른 목적지는 미중복",
+          shared.find_duplicate_watch([base_w], "ICN", "CXR", "2026-10-03", "round", "2026-10-07") is None, True)
+
     print()
     if failed:
         print(f"실패 {failed}건 / 전체 {passed + failed}건")

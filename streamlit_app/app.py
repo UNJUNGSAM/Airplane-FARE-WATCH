@@ -27,7 +27,7 @@ except Exception:
     pass
 
 # 실행 중인 shared 모듈이 이 페이지가 기대하는 버전인지 확인한다.
-_NEEDS_SHARED = "2026-09-07.01"
+_NEEDS_SHARED = "2026-10-02.01"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -75,6 +75,12 @@ with shared.util_bar():
     )
 
 if recheck:
+    # 캐시된 리소스(프로바이더 등) 초기화
+    try:
+        st.cache_resource.clear()
+    except Exception:
+        pass
+
     # 원격 최신 DB 위에서 조회하고 결과를 커밋한다. 클라우드의 로컬 파일은
     # 재배포 때마다 저장소 내용으로 교체되므로, 커밋하지 않으면 수동 조회
     # 이력이 통째로 사라진다.
@@ -91,7 +97,10 @@ if recheck:
             (idx + 1) / max(1, total_w),
             text=f"조회 중 ({idx+1}/{total_w}): {w.origin}→{w.destination} ({w.label or w.route_label})"
         )
-        res = shared.check_watch(db, provider, gemini, w)
+        try:
+            res = shared.check_watch(db, provider, gemini, w)
+        except Exception as exc:
+            res = {"ok": False, "error": str(exc)}
         if res.get("ok"):
             ok_cnt += 1
         if res.get("notified"):
@@ -152,15 +161,20 @@ if flash:
 
 if not watches:
     table_body = (
-        '<div class="ap-panel"><div class="ap-panel-h">감시 조건</div>'
-        '<div class="ap-empty">등록된 감시 조건이 없습니다. '
-        '상단의 <b>조건 등록</b>에서 첫 조건을 추가하여 주십시오.</div></div>'
+        '<div class="ap-empty-card">'
+        '<div class="ap-empty-icon">🛫</div>'
+        '<div class="ap-empty-title">등록된 감시 조건이 없습니다</div>'
+        '<div class="ap-empty-desc">관심 있는 여행지와 일정을 등록하면 백그라운드 엔진이 최저가를 주기적으로 추적하여 핫딜 발생 시 텔레그램으로 알려드립니다.</div>'
+        '<div style="margin-top:14px;"><a href="/register" class="ap-cta" style="padding:7px 18px;font-size:13px;">지금 첫 감시 조건 등록하기 →</a></div>'
+        '</div>'
     )
 elif not shown:
     table_body = (
-        '<div class="ap-panel"><div class="ap-panel-h">감시 조건</div>'
-        '<div class="ap-empty">선택한 조건에 해당하는 항목이 없습니다. '
-        '필터를 조정하여 주십시오.</div></div>'
+        '<div class="ap-empty-card">'
+        '<div class="ap-empty-icon">🔍</div>'
+        '<div class="ap-empty-title">일치하는 감시 조건이 없습니다</div>'
+        '<div class="ap-empty-desc">선택한 검색어 또는 국가/상태 필터 조건에 해당하는 항목이 없습니다. 상단 필터를 조정하여 주십시오.</div>'
+        '</div>'
     )
 else:
     groups: dict[str, list] = {}

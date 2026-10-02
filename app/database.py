@@ -276,8 +276,12 @@ class Database:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    watch_id, float(offer.price), offer.airline or "", offer.departure or "",
-                    offer.arrival or "", int(offer.stops or 0), provider_name,
+                    watch_id, float(getattr(offer, "price", 0.0) or 0.0),
+                    getattr(offer, "airline", "") or "",
+                    getattr(offer, "departure", "") or "",
+                    getattr(offer, "arrival", "") or "",
+                    int(getattr(offer, "stops", 0) or 0),
+                    provider_name,
                     checked_at or now_str(),
                 ),
             )
@@ -366,14 +370,20 @@ class Database:
         checked_at = checked_at or now_str()
         rows = [
             (
-                watch_id, float(offer.price), offer.airline or "",
-                json.dumps(offer.airline_codes or [], ensure_ascii=False),
-                offer.departure or "", offer.arrival or "",
-                int(offer.stops or 0), rank, checked_at,
-                offer.return_airline or "",
-                json.dumps(offer.return_airline_codes or [], ensure_ascii=False),
-                offer.return_departure or "", offer.return_arrival or "",
-                int(offer.return_stops or 0),
+                watch_id,
+                float(getattr(offer, "price", 0.0) or 0.0),
+                getattr(offer, "airline", "") or "",
+                json.dumps(getattr(offer, "airline_codes", []) or [], ensure_ascii=False),
+                getattr(offer, "departure", "") or "",
+                getattr(offer, "arrival", "") or "",
+                int(getattr(offer, "stops", 0) or 0),
+                rank,
+                checked_at,
+                getattr(offer, "return_airline", "") or "",
+                json.dumps(getattr(offer, "return_airline_codes", []) or [], ensure_ascii=False),
+                getattr(offer, "return_departure", "") or "",
+                getattr(offer, "return_arrival", "") or "",
+                int(getattr(offer, "return_stops", 0) or 0),
             )
             for rank, offer in enumerate(offers[:top_n])
         ]

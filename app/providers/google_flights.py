@@ -141,22 +141,25 @@ class GoogleFlightsProvider(FlightProvider):
 
         for o in offers:
             matched = None
-            out_codes = set(o.airline_codes)
+            out_codes = set(getattr(o, "airline_codes", []) or [])
             if out_codes:
                 for r in ret_offers:
-                    if set(r.airline_codes) & out_codes:
+                    if set(getattr(r, "airline_codes", []) or []) & out_codes:
                         matched = r
                         break
 
             if not matched:
                 matched = ret_offers[0]
 
-            o.return_airline = matched.airline
-            o.return_airline_codes = list(matched.airline_codes)
-            o.return_departure = matched.departure
-            o.return_arrival = matched.arrival
-            o.return_stops = matched.stops
-            o.return_layovers = matched.layovers
+            try:
+                setattr(o, "return_airline", getattr(matched, "airline", "") or "")
+                setattr(o, "return_airline_codes", list(getattr(matched, "airline_codes", []) or []))
+                setattr(o, "return_departure", getattr(matched, "departure", "") or "")
+                setattr(o, "return_arrival", getattr(matched, "arrival", "") or "")
+                setattr(o, "return_stops", int(getattr(matched, "stops", 0) or 0))
+                setattr(o, "return_layovers", getattr(matched, "layovers", None))
+            except Exception as exc:
+                logger.debug("귀국편 속성 결합 건너뜀: %s", exc)
 
 
     # ------------------------------------------------------------------

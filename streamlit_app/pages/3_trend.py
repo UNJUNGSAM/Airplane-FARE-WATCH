@@ -22,7 +22,7 @@ try:
 except Exception:
     pass
 
-_NEEDS_SHARED = "2026-09-07.01"
+_NEEDS_SHARED = "2026-10-02.01"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -42,7 +42,13 @@ if not watches:
         desc="표시할 감시 조건이 없습니다.",
         attached=False,
     )
-    st.info("먼저 조건 등록 페이지에서 감시 조건을 만들어 주십시오.")
+    shared.render_empty_state(
+        title="등록된 감시 조건이 없습니다",
+        desc="가격 추이를 분석할 감시 조건이 아직 없습니다. 조건 등록 페이지에서 원하는 일정을 추가해 주세요.",
+        icon="📈",
+        cta_label="감시 조건 등록하기",
+        cta_page="pages/2_register.py",
+    )
     st.stop()
 
 countries = sorted({shared.airport_info(w.destination)["country"] for w in watches})
@@ -86,9 +92,8 @@ MONO = "IBM Plex Mono, Consolas, monospace"
 
 def _render_trend_card(w):
     hist = db.get_history(w.id, days=period_days)
-    stats = db.price_stats(w.id, days=period_days, percentile=w.percentile)
-    d = shared.load_watch_data(db, w)
-    deal = d["deal"]
+    stats = db.price_stats(w.id, days=period_days, percentile=w.percentile, history=hist)
+    deal = shared.deal_status(stats, hist)
     search_url = shared.flights_search_url(w)
     sky_url = shared.skyscanner_search_url(w)
 

@@ -40,6 +40,14 @@ if str(_ROOT) not in _pypath.split(os.pathsep):
         f"{_ROOT}{os.pathsep}{_pypath}" if _pypath else str(_ROOT)
     )
 
+import importlib
+for _mod in list(sys.modules.keys()):
+    if _mod.startswith("app.") or _mod == "app":
+        try:
+            importlib.reload(sys.modules[_mod])
+        except Exception:
+            pass
+
 import pandas as pd  # noqa: E402,F401  (페이지에서 재사용)
 import streamlit as st  # noqa: E402
 
@@ -50,6 +58,10 @@ from app.airports import (  # noqa: E402
     code_from_choice,
     destination_label,
     get_airport_choices,
+    get_airports_by_country,
+    get_country_list,
+    get_popular_region_presets,
+    suggest_cloned_label,
 )
 from app.database import Database  # noqa: E402
 from app.models import WatchCondition  # noqa: E402
@@ -65,7 +77,7 @@ from app.providers.google_flights import GoogleFlightsProvider  # noqa: E402
 #  프로세스에 남겨 두는 일이 있어, 버전이 어긋나면 원인 모를 AttributeError가 난다)
 # 비교는 문자열 사전순이므로 반드시 "YYYY-MM-DD.N" 꼴을 유지하고, 하루에 10회를
 # 넘길 일이 생기면 N을 01, 02 처럼 두 자리로 적는다 (".10" < ".9" 함정 방지).
-SHARED_REVISION = "2026-09-07.01"
+SHARED_REVISION = "2026-10-02.01"
 
 CURRENCIES = ["KRW", "USD", "JPY", "EUR", "TWD", "THB", "SGD", "HKD", "AUD", "GBP"]
 HOUR_OPTIONS = ["제한없음"] + [f"{h:02d}시" for h in range(24)]
@@ -643,10 +655,71 @@ button[kind="primary"]:hover, button[kind="primaryFormSubmit"]:hover,
 .stNumberInput input, .stDateInput input { font-family: var(--font-mono) !important; font-size: 12.5px !important; }
 [data-baseweb="select"] > div { border-radius: var(--r-ctl) !important; min-height: 32px !important; font-size: 12.5px !important; }
 [data-baseweb="input"] { border-radius: var(--r-ctl) !important; min-height: 32px !important; font-size: 12.5px !important; }
-[data-testid="stWidgetLabel"] p {
-  font-size: 11px !important; font-weight: 600 !important; color: var(--ink-3) !important; margin-bottom: 2px !important;
+/* 가로형 라디오를 모던 세그먼트 탭(Pills)으로 변환 */
+div[data-testid="stRadio"] > div[role="radiogroup"] {
+  background: #edf2f7 !important;
+  padding: 4px !important;
+  border-radius: 9px !important;
+  gap: 3px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  border: 1px solid #d5dee8 !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label {
+  background: transparent !important;
+  padding: 5px 14px !important;
+  border-radius: 6px !important;
+  border: none !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  transition: all .15s ease !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
+  background: rgba(255, 255, 255, 0.75) !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label > div:first-child {
+  display: none !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label div[data-testid="stMarkdownContainer"] p {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: var(--ink-2) !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
+  background: var(--navy) !important;
+  box-shadow: 0 1px 4px rgba(36, 48, 80, 0.22) !important;
+}
+div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) div[data-testid="stMarkdownContainer"] p {
+  color: #ffffff !important;
+  font-weight: 700 !important;
 }
 
+/* 프리미엄 카드 & 빈 상태 */
+.ap-empty-card {
+  background: var(--surface);
+  border: 1px dashed #c8d3e0;
+  border-radius: var(--r-box);
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(19,27,48,0.02);
+  margin: 12px 0;
+}
+.ap-empty-icon { font-size: 38px; margin-bottom: 10px; }
+.ap-empty-title { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.ap-empty-desc { font-size: 12.5px; color: var(--ink-3); line-height: 1.5; max-width: 480px; margin: 0 auto; }
+
+/* 칩 & 태그 */
+.ap-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 16px; font-size: 11.5px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--ink-2); font-weight: 600; cursor: pointer;
+  transition: all .12s ease;
+}
+.ap-chip:hover { border-color: var(--navy); background: #fff; }
+.ap-chip.active { background: var(--navy); color: #fff; border-color: var(--navy); }
 
 .stTabs [data-baseweb="tab-list"] { gap: 2px; border-bottom: 1px solid var(--line); }
 .stTabs [data-baseweb="tab"] {
@@ -1833,3 +1906,93 @@ def last_check_text(watches: list[WatchCondition]) -> str:
 def today_checked(watches: list[WatchCondition]) -> int:
     today = date.today().isoformat()
     return sum(1 for w in watches if w.last_checked_at and w.last_checked_at[:10] == today)
+
+
+# ---------------------------------------------------------------------------
+# 감시 조건 식별 · 중복 검사 · 복제 헬퍼
+# ---------------------------------------------------------------------------
+def watch_unique_key(origin: str, dest: str, depart_date: str, trip_type: str, return_date: str | None) -> tuple:
+    """같은 노선·날짜·유형을 가리키는 고유 키."""
+    return (
+        (origin or "").strip().upper(),
+        (dest or "").strip().upper(),
+        (depart_date or "").strip(),
+        trip_type,
+        (return_date or "").strip() if trip_type == "round" else None,
+    )
+
+
+def find_duplicate_watch(
+    watches: list[WatchCondition],
+    origin: str,
+    dest: str,
+    depart_date: str,
+    trip_type: str,
+    return_date: str | None,
+) -> WatchCondition | None:
+    """기존 목록 중에서 동일한 노선·날짜 조건이 이미 등록되어 있는지 검색."""
+    target_key = watch_unique_key(origin, dest, depart_date, trip_type, return_date)
+    for w in watches:
+        if watch_unique_key(w.origin, w.destination, w.depart_date, w.trip_type, w.return_date) == target_key:
+            return w
+    return None
+
+
+def clone_watch_for_destination(
+    base: WatchCondition,
+    new_dest: str,
+    new_label: str | None = None,
+    new_target_price: float | None = None,
+) -> WatchCondition:
+    """기존 WatchCondition의 일정·시간대·규칙을 그대로 유지하며 새 도착지로 복제 조건 생성."""
+    clean_dest = (new_dest or "").strip().upper()
+    if new_label is None:
+        new_label = suggest_cloned_label(base.label, base.origin, base.destination, clean_dest)
+
+    target_price = base.target_price if new_target_price is None else new_target_price
+
+    return WatchCondition(
+        label=new_label,
+        origin=base.origin,
+        destination=clean_dest,
+        trip_type=base.trip_type,
+        depart_date=base.depart_date,
+        return_date=base.return_date if base.trip_type == "round" else None,
+        adults=base.adults,
+        currency=base.currency,
+        target_price=target_price,
+        drop_percent=base.drop_percent,
+        percentile=base.percentile,
+        cooldown_hours=base.cooldown_hours,
+        dep_hour_from=base.dep_hour_from,
+        dep_hour_to=base.dep_hour_to,
+        ret_hour_from=base.ret_hour_from if base.trip_type == "round" else None,
+        ret_hour_to=base.ret_hour_to if base.trip_type == "round" else None,
+        max_stops=base.max_stops,
+        active=True,
+    )
+
+
+def render_empty_state(
+    title: str,
+    desc: str,
+    icon: str = "✈️",
+    cta_label: str | None = None,
+    cta_page: str | None = None,
+) -> None:
+    """일관되고 아름다운 빈 상태(Empty state) 화면 렌더링."""
+    html_content = f"""
+    <div class="ap-empty-card">
+      <div class="ap-empty-icon">{icon}</div>
+      <div class="ap-empty-title">{html.escape(title)}</div>
+      <div class="ap-empty-desc">{html.escape(desc)}</div>
+    </div>
+    """
+    st.markdown(html_content, unsafe_allow_html=True)
+    if cta_label and cta_page:
+        _, bcol, _ = st.columns([1.2, 1.2, 1.2])
+        with bcol:
+            if st.button(cta_label, type="primary", width="stretch", key=f"empty_cta_{abs(hash(title))}"):
+                st.switch_page(cta_page)
+
+

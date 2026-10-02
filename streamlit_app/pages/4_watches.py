@@ -21,7 +21,7 @@ try:
 except Exception:
     pass
 
-_NEEDS_SHARED = "2026-09-07.01"
+_NEEDS_SHARED = "2026-10-02.01"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -116,11 +116,12 @@ if st.session_state.get("confirm_inactive"):
         st.rerun()
 
 if not watches:
-    st.markdown(
-        '<div class="ap-panel"><div class="ap-panel-h">감시 조건</div>'
-        '<div class="ap-empty">등록된 조건이 없습니다. 조건 등록 페이지를 '
-        '이용하여 주십시오.</div></div>',
-        unsafe_allow_html=True,
+    shared.render_empty_state(
+        title="등록된 감시 조건이 없습니다",
+        desc="관리할 감시 조건이 아직 없습니다. 조건 등록 페이지에서 원하는 일정을 추가해 주세요.",
+        icon="🛫",
+        cta_label="감시 조건 등록하기",
+        cta_page="pages/2_register.py",
     )
     st.stop()
 
@@ -282,8 +283,11 @@ def render_edit_form(w) -> None:
             msg += " 다만 조건을 다시 읽지 못해 조회는 건너뛰었습니다."
         else:
             with st.spinner("변경한 조건으로 조회하고 있습니다."):
-                res = shared.check_watch(fresh_db, shared.get_provider(),
-                                         shared.get_gemini(), fresh)
+                try:
+                    res = shared.check_watch(fresh_db, shared.get_provider(),
+                                             shared.get_gemini(), fresh)
+                except Exception as exc:
+                    res = {"ok": False, "error": str(exc)}
             if res["ok"]:
                 msg += f" 최저가는 {res['price']:,.0f} {fresh.currency}입니다."
                 if res["notified"]:
@@ -347,8 +351,11 @@ def render_status(w, d) -> None:
             fresh_db = shared.get_db()
             fresh = fresh_db.get_watch(w.id) or w
             with st.spinner("구글 항공권을 조회하고 있습니다."):
-                res = shared.check_watch(fresh_db, shared.get_provider(),
-                                         shared.get_gemini(), fresh)
+                try:
+                    res = shared.check_watch(fresh_db, shared.get_provider(),
+                                             shared.get_gemini(), fresh)
+                except Exception as exc:
+                    res = {"ok": False, "error": str(exc)}
             if res["ok"]:
                 msg = f"최저가는 {res['price']:,.0f} {fresh.currency}입니다."
                 if res["notified"]:
@@ -371,7 +378,13 @@ def render_status(w, d) -> None:
             st.session_state["edit_watch_id"] = w.id
             st.rerun()
 
-        if st.button("조건 복제 (새로 등록)", key=f"clone_{w.id}", width="stretch", help="이 조건의 설정을 복사하여 새 감시 조건을 만듭니다."):
+        if st.button("다른 공항으로 복제 (일괄)", key=f"clone_multi_{w.id}", width="stretch",
+                     help="이 조건(일정·시간대·경유)을 그대로 사용하여 다른 여행지(공항)들을 한 번에 일괄 등록합니다."):
+            st.session_state["clone_watch_id"] = w.id
+            st.session_state["reg_mode"] = "🔄 기존 조건 복제 등록 (다른 공항 추가)"
+            st.switch_page("pages/2_register.py")
+
+        if st.button("조건 복제 (직접 수정)", key=f"clone_{w.id}", width="stretch", help="이 조건의 설정을 상세 입력 폼에 복사하여 새 감시 조건을 만듭니다."):
             shared.prefill_form({
                 "label": f"{w.label} (복사본)" if w.label else "",
                 "origin": w.origin,
@@ -388,6 +401,7 @@ def render_status(w, d) -> None:
                 "ret_hour_to": w.ret_hour_to,
                 "max_stops": w.max_stops,
             })
+            st.session_state["reg_mode"] = "📝 상세 직접 입력"
             st.switch_page("pages/2_register.py")
 
         st.link_button("구글 항공권 열기", shared.flights_search_url(w), width="stretch")

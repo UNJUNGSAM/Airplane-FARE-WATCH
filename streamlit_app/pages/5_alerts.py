@@ -22,7 +22,7 @@ try:
 except Exception:
     pass
 
-_NEEDS_SHARED = "2026-09-07.01"
+_NEEDS_SHARED = "2026-10-02.01"
 if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
     st.error(
         "**배포된 새 코드가 아직 적용되지 않았습니다.** "
@@ -68,11 +68,12 @@ with shared.util_bar():
     )
 
 if not notis:
-    st.markdown(
-        '<div class="ap-panel"><div class="ap-panel-h">알림 기록</div>'
-        '<div class="ap-empty">발송된 알림이 없습니다. 핫딜로 판정되면 텔레그램으로 '
-        '발송한 뒤 이곳에 기록합니다.</div></div>',
-        unsafe_allow_html=True,
+    shared.render_empty_state(
+        title="발송된 알림 기록이 없습니다",
+        desc="조건에 부합하는 핫딜(목표가 이하 또는 급락)이 발생하면 텔레그램으로 즉시 알림을 발송하고 이곳에 상세 기록을 보관합니다.",
+        icon="🔔",
+        cta_label="감시 현황 대시보드로 이동",
+        cta_page="app.py",
     )
     st.stop()
 

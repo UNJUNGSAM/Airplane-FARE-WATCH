@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any
 
 # code: (도시, 국가, 국기)
@@ -123,6 +124,7 @@ def destination_label(code: str) -> str:
     return f"{city} ({code.upper()})"
 
 
+@lru_cache(maxsize=1)
 def get_airport_choices() -> list[str]:
     """검색 및 선택용 공항 목록 (한국 공항 상단, 그 외 국가/도시 순)."""
     korea = []
@@ -158,3 +160,76 @@ def code_from_choice(choice: str) -> str:
     if not choice or choice.startswith("DIRECT"):
         return ""
     return choice.split(" · ", 1)[0].strip().upper()
+
+
+@lru_cache(maxsize=1)
+def get_country_list(exclude_korea: bool = True) -> list[str]:
+    """공항이 등록된 국가 목록 (대한민국 제외 가능). 인기 여행 국가 우선 정렬."""
+    all_countries = list(dict.fromkeys(country for _, country, _ in _AIRPORTS.values()))
+    if exclude_korea and "대한민국" in all_countries:
+        all_countries.remove("대한민국")
+
+    priority = {
+        "일본": 1, "베트남": 2, "태국": 3, "대만": 4, "필리핀": 5,
+        "괌": 6, "북마리아나": 7, "홍콩": 8, "싱가포르": 9, "말레이시아": 10,
+        "인도네시아": 11, "미국": 12, "프랑스": 13, "이탈리아": 14, "영국": 15,
+    }
+    all_countries.sort(key=lambda c: (priority.get(c, 99), c))
+    return all_countries
+
+
+@lru_cache(maxsize=1)
+def get_airports_by_country() -> dict[str, list[dict[str, str]]]:
+    """국가별 공항 정보 목록 매핑."""
+    grouped: dict[str, list[dict[str, str]]] = {}
+    for code, (city, country, flag) in _AIRPORTS.items():
+        if country not in grouped:
+            grouped[country] = []
+        grouped[country].append({
+            "code": code,
+            "city": city,
+            "country": country,
+            "flag": flag,
+            "choice": f"{code} · {city} ({country}) {flag}",
+        })
+    return grouped
+
+
+def get_popular_region_presets() -> dict[str, list[str]]:
+    """자주 찾는 대표 여행 권역별 추천 공항 IATA 코드 목록."""
+    return {
+        "동남아 인기 휴양지": ["CXR", "PQC", "CEB", "KLO", "DPS", "BKI", "HKT"],
+        "베트남 주요 (다낭/나트랑/푸꾸옥/하노이)": ["DAD", "CXR", "PQC", "HAN"],
+        "일본 인기 (도쿄/오사카/후쿠오카/삿포로/오키나와)": ["NRT", "KIX", "FUK", "CTS", "OKA"],
+        "태국 주요 (방콕/치앙마이/푸켓)": ["BKK", "CNX", "HKT"],
+        "대만·홍콩 (타이베이/가오슝/홍콩)": ["TPE", "KHH", "HKG"],
+        "필리핀 휴양지 (세부/보라카이/클라크)": ["CEB", "KLO", "CRK"],
+        "괌·사이판": ["GUM", "SPN"],
+    }
+
+
+def suggest_cloned_label(original_label: str, origin_code: str, old_dest: str, new_dest: str) -> str:
+    """기존 조건 라벨과 기존 도착지를 참고하여 새 도착지에 어울리는 라벨 자동 생성."""
+    old_info = airport_info(old_dest)
+    new_info = airport_info(new_dest)
+    old_city_raw = old_info.get("city") or old_dest
+    new_city_raw = new_info.get("city") or new_dest
+
+    old_city = old_city_raw.split("(")[0].strip()
+    new_city = new_city_raw.split("(")[0].strip()
+
+    label = (original_label or "").strip()
+    if not label:
+        return f"{new_city} 감시"
+
+    # 원본 라벨에 옛 도시명이 들어있으면 새 도시명으로 교체
+    if old_city and old_city in label:
+        return label.replace(old_city, new_city)
+    if old_city_raw and old_city_raw in label:
+        return label.replace(old_city_raw, new_city)
+    if old_dest.upper() in label.upper():
+        idx = label.upper().find(old_dest.upper())
+        return label[:idx] + new_dest.upper() + label[idx + len(old_dest):]
+
+    return f"{label} · {new_city}"
+
