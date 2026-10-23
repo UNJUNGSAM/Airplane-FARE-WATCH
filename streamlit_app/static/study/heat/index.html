@@ -1,0 +1,1362 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>열 탐구 노트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: 한 화면에 한 장씩 넘기는 '과학 실험 웹진' — 왼쪽 실험대(그림·시뮬레이터) + 오른쪽 해설, 아래 자막과 재생 막대 */
+:root{
+  --bg:#edf1f4; --surface:#f9fbfc; --ink:#18222c; --muted:#536170; --line:#cdd6de;
+  --accent:#c2441d; --accent-ink:#ffffff; --cool:#1d6aa3; --soft:#fbe6da; --gold:#875800; --red:#c2441d;
+  --ok:#22774a; --bad:#b0352a; --scrim:rgba(8,12,16,.55);
+  --stage:#111923; --stage-2:#1f2a37; --stage-ink:#eef3f7; --stage-muted:#a7b4c2;
+  --hot:#ff7a45; --warm:#ffb347; --coolc:#5ab4ff; --paper:#fff8ee; --paper-ink:#2a2420;
+  --f-display:'Do Hyeon','Black Han Sans','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --f-body:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e141a; --surface:#16202a; --ink:#e3eaf0; --muted:#9aa9b7; --line:#2a3744;
+    --accent:#ff8a5c; --accent-ink:#0e141a; --cool:#6db8ff; --soft:#2a1d17; --gold:#e8b45a; --red:#ff8a5c;
+    --ok:#72d29a; --bad:#ff8b7b; --scrim:rgba(0,0,0,.6); --stage:#0a1017; --stage-2:#18222d; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e141a; --surface:#16202a; --ink:#e3eaf0; --muted:#9aa9b7; --line:#2a3744;
+  --accent:#ff8a5c; --accent-ink:#0e141a; --cool:#6db8ff; --soft:#2a1d17; --gold:#e8b45a; --red:#ff8a5c;
+  --ok:#72d29a; --bad:#ff8b7b; --scrim:rgba(0,0,0,.6); --stage:#0a1017; --stage-2:#18222d; color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.7;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;-webkit-text-size-adjust:100%}
+#app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding-inline:16px;max-width:1280px;margin-inline:auto}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;line-height:1.25;margin:0}
+p{margin:0}
+[hidden]{display:none!important}
+
+.top{display:flex;align-items:center;gap:12px;padding-block:10px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.brand svg{flex:none}
+.brand b{font-family:var(--f-display);font-weight:400;font-size:1.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--muted);font-size:.8rem;white-space:nowrap}
+.pager{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.progress{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cool),var(--accent));transition:width .5s ease}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;font-size:.95rem;line-height:1.2;text-decoration:none;color:var(--ink);transition:transform .15s ease,background .2s}
+.btn:hover{background:var(--soft)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn svg{width:18px;height:18px;flex:none}
+.btn.icon{padding:9px 12px}
+
+.stage{position:relative;overflow:hidden;min-height:0}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;opacity:0;visibility:hidden;transform:translateX(40px);transition:opacity .5s ease,transform .6s cubic-bezier(.2,.7,.2,1),visibility 0s linear .6s;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.slide.back{transform:translateX(-40px)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .5s ease,transform .6s cubic-bezier(.2,.7,.2,1),visibility 0s}
+.lesson{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:32px;align-items:center;min-height:100%;padding-block:22px}
+.full{padding-block:22px 28px;max-width:1040px;margin-inline:auto}
+.art{position:relative;margin:0;background:var(--stage);border-radius:16px;overflow:hidden;aspect-ratio:4/3;max-width:100%;box-shadow:0 18px 40px -24px rgba(0,0,0,.6)}
+.art>svg{display:block;width:100%;height:100%}
+.art figcaption{position:absolute;left:0;right:0;bottom:0;padding:22px 14px 10px;font-size:.78rem;color:var(--stage-muted);background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.txt{display:flex;flex-direction:column;gap:14px;min-width:0}
+.eyebrow{font-size:.82rem;letter-spacing:.08em;color:var(--accent);font-weight:700}
+.txt h2{font-size:clamp(1.7rem,3.4vw,2.5rem)}
+.txt p{max-width:38em}
+.mark{background:linear-gradient(transparent 58%,color-mix(in srgb,var(--accent) 26%,transparent) 58%);padding-inline:2px}
+.know{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--surface)}
+.know h3{font-family:var(--f-body);font-weight:700;font-size:.85rem;letter-spacing:.06em;color:var(--gold);margin-bottom:4px}
+.know ul{margin:0;padding-left:1.1em}
+.know li::marker{color:var(--gold)}
+.def{border-left:6px solid var(--accent);background:var(--surface);border-radius:0 12px 12px 0;padding:12px 16px;font-size:1.08rem}
+.def b{font-family:var(--f-display);font-weight:400;font-size:1.25rem;color:var(--accent)}
+.def.coolb{border-left-color:var(--cool)}
+.def.coolb b{color:var(--cool)}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-size:.85rem;padding:4px 10px;border-radius:999px;background:var(--soft);color:var(--ink)}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:st}
+.steps li{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;align-items:start;counter-increment:st}
+.steps li::before{content:counter(st);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.9rem;margin-top:2px}
+.dots{margin:0;padding-left:1.1em;display:grid;gap:6px}
+.dots li::marker{color:var(--accent)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.two>div{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface);min-width:0}
+.two h3{font-family:var(--f-body);font-weight:700;font-size:.9rem;color:var(--accent);margin-bottom:2px}
+.two .c h3{color:var(--cool)}
+.rows{display:grid;gap:6px}
+.rows div{display:grid;grid-template-columns:7.2em minmax(0,1fr);gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rows b{font-family:var(--f-display);font-weight:400;font-size:1.05rem}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{font-size:.88rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed currentColor}
+
+.cover h1{font-size:clamp(2.2rem,5.4vw,3.8rem);line-height:1.15}
+.cover .lead{font-size:1.08rem;color:var(--muted)}
+.route{display:flex;flex-wrap:wrap;gap:6px;font-size:.85rem;color:var(--muted)}
+.route span{padding:3px 10px;border:1px solid var(--line);border-radius:999px}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+.cta .btn{padding:12px 20px;font-size:1rem}
+.hint{font-size:.85rem;color:var(--muted)}
+
+/* 연습 위젯 */
+.lab{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface);display:grid;gap:10px}
+.lab h3{font-family:var(--f-body);font-weight:700;font-size:.95rem;color:var(--accent)}
+.lab .row{align-items:center}
+.lab input[type=number]{width:7em;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);font-variant-numeric:tabular-nums}
+.lab input[type=range]{width:100%;accent-color:var(--accent)}
+.lab label{font-size:.88rem;font-weight:700;color:var(--muted)}
+.msg{font-size:.95rem;min-height:1.6em}
+.msg.ok{color:var(--ok);font-weight:700}
+.msg.no{color:var(--bad)}
+.sliders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sliders output{font-variant-numeric:tabular-nums;font-weight:700}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.95rem}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);font-weight:400;background:var(--soft);font-size:1rem}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700;white-space:nowrap}
+.sechead{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.sechead h2{font-size:clamp(1.6rem,3.2vw,2.3rem)}
+.sechead p{color:var(--muted);max-width:44em}
+
+.grid4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.panel{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface);min-width:0}
+.panel h3{font-size:1.2rem;margin-bottom:4px}
+.panel p{color:var(--muted);font-size:.95rem}
+.frame{border:2px dashed var(--accent);border-radius:14px;padding:14px 18px;margin-top:16px;background:var(--soft)}
+.frame h3{font-family:var(--f-body);font-weight:700;font-size:.9rem;color:var(--accent);margin-bottom:6px}
+.frame p{font-size:1.1rem}
+.frame u{text-decoration:none;border-bottom:2px solid var(--gold);padding-inline:4px;color:var(--gold);font-weight:700}
+.rubric{margin-top:16px}
+.rubric td:first-child{white-space:normal}
+
+.essay{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--surface);display:grid;gap:10px}
+.essays{display:grid;gap:14px}
+.essay h3{font-size:1.05rem;font-family:var(--f-body);font-weight:700}
+.qn{display:inline-block;font-size:.78rem;padding:2px 8px;border-radius:999px;background:var(--accent);color:var(--accent-ink);margin-right:6px;vertical-align:2px}
+textarea,input[type=text],select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);line-height:1.6}
+textarea{resize:vertical;min-height:96px}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.row .btn{font-size:.88rem;padding:7px 13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.88rem}
+.chip{padding:3px 10px;border-radius:999px;border:1px solid var(--line)}
+.chip.yes{border-color:var(--ok);color:var(--ok)}
+.chip.no{border-color:var(--bad);color:var(--bad);border-style:dashed}
+.model{border-left:4px solid var(--gold);padding:8px 14px;background:var(--bg);border-radius:0 10px 10px 0}
+.model b{font-size:.85rem;color:var(--gold)}
+
+.maker{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.form{display:grid;gap:10px}
+.form label{font-size:.85rem;font-weight:700;color:var(--muted);display:block;margin-bottom:3px}
+.card{position:sticky;top:0;border-radius:16px;overflow:hidden;background:var(--paper);color:var(--paper-ink);box-shadow:0 18px 40px -24px rgba(0,0,0,.6);border:1px solid rgba(0,0,0,.08)}
+.card .thumb{background:var(--stage);aspect-ratio:16/9;display:grid;place-items:center}
+.card .thumb svg{width:70%;height:84%}
+.card .cb{padding:16px 18px 18px;display:grid;gap:8px}
+.card .tag{font-size:.75rem;letter-spacing:.1em;color:#a23c18;font-weight:700}
+.card h3{font-size:1.6rem;color:#1d1915}
+.card .flow{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center;text-align:center}
+.card .flow div{border-radius:10px;padding:8px;font-weight:700;font-size:.92rem;min-width:0}
+.card .flow .h{background:#ffe0d2;color:#8a2a0c}
+.card .flow .c{background:#d9ecfb;color:#0f4c7a}
+.card .flow span{font-family:var(--f-display);font-size:1.2rem;color:#a23c18;white-space:nowrap}
+.card dl{margin:0;display:grid;gap:8px}
+.card dt{font-size:.78rem;font-weight:700;color:#6b5a48}
+.card dd{margin:0;font-size:.95rem;line-height:1.6;color:#2a2420;white-space:pre-wrap}
+.card .sign{font-size:.8rem;color:#6b5a48;text-align:right}
+
+.quiz{display:grid;gap:12px}
+.qbox{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface);display:grid;gap:10px}
+.qbox h3{font-family:var(--f-body);font-weight:700;font-size:1.02rem}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.opt{text-align:left;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);cursor:pointer;line-height:1.45}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--bg));font-weight:700}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--bg))}
+.opt:disabled{cursor:default}
+.exp{font-size:.92rem;color:var(--muted)}
+.score{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-radius:12px;background:var(--soft);border:1px solid var(--line);margin-bottom:12px;flex-wrap:wrap}
+.score b{font-family:var(--f-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check label{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer}
+.check input{width:20px;height:20px;margin-top:4px;accent-color:var(--accent);flex:none}
+.check input:checked+span{color:var(--muted);text-decoration:line-through}
+
+.bottom{border-top:1px solid var(--line);padding-block:8px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px}
+.aprog{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.aprog i{display:block;height:100%;width:0;background:var(--red);transition:width .25s linear}
+.caption{min-height:3.2em;display:flex;align-items:center;justify-content:center;text-align:center;font-size:1rem;line-height:1.5;padding:4px 8px;color:var(--muted)}
+.caption.on{color:var(--ink);font-weight:600}
+.caption.on::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:10px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.controls{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:nowrap}
+
+.overlay{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:20}
+.sheet{width:min(560px,100%);max-height:86%;overflow:auto;background:var(--surface);border-radius:18px;padding:18px 20px;display:grid;gap:12px;border:1px solid var(--line)}
+.sheet header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet h2{font-size:1.4rem}
+.toclist{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.toclist button{width:100%;text-align:left;display:grid;grid-template-columns:2.2em minmax(0,1fr);gap:8px;padding:8px 10px;border-radius:10px;border:0;background:transparent;cursor:pointer}
+.toclist button:hover,.toclist button[aria-current="true"]{background:var(--soft)}
+.toclist span:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.note{font-size:.88rem;color:var(--muted)}
+
+/* 움직임 */
+.slide.active .txt>*,.slide.active .full>*{animation:rise .65s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 90ms + 120ms)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.slide.active .art>svg.kb{animation:kb 18s ease-in-out infinite alternate;transform-origin:50% 55%}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.06) translate(-1%,-1%)}}
+.steam{animation:steam 3.2s ease-in-out infinite;opacity:.8}
+.steam.d2{animation-delay:-1.1s}.steam.d3{animation-delay:-2.2s}
+@keyframes steam{0%{transform:translateY(10px);opacity:0}30%{opacity:.85}100%{transform:translateY(-40px);opacity:0}}
+.flow{stroke-dasharray:16 14;animation:flow 1.6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-60}}
+.pulse{animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.slide.active .draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 3.2s .4s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.slide.active .band{animation:band 6s ease-in infinite;animation-delay:var(--d)}
+@keyframes band{0%,8%{fill:#c97b4a}40%,100%{fill:var(--bandc)}}
+.bob{animation:bob 4s ease-in-out infinite alternate}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.melt{animation:melt 5s ease-in-out infinite}
+@keyframes melt{0%,20%{transform:scaleY(1)}70%,100%{transform:scaleY(.86)}}
+#liq{transform-box:fill-box;transform-origin:50% 100%;transition:transform 1.2s cubic-bezier(.3,.8,.3,1)}
+#eyeLine{transition:transform 1.2s cubic-bezier(.3,.8,.3,1)}
+
+@media (max-width:860px){
+  .lesson{grid-template-columns:minmax(0,1fr);align-items:start;gap:16px;min-height:0;padding-block:14px 22px}
+  .maker{grid-template-columns:minmax(0,1fr)}
+  .card{position:static}
+}
+@media (max-width:600px){
+  body{font-size:16px}
+  .grid4,.two,.opts,.sliders{grid-template-columns:minmax(0,1fr)}
+  .brand small{display:none}
+  .hide-s{display:none}
+  .caption{font-size:.93rem;min-height:3em}
+  .btn{padding:9px 13px}
+}
+@media (max-width:420px){
+  .hide-xs{display:none}
+  .controls .btn{padding:9px 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<!-- 공용 그림 부품 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <radialGradient id="gSpot" cx=".5" cy=".42" r=".7"><stop offset="0" stop-color="#25323f"/><stop offset="1" stop-color="#0b1117"/></radialGradient>
+    <linearGradient id="gHot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a5a"/><stop offset="1" stop-color="#d9431c"/></linearGradient>
+    <linearGradient id="gCold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd0ff"/><stop offset="1" stop-color="#2f7fc8"/></linearGradient>
+    <linearGradient id="gWarm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9a0"/><stop offset="1" stop-color="#e9a44f"/></linearGradient>
+    <linearGradient id="gGlass" x1="0" x2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".18"/><stop offset=".5" stop-color="#ffffff" stop-opacity=".05"/><stop offset="1" stop-color="#ffffff" stop-opacity=".2"/></linearGradient>
+    <linearGradient id="gMetal" x1="0" x2="1"><stop offset="0" stop-color="#8b96a3"/><stop offset=".5" stop-color="#d7dee6"/><stop offset="1" stop-color="#7b8693"/></linearGradient>
+    <linearGradient id="gCopper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e09a6a"/><stop offset="1" stop-color="#a5552c"/></linearGradient>
+    <marker id="arrH" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#ff7a45"/></marker>
+    <marker id="arrC" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#5ab4ff"/></marker>
+    <symbol id="sym-pan" viewBox="0 0 120 70">
+      <ellipse cx="50" cy="44" rx="44" ry="14" fill="#2b2f36"/><rect x="92" y="38" width="28" height="8" rx="4" fill="#5b4632"/>
+      <ellipse cx="50" cy="40" rx="20" ry="7" fill="#fbfbf6"/><circle cx="52" cy="39" r="6" fill="#ffc23a"/>
+      <path d="M30 26q4-8 0-14M50 22q4-8 0-14M70 26q4-8 0-14" stroke="#ff9a5a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="sym-ice" viewBox="0 0 120 70">
+      <circle cx="34" cy="38" r="26" fill="#f2c9a5"/><path d="M14 30q20-22 40 0" fill="#3a2a22"/>
+      <rect x="44" y="14" width="56" height="24" rx="12" fill="#9fd6ff"/><rect x="52" y="19" width="10" height="10" rx="2" fill="#e8f6ff"/><rect x="68" y="20" width="10" height="10" rx="2" fill="#e8f6ff"/><rect x="84" y="19" width="10" height="10" rx="2" fill="#e8f6ff"/>
+      <path d="M40 52H96" stroke="#ff7a45" stroke-width="4" marker-end="url(#arrH)"/>
+    </symbol>
+    <symbol id="sym-warmer" viewBox="0 0 120 70">
+      <rect x="40" y="18" width="40" height="34" rx="8" fill="#ff9a5a"/><path d="M48 30h24M48 40h24" stroke="#ffd9a0" stroke-width="3"/>
+      <path d="M10 60q10-30 30-28h50q20-2 30 28" fill="#f2c9a5"/>
+      <path d="M60 14q4-6 0-12" stroke="#ff9a5a" stroke-width="3" fill="none"/>
+    </symbol>
+    <symbol id="sym-soup" viewBox="0 0 120 70">
+      <path d="M18 30H102Q100 64 60 64Q20 64 18 30Z" fill="#e8e1d6"/><ellipse cx="60" cy="30" rx="42" ry="8" fill="#e08a3c"/>
+      <path d="M70 32L104 4" stroke="url(#gMetal)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M40 22q4-8 0-14M56 20q4-8 0-14" stroke="#ff9a5a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="sym-fridge" viewBox="0 0 120 70">
+      <rect x="30" y="2" width="60" height="66" rx="6" fill="#dfe8ef"/><path d="M30 26H90" stroke="#9aa9b7" stroke-width="2"/>
+      <rect x="40" y="36" width="40" height="22" rx="10" fill="#3a8a3a"/><path d="M44 47h32" stroke="#9fd06a" stroke-width="2"/>
+      <path d="M36 14h4M36 40h2" stroke="#9aa9b7" stroke-width="3"/>
+      <path d="M96 20q6 4 0 8q-6 4 0 8" stroke="#5ab4ff" stroke-width="3" fill="none"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <svg width="26" height="34" viewBox="0 0 26 34" aria-hidden="true"><rect x="9" y="2" width="8" height="22" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><rect x="11.5" y="10" width="3" height="14" fill="#e2552b"/><circle cx="13" cy="27" r="5.5" fill="#e2552b"/></svg>
+      <div style="min-width:0;display:flex;flex-direction:column;line-height:1.25">
+        <b>열 탐구 노트</b>
+        <small>초등 과학 · 3. 열과 우리 생활 · '열'이란?</small>
+      </div>
+    </div>
+    <span class="pager" id="pager">1 / 18</span>
+    <button class="btn icon ghost" id="btnToc" type="button" aria-label="목차 열기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="hide-s">목차</span>
+    </button>
+    <button class="btn icon ghost" id="btnSet" type="button" aria-label="목소리 설정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/></svg><span class="hide-s">목소리</span>
+    </button>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="progress" style="position:absolute;top:0;left:0;right:0;z-index:3"><i id="bar"></i></div>
+
+    <!-- 0 표지 -->
+    <section class="slide active" data-id="cover" data-title="표지 · 시작하기">
+      <div class="lesson cover">
+        <figure class="art">
+          <svg class="kb" viewBox="0 0 800 600" role="img" aria-label="김이 나는 따뜻한 컵과 얼음 사이로 열이 이동하는 그림">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <rect x="60" y="470" width="680" height="14" rx="7" fill="#2a3644"/>
+            <path d="M150 300H330L314 470H166Z" fill="url(#gHot)"/>
+            <path d="M330 330q60 0 60 50t-60 50" fill="none" stroke="#d9431c" stroke-width="16"/>
+            <ellipse cx="240" cy="300" rx="90" ry="14" fill="#ffb27a"/>
+            <g stroke="#ffd9c4" stroke-width="7" fill="none" stroke-linecap="round">
+              <path class="steam" d="M200 270q-14-24 0-48t0-48"/><path class="steam d2" d="M240 270q-14-24 0-48t0-48"/><path class="steam d3" d="M280 270q-14-24 0-48t0-48"/>
+            </g>
+            <g class="melt" style="transform-box:fill-box;transform-origin:50% 100%">
+              <rect x="520" y="370" width="100" height="100" rx="14" fill="url(#gCold)"/>
+              <rect x="560" y="320" width="80" height="80" rx="12" fill="#a9dcff" opacity=".9" transform="rotate(12 600 360)"/>
+              <path d="M540 390h30M548 410h14" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+            </g>
+            <path class="flow" d="M400 380H500" stroke="#ff7a45" stroke-width="10" stroke-linecap="round" marker-end="url(#arrH)"/>
+            <text x="450" y="350" text-anchor="middle" font-size="34" fill="#ffb27a" font-family="Do Hyeon, sans-serif">열</text>
+            <g transform="translate(680 90)">
+              <rect x="-12" y="0" width="24" height="230" rx="12" fill="none" stroke="#eef3f7" stroke-width="4"/>
+              <rect x="-5" y="70" width="10" height="170" fill="#ff5a3a"/>
+              <circle cx="0" cy="252" r="24" fill="#ff5a3a"/>
+              <g stroke="#eef3f7" stroke-width="3"><path d="M14 40h12M14 80h12M14 120h12M14 160h12M14 200h12"/></g>
+            </g>
+            <text x="70" y="110" font-size="56" fill="#eef3f7" font-family="Do Hyeon, sans-serif">25.0 ℃</text>
+          </svg>
+          <figcaption>따뜻한 물체에서 차가운 물체로 이동하는 '열'</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">초등 과학 · 3. 열과 우리 생활 · 수행평가 대비</p>
+          <h1>'열'이란<br>무엇일까?</h1>
+          <p class="lead">온도와 온도계, 열의 이동을 그림과 실험으로 살펴보고, 마지막에는 수행평가 연습까지 해 봐요.</p>
+          <div class="route"><span>느낌과 온도</span><span>온도계</span><span>온도계 읽기 연습</span><span>열의 뜻</span><span>열의 이동 실험</span><span>전도 · 대류 · 단열</span><span>수행평가 연습</span></div>
+          <div class="cta">
+            <button class="btn primary" type="button" id="btnStartAuto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>영상처럼 보기</button>
+            <button class="btn" type="button" id="btnStartManual">한 장씩 넘겨 보기<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+          <p class="hint">'영상처럼 보기'를 누르면 AI 성우가 읽어 주면서 다음 장으로 저절로 넘어가요. 화면을 옆으로 밀거나 ← → 키로도 넘길 수 있어요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 손의 느낌 -->
+    <section class="slide" data-id="feel" data-title="손으로 느끼는 온도는 정확할까?">
+      <div class="lesson">
+        <figure class="art">
+          <svg class="kb" viewBox="0 0 800 600" role="img" aria-label="차가운 물, 미지근한 물, 따뜻한 물 그릇과 두 손이 다르게 느끼는 모습">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <g font-family="Gowun Dodum, sans-serif" text-anchor="middle">
+              <path d="M60 360H240L222 470H78Z" fill="#2a3644"/><path d="M68 370H232L218 460H82Z" fill="url(#gCold)"/>
+              <text x="150" y="510" font-size="24" fill="#9fd6ff">차가운 물</text>
+              <path d="M310 360H490L472 470H328Z" fill="#2a3644"/><path d="M318 370H482L468 460H332Z" fill="#c9b7e8"/>
+              <text x="400" y="510" font-size="24" fill="#eef3f7">미지근한 물</text>
+              <path d="M560 360H740L722 470H578Z" fill="#2a3644"/><path d="M568 370H732L718 460H582Z" fill="url(#gHot)"/>
+              <text x="650" y="510" font-size="24" fill="#ffb27a">따뜻한 물</text>
+              <g stroke="#ffd9c4" stroke-width="5" fill="none" stroke-linecap="round"><path class="steam" d="M620 350q-10-18 0-36"/><path class="steam d2" d="M660 350q-10-18 0-36"/></g>
+              <path class="flow" d="M150 330Q240 250 340 330" stroke="#5ab4ff" stroke-width="5" fill="none" marker-end="url(#arrC)"/>
+              <path class="flow" d="M650 330Q560 250 460 330" stroke="#ff7a45" stroke-width="5" fill="none" marker-end="url(#arrH)"/>
+              <text x="230" y="250" font-size="22" fill="#9fd6ff">왼손</text>
+              <text x="570" y="250" font-size="22" fill="#ffb27a">오른손</text>
+              <rect x="210" y="100" width="170" height="70" rx="20" fill="#ffb27a"/><path d="M280 170l20 30 10-30z" fill="#ffb27a"/>
+              <text x="295" y="146" font-size="30" fill="#2a1408" font-family="Do Hyeon, sans-serif">따뜻해!</text>
+              <rect x="420" y="100" width="170" height="70" rx="20" fill="#9fd6ff"/><path d="M490 170l20 30 10-30z" fill="#9fd6ff"/>
+              <text x="505" y="146" font-size="30" fill="#0a2236" font-family="Do Hyeon, sans-serif">차가워!</text>
+              <text x="400" y="60" font-size="22" fill="#a7b4c2">같은 물인데 느낌이 달라요</text>
+            </g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">생각 열기 · 느낌과 온도</p>
+          <h2>손으로 느끼는 온도는 정확할까?</h2>
+          <ol class="steps">
+            <li><span>왼손은 <b>차가운 물</b>, 오른손은 <b>따뜻한 물</b>에 잠시 넣어요.</span></li>
+            <li><span>두 손을 동시에 <b>미지근한 물</b>에 넣어요.</span></li>
+            <li><span>왼손은 따뜻하게, 오른손은 차갑게 느껴져요!</span></li>
+          </ol>
+          <p>손으로 느끼는 차갑고 따뜻한 정도는 <span class="mark">사람과 상황에 따라 달라서 정확하지 않아요</span>. 그래서 정확한 숫자로 나타내는 방법이 필요해요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 온도 -->
+    <section class="slide" data-id="temp" data-title="온도란 무엇일까?">
+      <div class="lesson">
+        <figure class="art">
+          <svg class="kb" viewBox="0 0 800 600" role="img" aria-label="25.0 섭씨도를 크게 보여 주는 디지털 화면과 읽는 방법">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <rect x="120" y="120" width="560" height="230" rx="28" fill="#0b1117" stroke="#3a4a5a" stroke-width="4"/>
+            <text x="400" y="290" text-anchor="middle" font-size="150" fill="#ff8a5c" font-family="Do Hyeon, sans-serif">25.0 ℃</text>
+            <g font-family="Gowun Dodum, sans-serif" text-anchor="middle">
+              <text x="400" y="420" font-size="34" fill="#eef3f7">읽기: 섭씨 이십오 점 영 도</text>
+              <text x="400" y="470" font-size="22" fill="#a7b4c2">℃ = 섭씨도 (온도의 단위)</text>
+            </g>
+            <g transform="translate(150 500)" font-family="Gowun Dodum, sans-serif" font-size="20" fill="#a7b4c2" text-anchor="middle">
+              <text x="0" y="40">날씨</text><text x="250" y="40">요리</text><text x="500" y="40">체온</text>
+              <circle cx="0" cy="0" r="18" fill="#ffc23a"/><path d="M240 -8h20v16h-20z" fill="#ff9a5a"/><path d="M490 -14h20v28h-20z" fill="#9fd6ff" rx="4"/>
+            </g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">개념 ① · 온도</p>
+          <h2>온도란 무엇일까?</h2>
+          <p class="def"><b>온도</b> 물질의 차갑거나 따뜻한 정도를 <b>숫자</b>로 나타낸 것</p>
+          <div class="two">
+            <div><h3>단위</h3><p>℃ (섭씨도)</p></div>
+            <div><h3>읽는 법</h3><p>25.0 ℃ → 섭씨 이십오 점 영 도</p></div>
+          </div>
+          <p>온도를 숫자로 나타내면 <span class="mark">누구나 같은 값으로 정확하게</span> 알 수 있어요. 날씨, 요리, 체온 재기에 꼭 필요해요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 온도계 -->
+    <section class="slide" data-id="thermos" data-title="여러 가지 온도계">
+      <div class="lesson">
+        <figure class="art">
+          <svg class="kb" viewBox="0 0 800 600" role="img" aria-label="알코올 온도계, 적외선 온도계, 귀 체온계 그림">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <g font-family="Gowun Dodum, sans-serif" text-anchor="middle" fill="#eef3f7">
+              <g transform="translate(140 80)">
+                <rect x="-14" y="0" width="28" height="330" rx="14" fill="url(#gGlass)" stroke="#d7dee6" stroke-width="3"/>
+                <rect x="-4" y="140" width="8" height="200" fill="#ff4a3a"/><circle cx="0" cy="356" r="22" fill="#ff4a3a"/>
+                <g stroke="#d7dee6" stroke-width="2"><path d="M14 40h10M14 80h10M14 120h10M14 160h10M14 200h10M14 240h10M14 280h10"/></g>
+                <text x="0" y="430" font-size="26">알코올 온도계</text>
+                <text x="0" y="462" font-size="18" fill="#a7b4c2">액체 · 기체 (물, 공기)</text>
+              </g>
+              <g transform="translate(400 150)">
+                <path d="M-70 0H50Q70 0 70 20V50Q70 70 50 70H-10L-30 170H-70L-50 70H-70Z" fill="#ffb347"/>
+                <rect x="-56" y="12" width="50" height="34" rx="6" fill="#0b1117"/><text x="-31" y="37" font-size="20" fill="#7dff9a" font-family="Do Hyeon, sans-serif">180</text>
+                <path class="flow" d="M70 35L170 120" stroke="#ff4a3a" stroke-width="4"/>
+                <ellipse cx="190" cy="140" rx="46" ry="12" fill="#3a3f47"/><rect x="230" y="134" width="40" height="8" rx="4" fill="#5b4632"/>
+                <text x="40" y="260" font-size="26">적외선 온도계</text>
+                <text x="40" y="292" font-size="18" fill="#a7b4c2">닿지 않고 고체 표면 온도</text>
+              </g>
+              <g transform="translate(660 140)">
+                <path d="M-30 40Q-30 0 0 0Q30 0 30 40V170Q30 190 0 190Q-30 190 -30 170Z" fill="#eef3f7"/>
+                <path d="M-12 0Q0 -40 12 0Z" fill="#9fd6ff"/>
+                <rect x="-20" y="60" width="40" height="30" rx="6" fill="#0b1117"/><text x="0" y="83" font-size="18" fill="#7dff9a" font-family="Do Hyeon, sans-serif">36.5</text>
+                <text x="0" y="250" font-size="26">귀 체온계</text>
+                <text x="0" y="282" font-size="18" fill="#a7b4c2">체온 (몸의 온도)</text>
+              </g>
+            </g>
+          </svg>
+          <figcaption>이해를 돕기 위해 그린 그림이에요</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">개념 ② · 온도계</p>
+          <h2>무엇을 잴지에 따라 골라 써요</h2>
+          <div class="rows">
+            <div><b>알코올 온도계</b><span>물, 공기처럼 <b>액체와 기체</b>의 온도를 재요.</span></div>
+            <div><b>적외선 온도계</b><span>물체에 <b>닿지 않고</b> 고체의 <b>표면 온도</b>를 재요.</span></div>
+            <div><b>귀 체온계</b><span>귓속에 넣어 우리 몸의 온도인 <b>체온</b>을 재요.</span></div>
+          </div>
+          <div class="know"><h3>수행평가 꿀팁</h3><ul><li>"어떤 것을 잴 때 어떤 온도계를 쓰나요?"는 자주 나오는 문제예요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 온도계 읽기 -->
+    <section class="slide" data-id="read" data-title="알코올 온도계 바르게 읽기 (연습)">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="알코올 온도계 눈금 읽기 연습 그림">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <rect x="366" y="70" width="48" height="430" rx="24" fill="url(#gGlass)" stroke="#d7dee6" stroke-width="3"/>
+            <circle cx="390" cy="520" r="34" fill="#ff4a3a" stroke="#d7dee6" stroke-width="3"/>
+            <rect x="382" y="470" width="16" height="40" fill="#ff4a3a"/>
+            <rect id="liq" x="382" y="110" width="16" height="360" fill="#ff4a3a" style="transform:scaleY(.575)"/>
+            <g id="ticks" stroke="#eef3f7"></g>
+            <g id="tickLabels" font-family="Do Hyeon, sans-serif" font-size="26" fill="#eef3f7"></g>
+            <g id="eyeLine" style="transform:translateY(-207px)">
+              <path d="M150 470H360" stroke="#ffd34d" stroke-width="3" stroke-dasharray="10 8"/>
+              <path d="M90 470q30-28 60 0q-30 28-60 0z" fill="#eef3f7"/><circle cx="120" cy="470" r="10" fill="#1b2633"/>
+              <text x="120" y="514" text-anchor="middle" font-size="20" fill="#ffd34d" font-family="Gowun Dodum, sans-serif">눈높이</text>
+            </g>
+            <text x="470" y="560" font-size="20" fill="#a7b4c2" font-family="Gowun Dodum, sans-serif">액체샘</text>
+            <path d="M465 553L428 530" stroke="#a7b4c2" stroke-width="2"/>
+            <text x="560" y="300" font-size="20" fill="#a7b4c2" font-family="Gowun Dodum, sans-serif">액체 기둥</text>
+            <text x="560" y="326" font-size="17" fill="#a7b4c2" font-family="Gowun Dodum, sans-serif">긴 눈금 10 ℃</text>
+            <text x="560" y="350" font-size="17" fill="#a7b4c2" font-family="Gowun Dodum, sans-serif">짧은 눈금 1 ℃</text>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">개념 ② · 온도계 읽기 연습</p>
+          <h2>알코올 온도계 바르게 읽기</h2>
+          <ol class="steps">
+            <li><span><b>액체샘</b>을 물에 넣되, 그릇의 <b>바닥이나 옆면에 닿지 않게</b> 해요.</span></li>
+            <li><span>빨간 액체 기둥이 <b>더 이상 움직이지 않을 때</b> 읽어요.</span></li>
+            <li><span>액체 기둥 끝이 닿은 눈금을 <b>눈높이를 맞추어</b> 읽어요.</span></li>
+          </ol>
+          <div class="lab">
+            <h3>연습: 이 온도계는 몇 ℃일까요?</h3>
+            <div class="row"><label class="sr" for="readAns">내 답(℃)</label><input type="number" id="readAns" inputmode="numeric" placeholder="숫자"> <span>℃</span>
+              <button class="btn primary" type="button" id="readCheck">확인</button><button class="btn" type="button" id="readNew">다른 문제</button></div>
+            <p class="msg" id="readMsg" aria-live="polite">눈금을 세어 답을 써 보세요.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 열이란 -->
+    <section class="slide" data-id="heat" data-title="열이란 무엇일까? (실험해 보기)">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="온도가 다른 두 물체가 닿아 열이 이동하는 모습을 보여 주는 시뮬레이터">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <rect id="blkH" x="120" y="200" width="270" height="220" rx="18" fill="#e8552b"/>
+            <rect id="blkC" x="410" y="200" width="270" height="220" rx="18" fill="#3d8bd9"/>
+            <g font-family="Do Hyeon, sans-serif" text-anchor="middle" fill="#ffffff">
+              <text x="255" y="335" font-size="78"><tspan id="simHot">70</tspan> ℃</text>
+              <text x="545" y="335" font-size="78"><tspan id="simCold">10</tspan> ℃</text>
+            </g>
+            <g id="simArrows">
+              <path class="flow" d="M300 470H500" stroke="#ff7a45" stroke-width="12" stroke-linecap="round" marker-end="url(#arrH)"/>
+              <text x="400" y="530" text-anchor="middle" font-size="34" fill="#ffb27a" font-family="Do Hyeon, sans-serif">열이 이동해요</text>
+            </g>
+            <g font-family="Gowun Dodum, sans-serif" font-size="24" fill="#eef3f7" text-anchor="middle">
+              <text x="255" y="170">온도가 높은 물체</text><text x="545" y="170">온도가 낮은 물체</text>
+            </g>
+            <text id="simNote" x="400" y="90" text-anchor="middle" font-size="26" fill="#a7b4c2" font-family="Gowun Dodum, sans-serif">아래 '닿게 하기'를 눌러 보세요</text>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">개념 ③ · 열</p>
+          <h2>열이란 무엇일까?</h2>
+          <p class="def"><b>열</b> 온도가 <b>높은</b> 물체에서 <b>낮은</b> 물체로 이동하여, 물체의 온도를 변하게 하는 것</p>
+          <div class="lab">
+            <h3>실험해 보기: 두 물체를 닿게 하면?</h3>
+            <div class="sliders">
+              <div><label for="hotT">높은 물체 <output id="hotO">70</output> ℃</label><input type="range" id="hotT" min="40" max="90" value="70"></div>
+              <div><label for="coldT">낮은 물체 <output id="coldO">10</output> ℃</label><input type="range" id="coldT" min="0" max="30" value="10"></div>
+            </div>
+            <div class="row"><button class="btn primary" type="button" id="simGo">닿게 하기</button><button class="btn" type="button" id="simReset">처음으로</button></div>
+          </div>
+          <div class="two">
+            <div><h3>온도</h3><p>차갑고 따뜻한 <b>정도</b>를 나타내는 숫자</p></div>
+            <div class="c"><h3>열</h3><p>이동하면서 <b>온도를 바꾸는</b> 것</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 접촉 실험 -->
+    <section class="slide" data-id="contact" data-title="닿아 있는 두 물의 온도 변화">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="따뜻한 물과 차가운 물의 시간에 따른 온도 변화 그래프. 따뜻한 물은 60도에서 내려가고 차가운 물은 10도에서 올라가 약 35도에서 같아진다">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <g stroke="#2e3b49" stroke-width="1.5"><path d="M110 500H740M110 435H740M110 370H740M110 305H740M110 240H740M110 175H740M110 110H740"/></g>
+            <path d="M110 100V500H740" stroke="#a7b4c2" stroke-width="2" fill="none"/>
+            <g font-family="Gowun Dodum, sans-serif" font-size="18" fill="#a7b4c2" text-anchor="end">
+              <text x="98" y="506">0</text><text x="98" y="441">10</text><text x="98" y="376">20</text><text x="98" y="311">30</text><text x="98" y="246">40</text><text x="98" y="181">50</text><text x="98" y="116">60</text>
+            </g>
+            <g font-family="Gowun Dodum, sans-serif" font-size="18" fill="#a7b4c2" text-anchor="middle">
+              <text x="110" y="528">0</text><text x="236" y="528">2</text><text x="362" y="528">4</text><text x="488" y="528">6</text><text x="614" y="528">8</text><text x="740" y="528">10</text>
+              <text x="425" y="552">시간(분)</text>
+            </g>
+            <text x="60" y="80" font-size="18" fill="#a7b4c2" font-family="Gowun Dodum, sans-serif">온도(℃)</text>
+            <path class="draw" pathLength="1" d="M110 110L173 168.5L236 207.5L299 233.5L362 249.8L425 259.5L488 266L551 269.3L614 271.2L677 272.5L740 272.5" fill="none" stroke="#ff7a45" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+            <path class="draw" pathLength="1" d="M110 435L173 376.5L236 337.5L299 311.5L362 295.3L425 285.5L488 279L551 275.8L614 273.8L677 272.5L740 272.5" fill="none" stroke="#5ab4ff" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="110" cy="110" r="8" fill="#ff7a45"/><circle cx="110" cy="435" r="8" fill="#5ab4ff"/>
+            <g font-family="Gowun Dodum, sans-serif" font-size="21">
+              <text x="180" y="150" fill="#ffb27a">따뜻한 물 (비커)</text>
+              <text x="180" y="420" fill="#9fd6ff">차가운 물 (캔)</text>
+              <text x="560" y="250" fill="#eef3f7">온도가 같아져요</text>
+            </g>
+            <g transform="translate(600 360)">
+              <path d="M0 0H110V110Q110 120 100 120H10Q0 120 0 110Z" fill="url(#gHot)" opacity=".85"/>
+              <rect x="34" y="20" width="42" height="90" rx="8" fill="url(#gCold)"/>
+              <path d="M-4 0H114" stroke="#d7dee6" stroke-width="4"/>
+            </g>
+          </svg>
+          <figcaption>그래프 값은 이해를 돕기 위한 예시 측정값이에요</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">실험 · 접촉한 두 물체</p>
+          <h2>닿아 있는 두 물의 온도는 어떻게 변할까?</h2>
+          <p>따뜻한 물이 담긴 비커에 차가운 물이 담긴 음료수 캔을 넣고, <b>1분마다</b> 두 물의 온도를 재었어요.</p>
+          <div class="two">
+            <div><h3>따뜻한 물</h3><p>온도가 점점 <b>낮아져요</b>.</p></div>
+            <div class="c"><h3>차가운 물</h3><p>온도가 점점 <b>높아져요</b>.</p></div>
+          </div>
+          <p>시간이 지나면 <span class="mark">두 물의 온도가 같아지고</span>, 그 뒤로는 변하지 않아요.</p>
+          <div class="know"><h3>왜 그럴까요?</h3><ul><li>따뜻한 물의 열이 차가운 물로 이동했기 때문이에요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 열의 이동 방향 -->
+    <section class="slide" data-id="direction" data-title="열은 어느 쪽으로 이동할까?">
+      <div class="lesson">
+        <figure class="art">
+          <svg class="kb" viewBox="0 0 800 600" role="img" aria-label="얼음을 쥔 손에서 얼음으로 열이 이동하는 그림. 차가움이 이동하는 것이 아님">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <path d="M200 420Q160 300 230 250Q300 220 360 240L520 250Q560 255 555 285Q550 312 515 310L420 305Q470 330 470 380Q470 470 380 480H260Q220 480 200 420Z" fill="#f2c9a5"/>
+            <g class="melt" style="transform-box:fill-box;transform-origin:50% 100%">
+              <rect x="300" y="290" width="120" height="110" rx="16" fill="url(#gCold)"/>
+              <path d="M320 310h40M328 332h18" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".7"/>
+            </g>
+            <circle cx="360" cy="415" r="6" fill="#9fd6ff" class="pulse"/><circle cx="380" cy="430" r="4" fill="#9fd6ff" class="pulse"/>
+            <path class="flow" d="M220 360Q250 350 290 350" stroke="#ff7a45" stroke-width="10" fill="none" stroke-linecap="round" marker-end="url(#arrH)"/>
+            <path class="flow" d="M450 380Q440 370 430 365" stroke="#ff7a45" stroke-width="10" fill="none" stroke-linecap="round" marker-end="url(#arrH)"/>
+            <g font-family="Do Hyeon, sans-serif" text-anchor="middle">
+              <text x="190" y="320" font-size="36" fill="#ffb27a">열 →</text>
+              <text x="400" y="110" font-size="40" fill="#eef3f7">손(높은 온도) → 얼음(낮은 온도)</text>
+            </g>
+            <g transform="translate(560 420)">
+              <rect x="0" y="0" width="200" height="90" rx="16" fill="#1f2a37" stroke="#ff8b7b" stroke-width="3"/>
+              <text x="100" y="40" text-anchor="middle" font-size="22" fill="#9fd6ff" font-family="Gowun Dodum, sans-serif">차가움이 이동?</text>
+              <text x="100" y="74" text-anchor="middle" font-size="26" fill="#ff8b7b" font-family="Do Hyeon, sans-serif">틀린 생각!</text>
+              <path d="M20 20L180 70" stroke="#ff8b7b" stroke-width="4" opacity=".6"/>
+            </g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">개념 ③ · 열의 이동 방향</p>
+          <h2>열은 언제나 높은 곳에서 낮은 곳으로</h2>
+          <p>얼음을 손에 쥐면 왜 손이 차가워질까요?</p>
+          <p class="def coolb"><b>정답</b> 따뜻한 <b>손의 열이 얼음으로</b> 이동해서 손의 온도가 낮아지기 때문이에요.</p>
+          <p>얼음은 손에서 열을 받아 녹아요. <span class="mark">"얼음의 차가움이 손으로 이동한다"는 틀린 생각</span>이에요.</p>
+          <div class="know"><h3>수행평가 꿀팁</h3><ul><li>열의 이동은 항상 <b>온도가 높은 물체 → 낮은 물체</b> 방향으로 써요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 생활 속 열의 이동 -->
+    <section class="slide" data-id="life" data-title="생활 속 열의 이동">
+      <div class="lesson">
+        <figure class="art">
+          <svg class="kb" viewBox="0 0 800 600" role="img" aria-label="프라이팬과 달걀, 얼음주머니와 이마, 손난로와 손, 냉장고와 수박에서 열이 이동하는 네 장면">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <g font-family="Gowun Dodum, sans-serif" font-size="21" fill="#eef3f7" text-anchor="middle">
+              <rect x="30" y="30" width="360" height="260" rx="18" fill="#1a2430"/>
+              <use href="#sym-pan" x="70" y="60" width="280" height="160"/>
+              <text x="210" y="260">프라이팬 → 달걀</text>
+              <rect x="410" y="30" width="360" height="260" rx="18" fill="#1a2430"/>
+              <use href="#sym-ice" x="450" y="60" width="280" height="160"/>
+              <text x="590" y="260">이마 → 얼음주머니</text>
+              <rect x="30" y="310" width="360" height="260" rx="18" fill="#1a2430"/>
+              <use href="#sym-warmer" x="70" y="340" width="280" height="160"/>
+              <text x="210" y="540">손난로 → 손</text>
+              <rect x="410" y="310" width="360" height="260" rx="18" fill="#1a2430"/>
+              <use href="#sym-fridge" x="450" y="340" width="280" height="160"/>
+              <text x="590" y="540">수박 → 차가운 공기</text>
+            </g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">생활 속 열 · 어디에서 어디로?</p>
+          <h2>우리 생활 속 열의 이동</h2>
+          <div class="rows">
+            <div><b>달걀 프라이</b><span>뜨거운 <b>프라이팬 → 달걀</b>로 열이 이동해 달걀이 익어요.</span></div>
+            <div><b>얼음주머니</b><span>뜨거운 <b>이마 → 얼음주머니</b>로 열이 이동해 이마가 시원해져요.</span></div>
+            <div><b>손난로</b><span><b>손난로 → 손</b>으로 열이 이동해 손이 따뜻해져요.</span></div>
+            <div><b>냉장고</b><span><b>음식 → 차가운 공기</b>로 열이 이동해 음식이 시원해져요.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 전도 -->
+    <section class="slide" data-id="conduction" data-title="더 알아보기 ① 고체에서 열의 이동, 전도">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="구리판 한쪽 끝을 가열하면 열 변색 붙임딱지 색이 가까운 곳부터 차례로 변하는 모습">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <path d="M180 140H660L620 420H140Z" fill="url(#gCopper)"/>
+            <g>
+              <circle class="band" style="--d:0s;--bandc:#ffe14d" cx="190" cy="390" r="22" fill="#c97b4a"/>
+              <circle class="band" style="--d:.5s;--bandc:#ffe14d" cx="270" cy="360" r="22" fill="#c97b4a"/>
+              <circle class="band" style="--d:1s;--bandc:#ffe14d" cx="350" cy="330" r="22" fill="#c97b4a"/>
+              <circle class="band" style="--d:1.5s;--bandc:#ffe14d" cx="430" cy="300" r="22" fill="#c97b4a"/>
+              <circle class="band" style="--d:2s;--bandc:#ffe14d" cx="510" cy="270" r="22" fill="#c97b4a"/>
+              <circle class="band" style="--d:2.5s;--bandc:#ffe14d" cx="590" cy="240" r="22" fill="#c97b4a"/>
+              <circle class="band" style="--d:3s;--bandc:#ffe14d" cx="610" cy="180" r="22" fill="#c97b4a"/>
+            </g>
+            <g transform="translate(160 440)">
+              <path d="M0 0Q-26 -40 0 -86Q26 -40 0 0Z" fill="#ffb347" class="pulse"/>
+              <path d="M0 -6Q-12 -30 0 -54Q12 -30 0 -6Z" fill="#fff2b0"/>
+              <rect x="-30" y="0" width="60" height="70" rx="10" fill="#d7dee6" opacity=".9"/>
+            </g>
+            <path class="flow" d="M220 400L620 200" stroke="#ff7a45" stroke-width="6" stroke-linecap="round" marker-end="url(#arrH)" opacity=".9"/>
+            <g font-family="Gowun Dodum, sans-serif" font-size="22" fill="#eef3f7">
+              <text x="40" y="80" font-size="34" font-family="Do Hyeon, sans-serif">전도: 물체를 따라 이동</text>
+              <text x="400" y="545" text-anchor="middle">노란색 붙임딱지 = 열이 도착한 곳</text>
+            </g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">더 알아보기 ① · 고체</p>
+          <h2>고체에서 열의 이동, 전도</h2>
+          <p>구리판의 한쪽 끝을 가열하면 <b>열 변색 붙임딱지</b>의 색이 가열한 곳에서 먼 곳으로 차례차례 변해요.</p>
+          <p class="def"><b>전도</b> 고체에서 열이 온도가 높은 곳에서 낮은 곳으로 <b>물체를 따라</b> 이동하는 것</p>
+          <div class="know"><h3>생활 속 예</h3><ul><li>프라이팬 손잡이는 열이 잘 전도되지 않는 나무나 플라스틱으로 만들어요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 대류 -->
+    <section class="slide" data-id="convection" data-title="더 알아보기 ② 액체와 기체에서 열의 이동, 대류">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="냄비 아래를 가열하면 따뜻한 물이 위로 올라가고 차가운 물이 내려오는 대류">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <path d="M200 160H600V420Q600 460 560 460H240Q200 460 200 420Z" fill="#203242" stroke="#8b96a3" stroke-width="8"/>
+            <path d="M208 200H592V420Q592 452 560 452H240Q208 452 208 420Z" fill="#2e6c9e" opacity=".7"/>
+            <path class="flow" d="M400 430V230" stroke="#ff7a45" stroke-width="10" stroke-linecap="round" marker-end="url(#arrH)"/>
+            <path class="flow" d="M380 220Q280 220 270 320Q265 400 360 425" stroke="#5ab4ff" stroke-width="8" fill="none" stroke-linecap="round" marker-end="url(#arrC)"/>
+            <path class="flow" d="M420 220Q520 220 530 320Q535 400 440 425" stroke="#5ab4ff" stroke-width="8" fill="none" stroke-linecap="round" marker-end="url(#arrC)"/>
+            <g transform="translate(400 470)">
+              <path d="M-40 70Q-60 30 -30 0Q-20 30 0 10Q20 30 30 0Q60 30 40 70Z" fill="#ffb347" class="pulse"/>
+            </g>
+            <g font-family="Gowun Dodum, sans-serif" font-size="22" fill="#eef3f7" text-anchor="middle">
+              <text x="400" y="80" font-size="34" font-family="Do Hyeon, sans-serif">대류: 따뜻한 물질이 직접 위로</text>
+              <text x="400" y="130" fill="#ffb27a">따뜻해진 물 ↑</text>
+              <text x="680" y="320" fill="#9fd6ff">차가운 물 ↓</text>
+            </g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">더 알아보기 ② · 액체와 기체</p>
+          <h2>액체와 기체에서 열의 이동, 대류</h2>
+          <p>냄비 아래를 가열하면 <b>따뜻해진 물은 위로</b> 올라가고, <b>차가운 물은 아래로</b> 내려와요.</p>
+          <p class="def"><b>대류</b> 액체나 기체에서 따뜻해진 물질이 <b>직접 위로 올라가며</b> 열이 이동하는 것</p>
+          <div class="two">
+            <div><h3>난로</h3><p>방의 <b>아래쪽</b>에 두면 따뜻한 공기가 위로 올라가 방 전체가 따뜻해져요.</p></div>
+            <div class="c"><h3>에어컨</h3><p>방의 <b>위쪽</b>에 두면 차가운 공기가 아래로 내려와 방 전체가 시원해져요.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 단열 -->
+    <section class="slide" data-id="insulation" data-title="더 알아보기 ③ 열의 이동을 줄이는 단열">
+      <div class="lesson">
+        <figure class="art">
+          <svg class="kb" viewBox="0 0 800 600" role="img" aria-label="보온병 단면: 벽 사이 진공층이 열의 이동을 막는 모습">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <rect x="250" y="120" width="300" height="400" rx="40" fill="url(#gMetal)"/>
+            <rect x="272" y="142" width="256" height="356" rx="30" fill="#0f151c"/>
+            <rect x="292" y="162" width="216" height="316" rx="22" fill="#c9d3dd"/>
+            <rect x="304" y="220" width="192" height="246" rx="16" fill="url(#gHot)"/>
+            <rect x="300" y="80" width="200" height="50" rx="12" fill="#3a4654"/>
+            <g stroke="#ffd9c4" stroke-width="5" fill="none" stroke-linecap="round"><path class="steam" d="M370 210q-8-14 0-28"/><path class="steam d2" d="M430 210q-8-14 0-28"/></g>
+            <path d="M500 330H640" stroke="#ff7a45" stroke-width="8" stroke-linecap="round" stroke-dasharray="12 10" opacity=".5"/>
+            <path d="M600 300L660 360M660 300L600 360" stroke="#ff8b7b" stroke-width="8" stroke-linecap="round"/>
+            <g font-family="Gowun Dodum, sans-serif" font-size="22" fill="#eef3f7">
+              <path d="M282 400H160" stroke="#a7b4c2" stroke-width="2"/><text x="40" y="392">진공층</text><text x="40" y="420" font-size="17" fill="#a7b4c2">열이 잘 못 지나가요</text>
+              <text x="580" y="420">열이 밖으로</text><text x="580" y="450">잘 못 나가요</text>
+              <text x="400" y="60" text-anchor="middle" font-size="34" font-family="Do Hyeon, sans-serif">단열: 열의 이동을 줄여요</text>
+            </g>
+          </svg>
+          <figcaption>보온병 속을 쉽게 보여 주는 그림이에요</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">더 알아보기 ③ · 단열</p>
+          <h2>열의 이동을 줄이는 단열</h2>
+          <p class="def"><b>단열</b> 두 물체 사이에서 <b>열의 이동을 줄이는</b> 것</p>
+          <p><b>보온병</b>은 벽 사이를 진공으로 만들어, 따뜻한 물은 따뜻하게, 차가운 물은 차갑게 오래 지켜 줘요.</p>
+          <div class="facts"><span>두꺼운 겨울옷</span><span>집의 이중창</span><span>아이스박스(스타이로폼)</span><span>냄비 손잡이 덮개</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 정리 -->
+    <section class="slide" data-id="summary" data-title="한눈에 정리하기">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">정리 · 열이란?</p><h2>한눈에 정리하기</h2><p>가운데 칸을 가리고 낱말만 보며 뜻을 말해 보세요. 반대로도 해 보면 실력이 쑥쑥!</p></div>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>낱말</th><th>뜻</th><th>예</th></tr></thead>
+            <tbody>
+              <tr><td>온도</td><td>물질의 차갑거나 따뜻한 정도를 숫자로 나타낸 것 (단위 ℃, 섭씨도)</td><td>오늘 기온 25.0 ℃</td></tr>
+              <tr><td>온도계</td><td>알코올 온도계(액체·기체), 적외선 온도계(고체 표면), 귀 체온계(체온)</td><td>물 온도는 알코올 온도계</td></tr>
+              <tr><td>열</td><td>온도가 높은 물체에서 낮은 물체로 이동하며 온도를 변하게 하는 것</td><td>프라이팬 → 달걀</td></tr>
+              <tr><td>접촉한 두 물체</td><td>높은 쪽은 온도가 낮아지고, 낮은 쪽은 높아져 결국 같아짐</td><td>따뜻한 물 속 차가운 캔</td></tr>
+              <tr><td>전도</td><td>고체에서 열이 물체를 따라 이동</td><td>구리판, 숟가락 손잡이</td></tr>
+              <tr><td>대류</td><td>액체·기체에서 따뜻해진 물질이 직접 위로 올라가며 열이 이동</td><td>난로는 아래, 에어컨은 위</td></tr>
+              <tr><td>단열</td><td>두 물체 사이의 열의 이동을 줄이는 것</td><td>보온병, 이중창, 아이스박스</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 수행평가 안내 -->
+    <section class="slide" data-id="guide" data-title="수행평가 ① 이렇게 준비해요">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">수행평가 준비 ①</p><h2>수행평가, 이렇게 준비해요</h2><p>학교마다 방법은 조금씩 다르지만, 이 단원에서는 아래 같은 활동이 자주 나와요. 선생님께 받은 안내문과 함께 비교해 보세요.</p></div>
+        <div class="grid4">
+          <div class="panel"><h3>온도계 사용하기</h3><p>알맞은 온도계를 고르고, 눈금을 바르게 읽어요.</p></div>
+          <div class="panel"><h3>실험 결과 정리</h3><p>시간에 따른 온도를 표나 꺾은선그래프로 나타내요.</p></div>
+          <div class="panel"><h3>서술형 쓰기</h3><p>"두 물의 온도가 왜 이렇게 변했는지 쓰시오" 같은 문제예요.</p></div>
+          <div class="panel"><h3>생활 속 예 설명하기</h3><p>생활 속 열의 이동을 찾아 그림과 글로 설명해요.</p></div>
+        </div>
+        <div class="frame">
+          <h3>어떤 문제든 통하는 문장 틀</h3>
+          <p><u>(온도가 높은 물체)</u>에서 <u>(온도가 낮은 물체)</u>로 열이 이동한다. 그래서 <u>(높은 물체)</u>의 온도는 낮아지고, <u>(낮은 물체)</u>의 온도는 높아진다.</p>
+        </div>
+        <div class="tbl rubric">
+          <table>
+            <thead><tr><th>채점에서 보는 점</th><th>잘했어요 체크</th></tr></thead>
+            <tbody>
+              <tr><td>정확한 낱말</td><td>온도, 열, 이동처럼 과학 낱말을 바르게 썼나요?</td></tr>
+              <tr><td>이동 방향</td><td>열이 <b>높은 온도 → 낮은 온도</b>로 이동한다고 썼나요?</td></tr>
+              <tr><td>온도 변화</td><td>어느 쪽 온도가 높아지고 낮아지는지 함께 썼나요?</td></tr>
+              <tr><td>정리와 표현</td><td>측정값을 표나 그래프로 알아보기 쉽게 정리했나요?</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 서술형 -->
+    <section class="slide" data-id="essay" data-title="수행평가 ② 서술형 연습" data-stop="1">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">수행평가 준비 ②</p><h2>서술형 연습</h2><p>먼저 스스로 써 보고 <b>내 답 점검하기</b>를 누르세요. 꼭 들어가야 할 핵심 낱말이 있는지 알려 줘요. 쓴 답은 이 기기에 저장돼요.</p></div>
+        <div class="essays" id="essays"></div>
+      </div>
+    </section>
+
+    <!-- 15 설명 카드 -->
+    <section class="slide" data-id="card" data-title="수행평가 ③ 열의 이동 설명 카드 만들기" data-stop="1">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">수행평가 준비 ③</p><h2>생활 속 열의 이동 설명 카드</h2><p>상황을 고르고 빈칸을 채우면 카드가 완성돼요. 다 쓰면 <b>발표 읽어 주기</b>로 발표 연습을 해 보세요. 예시 그대로면 AI 성우가, 직접 고쳐 쓰면 기기 목소리가 읽어 줘요.</p></div>
+        <div class="maker">
+          <form class="form" id="cardForm" autocomplete="off">
+            <div><label for="cardArt">상황 고르기</label>
+              <select id="cardArt">
+                <option value="pan">프라이팬에 달걀 익히기</option><option value="icepack">얼음주머니로 이마 식히기</option><option value="warmer">손난로로 손 녹이기</option><option value="soup">뜨거운 국에 숟가락 담그기</option><option value="fridge">냉장고에 수박 넣기</option>
+              </select></div>
+            <div><label for="cardName">상황 이름</label><input type="text" id="cardName"></div>
+            <div><label for="cardHot">온도가 높은 물체</label><input type="text" id="cardHot"></div>
+            <div><label for="cardCold">온도가 낮은 물체</label><input type="text" id="cardCold"></div>
+            <div><label for="cardChange">온도는 어떻게 변하나요?</label><textarea id="cardChange" rows="2"></textarea></div>
+            <div><label for="cardExplain">열의 이동으로 설명하기</label><textarea id="cardExplain" rows="3"></textarea></div>
+            <div class="row">
+              <button class="btn" type="button" id="cardEx">예시 채우기</button>
+              <button class="btn" type="button" id="cardClear">지우기</button>
+              <button class="btn primary" type="button" id="cardSay">발표 읽어 주기</button>
+            </div>
+          </form>
+          <div class="card" aria-live="polite">
+            <div class="thumb"><svg viewBox="0 0 120 70" id="cardThumb"><use href="#sym-pan"/></svg></div>
+            <div class="cb">
+              <p class="tag">생활 속 열의 이동 카드</p>
+              <h3 id="pvName">상황 이름</h3>
+              <div class="flow"><div class="h" id="pvHot">-</div><span>열 →</span><div class="c" id="pvCold">-</div></div>
+              <dl>
+                <div><dt>온도 변화</dt><dd id="pvChange">-</dd></div>
+                <div><dt>열의 이동으로 설명하기</dt><dd id="pvExplain">-</dd></div>
+              </dl>
+              <p class="sign">열 탐구 노트</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16 퀴즈 -->
+    <section class="slide" data-id="quiz" data-title="실력 확인 퀴즈 10문제" data-stop="1">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">마무리 · 실력 확인</p><h2>실력 확인 퀴즈</h2><p>답을 누르면 바로 정답과 설명이 나와요. 틀린 문제는 설명을 꼭 읽어 보세요.</p></div>
+        <div class="score"><span>맞힌 문제 <b id="qScore">0</b> / <span id="qTotal">10</span></span><button class="btn" type="button" id="qReset">다시 풀기</button></div>
+        <div class="quiz" id="quiz"></div>
+      </div>
+    </section>
+
+    <!-- 17 마무리 -->
+    <section class="slide" data-id="end" data-title="마무리 체크리스트">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">마무리</p><h2>스스로 확인하는 체크리스트</h2><p>말로 설명할 수 있으면 체크하세요. 모두 체크하면 수행평가 준비 끝!</p></div>
+        <ul class="check" id="checklist"></ul>
+        <p class="note" style="margin-top:18px">음성: Supertone의 공개 AI 음성 모델 Supertonic 3(MIT 라이선스)로 만든 AI 성우 음성이에요. 그림과 그래프 값은 이해를 돕기 위해 새로 만든 예시예요.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottom">
+    <div class="aprog" aria-hidden="true"><i id="aprogBar"></i></div>
+    <audio id="voice" preload="auto"></audio>
+    <div class="caption" id="caption" aria-live="polite">재생 버튼을 누르면 AI 성우가 읽어 줘요.</div>
+    <div class="controls">
+      <button class="btn icon" type="button" id="btnPrev" aria-label="이전 장"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span class="hide-s">이전</span></button>
+      <button class="btn primary" type="button" id="btnAuto"><svg viewBox="0 0 24 24" fill="currentColor" id="icAuto"><path d="M7 4v16l13-8z"/></svg><span id="lbAuto">영상처럼 보기</span></button>
+      <button class="btn" type="button" id="btnListen" aria-label="이 장 듣기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg><span id="lbListen" class="hide-xs">이 장 듣기</span></button>
+      <button class="btn icon" type="button" id="btnNext" aria-label="다음 장"><span class="hide-s">다음</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<div class="overlay" id="tocBox" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tocTitle">
+    <header><h2 id="tocTitle">목차</h2><button class="btn" type="button" data-close>닫기</button></header>
+    <ol class="toclist" id="tocList"></ol>
+  </div>
+</div>
+
+<div class="overlay" id="setBox" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <header><h2 id="setTitle">목소리 설정</h2><button class="btn" type="button" data-close>닫기</button></header>
+    <p class="note">설명, 모범 답안, 카드 예시는 <b>AI 성우 음성(Supertonic 3)</b>으로 미리 녹음해 두었어요.</p>
+    <div><label for="rateSel" style="font-weight:700;font-size:.9rem">읽는 빠르기</label>
+      <select id="rateSel"><option value="0.9">천천히</option><option value="1" selected>보통</option><option value="1.15">조금 빠르게</option></select></div>
+    <div class="row"><button class="btn primary" type="button" id="aiTest">AI 성우 목소리 들어 보기</button></div>
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <div><label for="voiceSel" style="font-weight:700;font-size:.9rem">기기 목소리 (직접 고쳐 쓴 카드를 읽을 때만 써요)</label><select id="voiceSel"></select></div>
+    <div class="row"><button class="btn" type="button" id="voiceTest">기기 목소리 들어 보기</button></div>
+    <p class="note" id="voiceNote">기기에 설치된 한국어 목소리 중 여성 목소리를 먼저 골라 두었어요.</p>
+  </div>
+</div>
+
+<script type="application/json" id="voiceTiming">{"n_cover":{"dur":18.91,"cues":[{"t":0.15,"text":"안녕하세요!"},{"t":1.3,"text":"오늘은 과학 3단원, 열과 우리 생활에서 열이란 무엇인지 함께 알아볼 거예요."},{"t":7.78,"text":"온도와 온도계, 그리고 열이 어디에서 어디로 이동하는지 그림과 실험으로 살펴보고, 마지막에는 수행평가 연습까지 해 봐요."},{"t":17.42,"text":"그럼 시작해 볼까요?"}]},"n_feel":{"dur":25.03,"cues":[{"t":0.15,"text":"먼저 재미있는 실험 하나를 생각해 볼게요."},{"t":2.79,"text":"왼손은 차가운 물에, 오른손은 따뜻한 물에 잠시 넣었다가, 두 손을 동시에 미지근한 물에 넣어 보세요."},{"t":10.71,"text":"같은 물인데도 왼손은 따뜻하게, 오른손은 차갑게 느껴져요."},{"t":15.07,"text":"이처럼 손으로 느끼는 차갑고 따뜻한 정도는 사람과 상황에 따라 달라서 정확하지 않아요."},{"t":21.82,"text":"그래서 정확한 숫자로 나타내는 방법이 필요해요."}]},"n_temp":{"dur":25.75,"cues":[{"t":0.15,"text":"물질의 차갑거나 따뜻한 정도를 숫자로 나타낸 것을 온도라고 해요."},{"t":5.15,"text":"온도의 단위는 섭씨도이고, 작은 동그라미와 대문자 씨를 붙여 써요."},{"t":10.21,"text":"화면에 쓰인 온도는 섭씨 이십오 점 영 도라고 읽어요."},{"t":14.02,"text":"온도를 숫자로 나타내면 누구나 같은 값으로 정확하게 알 수 있어서, 날씨를 알려 주거나 음식을 만들 때, 그리고 몸이 아픈지 확인할 때 아주 편리해요."}]},"n_thermos":{"dur":21.96,"cues":[{"t":0.15,"text":"온도를 잴 때는 온도계를 써요."},{"t":2.13,"text":"알코올 온도계는 물이나 공기처럼 액체와 기체의 온도를 잴 때 써요."},{"t":7.55,"text":"적외선 온도계는 물체에 닿지 않고도 고체 물체의 표면 온도를 잴 수 있어요."},{"t":13.09,"text":"귀 체온계는 귓속에 넣어 우리 몸의 온도인 체온을 재요."},{"t":17.29,"text":"무엇의 온도를 재는지에 따라 알맞은 온도계를 골라 써야 해요."}]},"n_read":{"dur":28.46,"cues":[{"t":0.15,"text":"알코올 온도계를 바르게 읽는 방법을 알아볼게요."},{"t":3.69,"text":"먼저 온도계 아랫부분인 액체샘을 재려는 물에 넣어요."},{"t":7.64,"text":"이때 액체샘이 그릇의 바닥이나 옆면에 닿지 않게 해요."},{"t":11.52,"text":"빨간 액체 기둥이 더 이상 움직이지 않으면, 액체 기둥 끝이 닿은 곳의 눈금을 눈높이를 맞추어 읽어요."},{"t":19.94,"text":"그림의 온도계에서 긴 눈금 사이는 십 도, 짧은 눈금 하나는 일 도예요."},{"t":25.44,"text":"연습 문제로 온도계 읽기를 직접 해 보세요."}]},"n_heat":{"dur":28.32,"cues":[{"t":0.15,"text":"그렇다면 열은 무엇일까요?"},{"t":2.04,"text":"온도가 다른 두 물체가 닿아 있으면, 온도가 높은 물체에서 온도가 낮은 물체로 무언가가 옮겨 가요."},{"t":9.76,"text":"이것을 열이라고 해요."},{"t":11.49,"text":"열이 옮겨 가면 온도가 높은 물체는 온도가 낮아지고, 온도가 낮은 물체는 온도가 높아져요."},{"t":18.85,"text":"그래서 열은 물체의 온도를 변하게 하는 원인이에요."},{"t":22.44,"text":"닿게 하기 버튼을 눌러서 두 물체의 온도가 어떻게 변하는지 직접 확인해 보세요."}]},"n_contact":{"dur":28.31,"cues":[{"t":0.15,"text":"이번에는 실제 실험을 살펴볼게요."},{"t":2.51,"text":"따뜻한 물이 담긴 비커에 차가운 물이 담긴 음료수 캔을 넣고, 1분마다 두 물의 온도를 재었어요."},{"t":10.17,"text":"시간이 지날수록 따뜻한 물의 온도는 점점 낮아지고, 차가운 물의 온도는 점점 높아졌어요."},{"t":17.43,"text":"그리고 마침내 두 물의 온도가 같아졌어요."},{"t":20.14,"text":"따뜻한 물의 열이 차가운 물로 이동했기 때문이에요."},{"t":23.75,"text":"두 물의 온도가 같아지면 그 뒤로는 온도가 더 이상 변하지 않아요."}]},"n_direction":{"dur":25.26,"cues":[{"t":0.15,"text":"열은 언제나 온도가 높은 곳에서 온도가 낮은 곳으로 이동해요."},{"t":4.93,"text":"그럼 얼음을 손에 쥐면 왜 손이 차가워질까요?"},{"t":8.15,"text":"얼음의 차가움이 손으로 오는 것이 아니에요."},{"t":11.21,"text":"따뜻한 손의 열이 차가운 얼음으로 이동해서, 손의 온도가 낮아지기 때문이에요."},{"t":17.18,"text":"얼음은 손에서 열을 받아 녹아요."},{"t":19.38,"text":"차가움이 이동한다는 생각은 틀린 생각이니까, 수행평가에서 꼭 조심하세요."}]},"n_life":{"dur":25.04,"cues":[{"t":0.15,"text":"우리 생활에서도 열의 이동을 쉽게 찾을 수 있어요."},{"t":3.62,"text":"뜨거운 프라이팬의 열이 달걀로 이동해서 달걀이 익어요."},{"t":7.46,"text":"이마가 뜨거울 때 얼음주머니를 올리면, 이마의 열이 얼음주머니로 이동해서 이마가 시원해져요."},{"t":14.83,"text":"손난로를 쥐면 손난로의 열이 손으로 이동해서 손이 따뜻해져요."},{"t":19.7,"text":"냉장고에 넣은 수박은, 수박의 열이 차가운 공기로 이동해서 시원해져요."}]},"n_conduction":{"dur":26.57,"cues":[{"t":0.15,"text":"여기부터는 더 알아보기예요."},{"t":1.94,"text":"고체에서는 열이 어떻게 이동할까요?"},{"t":4.21,"text":"구리판의 한쪽 끝을 가열하면, 열 변색 붙임딱지의 색이 가열한 곳에서부터 먼 곳으로 차례차례 변해요."},{"t":12.46,"text":"이처럼 고체에서 열이 온도가 높은 곳에서 낮은 곳으로 물체를 따라 이동하는 것을 전도라고 해요."},{"t":19.8,"text":"프라이팬 손잡이를 나무나 플라스틱으로 만드는 까닭은, 열이 잘 전도되지 않게 하려는 거예요."}]},"n_convection":{"dur":25.1,"cues":[{"t":0.15,"text":"액체와 기체에서는 열이 어떻게 이동할까요?"},{"t":3.25,"text":"냄비 아래를 가열하면, 따뜻해진 물은 위로 올라가고 위에 있던 차가운 물은 아래로 내려와요."},{"t":10.22,"text":"이렇게 액체나 기체에서 따뜻해진 물질이 직접 위로 올라가며 열이 이동하는 것을 대류라고 해요."},{"t":17.36,"text":"그래서 난로는 방의 아래쪽에, 에어컨은 방의 위쪽에 두면 방 전체의 온도를 고르게 바꿀 수 있어요."}]},"n_insulation":{"dur":23.21,"cues":[{"t":0.15,"text":"마지막으로 단열이에요."},{"t":1.84,"text":"단열은 두 물체 사이에서 열의 이동을 줄이는 것이에요."},{"t":5.73,"text":"보온병은 벽 사이를 진공으로 만들어 열이 잘 이동하지 못하게 해요."},{"t":10.44,"text":"그래서 따뜻한 물은 따뜻하게, 차가운 물은 차갑게 오래 지켜 줘요."},{"t":15.42,"text":"겨울에 입는 두꺼운 옷, 집의 이중창, 스타이로폼으로 만든 아이스박스도 모두 단열을 이용한 것이에요."}]},"n_summary":{"dur":29.94,"cues":[{"t":0.15,"text":"지금까지 배운 내용을 정리해 볼게요."},{"t":2.51,"text":"온도는 물질의 차갑거나 따뜻한 정도를 숫자로 나타낸 것이고, 단위는 섭씨도예요."},{"t":8.91,"text":"열은 온도가 높은 물체에서 낮은 물체로 이동하며 물체의 온도를 변하게 해요."},{"t":14.91,"text":"온도가 다른 두 물체가 닿아 있으면 두 물체의 온도는 결국 같아져요."},{"t":19.95,"text":"고체에서는 전도, 액체와 기체에서는 대류로 열이 이동하고, 단열은 열의 이동을 줄이는 거예요."},{"t":27.28,"text":"표를 보며 소리 내어 한 번 읽어 보세요."}]},"n_guide":{"dur":30.9,"cues":[{"t":0.15,"text":"이제 수행평가를 준비해 볼게요."},{"t":2.28,"text":"이 단원에서는 온도계를 바르게 사용하기, 실험 결과를 표나 그래프로 정리하기, 서술형 쓰기, 생활 속 열의 이동 설명하기 같은 활동이 자주 나와요."},{"t":13.52,"text":"설명할 때는 이 문장 틀을 기억하세요."},{"t":16.15,"text":"무엇에서 무엇으로 열이 이동한다."},{"t":18.45,"text":"그래서 높은 물체의 온도는 낮아지고, 낮은 물체의 온도는 높아진다."},{"t":23.76,"text":"열이 이동하는 방향과 온도 변화, 이 두 가지만 정확하게 쓰면 대부분의 문제를 해결할 수 있어요."}]},"n_essay":{"dur":17.88,"cues":[{"t":0.15,"text":"서술형 문제를 연습해 볼게요."},{"t":2.33,"text":"먼저 스스로 답을 써 보고, 내 답 점검하기 버튼을 눌러 보세요."},{"t":7.11,"text":"꼭 들어가야 할 핵심 낱말이 들어 있는지 알려 줘요."},{"t":10.51,"text":"그다음 모범 답안과 비교해 보세요."},{"t":12.9,"text":"여기부터는 직접 해 보는 활동이니까, 자동 재생은 잠시 멈출게요."}]},"n_card":{"dur":14.6,"cues":[{"t":0.15,"text":"생활 속 열의 이동 설명 카드를 만들어 볼까요?"},{"t":3.46,"text":"상황을 고르고 빈칸을 채우면 카드가 완성돼요."},{"t":6.76,"text":"예시 채우기 버튼을 누르면 예시 답을 볼 수 있어요."},{"t":10.06,"text":"다 만들었으면 발표 읽어 주기 버튼으로 발표 연습도 해 보세요."}]},"n_quiz":{"dur":8.01,"cues":[{"t":0.15,"text":"마지막으로 실력 확인 퀴즈예요."},{"t":2.14,"text":"열 문제를 풀고 몇 개 맞혔는지 확인해 보세요."},{"t":5.44,"text":"틀린 문제는 설명을 꼭 읽어 보세요."}]},"n_end":{"dur":13.43,"cues":[{"t":0.15,"text":"오늘 공부 정말 잘했어요!"},{"t":2.07,"text":"체크리스트를 보며 스스로 설명할 수 있는지 확인해 보세요."},{"t":5.96,"text":"열이 어디에서 어디로 이동하는지만 기억하면, 수행평가도 자신 있게 해낼 수 있을 거예요."},{"t":12.44,"text":"화이팅!"}]},"e_0":{"dur":14.46,"cues":[{"t":0.15,"text":"손으로 느끼는 차갑고 따뜻한 정도는 사람이나 상황에 따라 다르게 느껴지기 때문에 정확하지 않습니다."},{"t":7.75,"text":"온도계로 재면 온도를 숫자로 나타낼 수 있어서 누구나 같은 값으로 정확하게 알 수 있습니다."}]},"e_1":{"dur":15.96,"cues":[{"t":0.15,"text":"따뜻한 물의 온도는 점점 낮아지고 차가운 물의 온도는 점점 높아지다가, 시간이 지나면 두 물의 온도가 같아집니다."},{"t":9.29,"text":"그 까닭은 온도가 높은 따뜻한 물에서 온도가 낮은 차가운 물로 열이 이동했기 때문입니다."}]},"e_2":{"dur":14.88,"cues":[{"t":0.15,"text":"손의 온도가 얼음보다 높기 때문에 손에서 얼음으로 열이 이동합니다."},{"t":5.36,"text":"손은 열을 잃어 온도가 낮아지므로 차갑게 느껴지고, 얼음은 열을 받아 녹습니다."},{"t":11.48,"text":"얼음의 차가움이 손으로 이동하는 것이 아닙니다."}]},"e_3":{"dur":12.73,"cues":[{"t":0.15,"text":"온도계의 액체샘이 그릇의 바닥이나 옆면에 닿지 않도록 합니다."},{"t":5.03,"text":"빨간 액체 기둥의 움직임이 멈추면, 액체 기둥 끝이 닿은 눈금을 눈높이를 맞추어 읽습니다."}]},"e_4":{"dur":12.32,"cues":[{"t":0.15,"text":"프라이팬으로 달걀을 익히는 것은 열의 이동을 볼 수 있는 예입니다."},{"t":4.77,"text":"온도가 높은 프라이팬에서 온도가 낮은 달걀로 열이 이동하여 달걀의 온도가 높아지고 익게 됩니다."}]},"c_pan":{"dur":21.52,"cues":[{"t":0.15,"text":"제가 설명할 상황은 프라이팬에 달걀 익히기입니다."},{"t":3.74,"text":"온도가 높은 물체는 뜨거운 프라이팬, 온도가 낮은 물체는 날달걀입니다."},{"t":9.34,"text":"달걀의 온도는 높아지고, 프라이팬의 온도는 조금 낮아져요."},{"t":13.87,"text":"온도가 높은 프라이팬에서 온도가 낮은 달걀로 열이 이동해서 달걀이 익어요."},{"t":19.85,"text":"들어 주셔서 감사합니다."}]},"c_icepack":{"dur":22.54,"cues":[{"t":0.15,"text":"제가 설명할 상황은 얼음주머니로 이마 식히기입니다."},{"t":4.13,"text":"온도가 높은 물체는 뜨거운 이마, 온도가 낮은 물체는 얼음주머니입니다."},{"t":9.74,"text":"이마의 온도는 낮아지고, 얼음주머니의 온도는 높아져요."},{"t":14.02,"text":"이마에서 얼음주머니로 열이 이동해서 이마가 시원해져요."},{"t":18.0,"text":"얼음주머니 속 얼음은 열을 받아 녹아요."},{"t":20.88,"text":"들어 주셔서 감사합니다."}]},"c_warmer":{"dur":21.5,"cues":[{"t":0.15,"text":"제가 설명할 상황은 손난로로 손 녹이기입니다."},{"t":3.65,"text":"온도가 높은 물체는 따뜻한 손난로, 온도가 낮은 물체는 차가운 손입니다."},{"t":9.5,"text":"손의 온도는 높아지고, 손난로의 온도는 조금씩 낮아져요."},{"t":14.03,"text":"온도가 높은 손난로에서 온도가 낮은 손으로 열이 이동해서 손이 따뜻해져요."},{"t":19.84,"text":"들어 주셔서 감사합니다."}]},"c_soup":{"dur":23.9,"cues":[{"t":0.15,"text":"제가 설명할 상황은 뜨거운 국에 숟가락 담그기입니다."},{"t":4.05,"text":"온도가 높은 물체는 뜨거운 국, 온도가 낮은 물체는 숟가락입니다."},{"t":9.26,"text":"숟가락의 온도는 높아지고, 국의 온도는 조금 낮아져요."},{"t":13.61,"text":"국에서 숟가락으로 열이 이동하고, 숟가락 안에서도 전도로 열이 손잡이 쪽까지 이동해서 손잡이가 따뜻해져요."},{"t":22.24,"text":"들어 주셔서 감사합니다."}]},"c_fridge":{"dur":20.23,"cues":[{"t":0.15,"text":"제가 설명할 상황은 냉장고에 수박 넣기입니다."},{"t":3.65,"text":"온도가 높은 물체는 수박, 온도가 낮은 물체는 냉장고 안의 차가운 공기입니다."},{"t":9.8,"text":"수박의 온도는 낮아지고, 주변 공기의 온도는 조금 높아져요."},{"t":14.39,"text":"수박에서 차가운 공기로 열이 이동해서 수박이 시원해져요."},{"t":18.57,"text":"들어 주셔서 감사합니다."}]}}</script>
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('heat:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('heat:' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const SVGNS = 'http://www.w3.org/2000/svg';
+
+  /* ---------- 내레이션(AI 성우 대본) ---------- */
+  const NARR = {
+    cover: '안녕하세요! 오늘은 과학 3단원, 열과 우리 생활에서 열이란 무엇인지 함께 알아볼 거예요. 온도와 온도계, 그리고 열이 어디에서 어디로 이동하는지 그림과 실험으로 살펴보고, 마지막에는 수행평가 연습까지 해 봐요. 그럼 시작해 볼까요?',
+    feel: '먼저 재미있는 실험 하나를 생각해 볼게요. 왼손은 차가운 물에, 오른손은 따뜻한 물에 잠시 넣었다가, 두 손을 동시에 미지근한 물에 넣어 보세요. 같은 물인데도 왼손은 따뜻하게, 오른손은 차갑게 느껴져요. 이처럼 손으로 느끼는 차갑고 따뜻한 정도는 사람과 상황에 따라 달라서 정확하지 않아요. 그래서 정확한 숫자로 나타내는 방법이 필요해요.',
+    temp: '물질의 차갑거나 따뜻한 정도를 숫자로 나타낸 것을 온도라고 해요. 온도의 단위는 섭씨도이고, 작은 동그라미와 대문자 씨를 붙여 써요. 화면에 쓰인 온도는 섭씨 이십오 점 영 도라고 읽어요. 온도를 숫자로 나타내면 누구나 같은 값으로 정확하게 알 수 있어서, 날씨를 알려 주거나 음식을 만들 때, 그리고 몸이 아픈지 확인할 때 아주 편리해요.',
+    thermos: '온도를 잴 때는 온도계를 써요. 알코올 온도계는 물이나 공기처럼 액체와 기체의 온도를 잴 때 써요. 적외선 온도계는 물체에 닿지 않고도 고체 물체의 표면 온도를 잴 수 있어요. 귀 체온계는 귓속에 넣어 우리 몸의 온도인 체온을 재요. 무엇의 온도를 재는지에 따라 알맞은 온도계를 골라 써야 해요.',
+    read: '알코올 온도계를 바르게 읽는 방법을 알아볼게요. 먼저 온도계 아랫부분인 액체샘을 재려는 물에 넣어요. 이때 액체샘이 그릇의 바닥이나 옆면에 닿지 않게 해요. 빨간 액체 기둥이 더 이상 움직이지 않으면, 액체 기둥 끝이 닿은 곳의 눈금을 눈높이를 맞추어 읽어요. 그림의 온도계에서 긴 눈금 사이는 십 도, 짧은 눈금 하나는 일 도예요. 연습 문제로 온도계 읽기를 직접 해 보세요.',
+    heat: '그렇다면 열은 무엇일까요? 온도가 다른 두 물체가 닿아 있으면, 온도가 높은 물체에서 온도가 낮은 물체로 무언가가 옮겨 가요. 이것을 열이라고 해요. 열이 옮겨 가면 온도가 높은 물체는 온도가 낮아지고, 온도가 낮은 물체는 온도가 높아져요. 그래서 열은 물체의 온도를 변하게 하는 원인이에요. 닿게 하기 버튼을 눌러서 두 물체의 온도가 어떻게 변하는지 직접 확인해 보세요.',
+    contact: '이번에는 실제 실험을 살펴볼게요. 따뜻한 물이 담긴 비커에 차가운 물이 담긴 음료수 캔을 넣고, 1분마다 두 물의 온도를 재었어요. 시간이 지날수록 따뜻한 물의 온도는 점점 낮아지고, 차가운 물의 온도는 점점 높아졌어요. 그리고 마침내 두 물의 온도가 같아졌어요. 따뜻한 물의 열이 차가운 물로 이동했기 때문이에요. 두 물의 온도가 같아지면 그 뒤로는 온도가 더 이상 변하지 않아요.',
+    direction: '열은 언제나 온도가 높은 곳에서 온도가 낮은 곳으로 이동해요. 그럼 얼음을 손에 쥐면 왜 손이 차가워질까요? 얼음의 차가움이 손으로 오는 것이 아니에요. 따뜻한 손의 열이 차가운 얼음으로 이동해서, 손의 온도가 낮아지기 때문이에요. 얼음은 손에서 열을 받아 녹아요. 차가움이 이동한다는 생각은 틀린 생각이니까, 수행평가에서 꼭 조심하세요.',
+    life: '우리 생활에서도 열의 이동을 쉽게 찾을 수 있어요. 뜨거운 프라이팬의 열이 달걀로 이동해서 달걀이 익어요. 이마가 뜨거울 때 얼음주머니를 올리면, 이마의 열이 얼음주머니로 이동해서 이마가 시원해져요. 손난로를 쥐면 손난로의 열이 손으로 이동해서 손이 따뜻해져요. 냉장고에 넣은 수박은, 수박의 열이 차가운 공기로 이동해서 시원해져요.',
+    conduction: '여기부터는 더 알아보기예요. 고체에서는 열이 어떻게 이동할까요? 구리판의 한쪽 끝을 가열하면, 열 변색 붙임딱지의 색이 가열한 곳에서부터 먼 곳으로 차례차례 변해요. 이처럼 고체에서 열이 온도가 높은 곳에서 낮은 곳으로 물체를 따라 이동하는 것을 전도라고 해요. 프라이팬 손잡이를 나무나 플라스틱으로 만드는 까닭은, 열이 잘 전도되지 않게 하려는 거예요.',
+    convection: '액체와 기체에서는 열이 어떻게 이동할까요? 냄비 아래를 가열하면, 따뜻해진 물은 위로 올라가고 위에 있던 차가운 물은 아래로 내려와요. 이렇게 액체나 기체에서 따뜻해진 물질이 직접 위로 올라가며 열이 이동하는 것을 대류라고 해요. 그래서 난로는 방의 아래쪽에, 에어컨은 방의 위쪽에 두면 방 전체의 온도를 고르게 바꿀 수 있어요.',
+    insulation: '마지막으로 단열이에요. 단열은 두 물체 사이에서 열의 이동을 줄이는 것이에요. 보온병은 벽 사이를 진공으로 만들어 열이 잘 이동하지 못하게 해요. 그래서 따뜻한 물은 따뜻하게, 차가운 물은 차갑게 오래 지켜 줘요. 겨울에 입는 두꺼운 옷, 집의 이중창, 스타이로폼으로 만든 아이스박스도 모두 단열을 이용한 것이에요.',
+    summary: '지금까지 배운 내용을 정리해 볼게요. 온도는 물질의 차갑거나 따뜻한 정도를 숫자로 나타낸 것이고, 단위는 섭씨도예요. 열은 온도가 높은 물체에서 낮은 물체로 이동하며 물체의 온도를 변하게 해요. 온도가 다른 두 물체가 닿아 있으면 두 물체의 온도는 결국 같아져요. 고체에서는 전도, 액체와 기체에서는 대류로 열이 이동하고, 단열은 열의 이동을 줄이는 거예요. 표를 보며 소리 내어 한 번 읽어 보세요.',
+    guide: '이제 수행평가를 준비해 볼게요. 이 단원에서는 온도계를 바르게 사용하기, 실험 결과를 표나 그래프로 정리하기, 서술형 쓰기, 생활 속 열의 이동 설명하기 같은 활동이 자주 나와요. 설명할 때는 이 문장 틀을 기억하세요. 무엇에서 무엇으로 열이 이동한다. 그래서 높은 물체의 온도는 낮아지고, 낮은 물체의 온도는 높아진다. 열이 이동하는 방향과 온도 변화, 이 두 가지만 정확하게 쓰면 대부분의 문제를 해결할 수 있어요.',
+    essay: '서술형 문제를 연습해 볼게요. 먼저 스스로 답을 써 보고, 내 답 점검하기 버튼을 눌러 보세요. 꼭 들어가야 할 핵심 낱말이 들어 있는지 알려 줘요. 그다음 모범 답안과 비교해 보세요. 여기부터는 직접 해 보는 활동이니까, 자동 재생은 잠시 멈출게요.',
+    card: '생활 속 열의 이동 설명 카드를 만들어 볼까요? 상황을 고르고 빈칸을 채우면 카드가 완성돼요. 예시 채우기 버튼을 누르면 예시 답을 볼 수 있어요. 다 만들었으면 발표 읽어 주기 버튼으로 발표 연습도 해 보세요.',
+    quiz: '마지막으로 실력 확인 퀴즈예요. 열 문제를 풀고 몇 개 맞혔는지 확인해 보세요. 틀린 문제는 설명을 꼭 읽어 보세요.',
+    end: '오늘 공부 정말 잘했어요! 체크리스트를 보며 스스로 설명할 수 있는지 확인해 보세요. 열이 어디에서 어디로 이동하는지만 기억하면, 수행평가도 자신 있게 해낼 수 있을 거예요. 화이팅!'
+  };
+  const IDLE = '재생 버튼을 누르면 AI 성우가 읽어 줘요.';
+
+  /* ---------- 온도계 읽기 연습 ---------- */
+  const Y0 = 470, PX = 9; // 0℃ 위치와 1℃당 픽셀
+  (function drawScale() {
+    const tg = $('#ticks'), lg = $('#tickLabels');
+    for (let t = 0; t <= 40; t++) {
+      const y = Y0 - t * PX, len = t % 10 === 0 ? 34 : t % 5 === 0 ? 24 : 14;
+      const l = document.createElementNS(SVGNS, 'path');
+      l.setAttribute('d', `M414 ${y}h${len}`); l.setAttribute('stroke-width', t % 10 === 0 ? 3 : 1.6);
+      tg.appendChild(l);
+      if (t % 10 === 0) {
+        const tx = document.createElementNS(SVGNS, 'text');
+        tx.setAttribute('x', 458); tx.setAttribute('y', y + 9); tx.textContent = t;
+        lg.appendChild(tx);
+      }
+    }
+  })();
+  let readTarget = 23;
+  function setTherm(t) {
+    $('#liq').style.transform = `scaleY(${t / 40})`;
+    $('#eyeLine').style.transform = `translateY(${-t * PX}px)`;
+  }
+  setTherm(readTarget);
+  $('#readNew').addEventListener('click', () => {
+    let n; do { n = 3 + Math.floor(Math.random() * 35); } while (n === readTarget);
+    readTarget = n; setTherm(n); $('#readAns').value = '';
+    const m = $('#readMsg'); m.className = 'msg'; m.textContent = '새 문제예요. 눈금을 세어 보세요.';
+  });
+  $('#readCheck').addEventListener('click', () => {
+    const v = parseFloat($('#readAns').value), m = $('#readMsg');
+    if (isNaN(v)) { m.className = 'msg no'; m.textContent = '숫자를 먼저 써 주세요.'; return; }
+    if (v === readTarget) { m.className = 'msg ok'; m.textContent = `정답! 액체 기둥 끝이 ${readTarget} ℃ 눈금에 있어요.`; }
+    else { m.className = 'msg no'; m.textContent = `다시 한번! 가까운 긴 눈금(10 ℃ 단위)을 먼저 찾고, 짧은 눈금을 하나씩(1 ℃) 세어 보세요.`; }
+  });
+  $('#readAns').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#readCheck').click(); } });
+
+  /* ---------- 열 이동 시뮬레이터 ---------- */
+  function tempColor(t) {
+    const a = [61, 139, 217], b = [232, 85, 43], k = Math.max(0, Math.min(1, t / 90));
+    return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(',')})`;
+  }
+  let simRaf = 0;
+  function simShow(h, c, note, arrow) {
+    $('#simHot').textContent = Math.round(h); $('#simCold').textContent = Math.round(c);
+    $('#blkH').setAttribute('fill', tempColor(h)); $('#blkC').setAttribute('fill', tempColor(c));
+    $('#simArrows').style.opacity = arrow; if (note) $('#simNote').textContent = note;
+  }
+  function simReset() {
+    cancelAnimationFrame(simRaf);
+    const h = +$('#hotT').value, c = +$('#coldT').value;
+    $('#hotO').textContent = h; $('#coldO').textContent = c;
+    simShow(h, c, "아래 '닿게 하기'를 눌러 보세요", 1);
+  }
+  ['hotT', 'coldT'].forEach(id => $('#' + id).addEventListener('input', simReset));
+  $('#simReset').addEventListener('click', simReset);
+  $('#simGo').addEventListener('click', () => {
+    cancelAnimationFrame(simRaf);
+    const h = +$('#hotT').value, c = +$('#coldT').value, f = (h + c) / 2, t0 = performance.now(), dur = 6000;
+    const step = now => {
+      const p = Math.min(1, (now - t0) / dur), e = Math.exp(-5 * p);
+      const H = f + (h - f) * e, C = f + (c - f) * e;
+      simShow(H, C, p < 1 ? '열이 이동하는 중…' : `두 물체의 온도가 ${Math.round(f)} ℃로 같아졌어요!`, Math.max(0, (H - C) / Math.max(1, h - c)));
+      if (p < 1) simRaf = requestAnimationFrame(step);
+    };
+    simRaf = requestAnimationFrame(step);
+  });
+  simReset();
+
+  /* ---------- 슬라이드 넘기기 ---------- */
+  const slides = $$('.slide');
+  let cur = 0, auto = false, autoTimer = null;
+  slides.forEach(s => { [...s.querySelectorAll('.txt, .full')].forEach(box => [...box.children].forEach((el, i) => el.style.setProperty('--i', i))); });
+  function updateUI() {
+    $('#pager').textContent = `${cur + 1} / ${slides.length}`;
+    $('#bar').style.width = ((cur + 1) / slides.length * 100) + '%';
+    $('#btnPrev').disabled = cur === 0; $('#btnNext').disabled = cur === slides.length - 1;
+    $$('#tocList button').forEach((b, i) => b.setAttribute('aria-current', i === cur ? 'true' : 'false'));
+  }
+  function go(i) {
+    if (i < 0 || i >= slides.length || i === cur) return;
+    const dirBack = i < cur;
+    clearTimeout(autoTimer);
+    slides[cur].classList.remove('active');
+    slides.forEach(s => s.classList.toggle('back', dirBack));
+    cur = i;
+    const s = slides[cur];
+    s.scrollTop = 0; s.classList.add('active');
+    updateUI();
+    if (auto) narrate(); else { stopSpeech(); setCaption(IDLE, false); }
+  }
+  $('#btnPrev').addEventListener('click', () => go(cur - 1));
+  $('#btnNext').addEventListener('click', () => go(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select')) return;
+    if (!$('#tocBox').hidden || !$('#setBox').hidden) { if (e.key === 'Escape') closeAll(); return; }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  });
+  let tx = 0, ty = 0, tOk = false;
+  const stage = $('#stage');
+  stage.addEventListener('touchstart', e => { tOk = !e.target.closest('input, textarea, select, .tbl, button, a'); tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (!tOk) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.6) go(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  /* ---------- 목차 · 설정 창 ---------- */
+  const toc = $('#tocList');
+  slides.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button"><span>${i + 1}</span><span>${s.dataset.title}</span></button>`;
+    li.firstChild.addEventListener('click', () => { closeAll(); go(i); });
+    toc.appendChild(li);
+  });
+  function closeAll() { $('#tocBox').hidden = true; $('#setBox').hidden = true; }
+  $('#btnToc').addEventListener('click', () => { $('#tocBox').hidden = false; });
+  $('#btnSet').addEventListener('click', () => { loadVoices(); $('#setBox').hidden = false; });
+  $$('[data-close]').forEach(b => b.addEventListener('click', closeAll));
+  $$('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeAll(); }));
+
+  /* ---------- 목소리: 녹음된 AI 성우 + 기기 목소리(직접 쓴 글) ---------- */
+  const synth = window.speechSynthesis || null;
+  let voices = [], voice = null, rate = +store.get('rate', 1), token = 0, speaking = false;
+  $('#rateSel').value = String(rate);
+  function voiceScore(v) {
+    const n = (v.name + ' ' + (v.voiceURI || '')).toLowerCase();
+    let s = 0;
+    if (/female|여성|여자|yuna|sora|heami|sunhi|sun-hi|seoyeon|jimin|nara|나래|유나|google 한국|ko-kr-x-ism|ko-kr-x-kob|kyuri|yujin/.test(n)) s += 10;
+    else if (/\bmale\b|남성|남자|injoon|in-joon|hyunsu|minsu|jian|bongjin|gookmin|ko-kr-x-koc|ko-kr-x-kod|minjun/.test(n)) s -= 10;
+    if (/natural|online|neural|premium|enhanced/.test(n)) s += 3;
+    return s;
+  }
+  function loadVoices() {
+    if (!synth) { $('#voiceNote').textContent = '이 브라우저는 기기 목소리 읽어 주기를 지원하지 않아요. 녹음된 AI 성우 음성은 그대로 들을 수 있어요.'; return; }
+    const all = synth.getVoices();
+    const ko = all.filter(v => /^ko/i.test(v.lang) || /korean|한국/i.test(v.name)).sort((a, b) => voiceScore(b) - voiceScore(a));
+    if (ko.length === voices.length && voice) return;
+    voices = ko;
+    const sel = $('#voiceSel'); sel.innerHTML = '';
+    if (!ko.length) { sel.innerHTML = '<option value="">기본 목소리</option>'; return; }
+    const saved = store.get('voice', '');
+    ko.forEach((v, i) => { const o = document.createElement('option'); o.value = String(i); o.textContent = v.name + (voiceScore(v) >= 10 ? ' (여성 추천)' : ''); sel.appendChild(o); });
+    let idx = ko.findIndex(v => v.name === saved); if (idx < 0) idx = 0;
+    sel.value = String(idx); voice = ko[idx];
+  }
+  if (synth) { loadVoices(); synth.onvoiceschanged = loadVoices; setTimeout(loadVoices, 600); setTimeout(loadVoices, 2000); }
+  $('#voiceSel').addEventListener('change', e => { voice = voices[+e.target.value] || null; if (voice) store.set('voice', voice.name); });
+  $('#voiceTest').addEventListener('click', () => speakText('안녕하세요. 직접 쓴 글을 읽어 줄 기기 목소리예요.', null));
+
+  let unlocked = false;
+  function unlockVoice() {
+    if (unlocked || !synth) return; unlocked = true;
+    try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {}
+  }
+  document.addEventListener('click', unlockVoice, true);
+  document.addEventListener('touchend', unlockVoice, true);
+  function setCaption(t, on) { const c = $('#caption'); c.textContent = t; c.classList.toggle('on', !!on); }
+  function splitSentences(t) { return (t.match(/[^.!?]+[.!?]?/g) || [t]).map(s => s.trim()).filter(Boolean); }
+  function stopSpeech() {
+    token++; speaking = false; clearTimeout(autoTimer);
+    if (synth) try { synth.cancel(); } catch (e) {}
+    try { player.pause(); } catch (e) {}
+    $('#aprogBar').style.width = '0';
+    refreshButtons();
+  }
+  function speakText(text, onDone) {
+    stopSpeech();
+    const my = ++token; speaking = true; refreshButtons();
+    const list = splitSentences(text); let k = 0;
+    const next = () => {
+      if (my !== token) return;
+      if (k >= list.length) { speaking = false; refreshButtons(); setCaption(auto ? '' : IDLE, false); onDone && onDone(); return; }
+      const line = list[k++]; setCaption(line, true);
+      if (!synth) { autoTimer = setTimeout(next, Math.max(1800, line.length * 120 / rate)); return; }
+      const u = new SpeechSynthesisUtterance(line);
+      u.lang = 'ko-KR'; if (voice) u.voice = voice; u.rate = rate * 0.95; u.pitch = 1.05;
+      let done = false;
+      const fin = () => { if (done) return; done = true; clearTimeout(guard); if (my === token) setTimeout(next, 160); };
+      const guard = setTimeout(fin, (line.length * 380 + 5000) / rate);
+      u.onend = fin;
+      u.onerror = e => {
+        if (my !== token) return;
+        if (e.error === 'not-allowed') { clearTimeout(guard); done = true; auto = false; speaking = false; refreshButtons(); setCaption('소리를 켜려면 아래 재생 버튼을 한 번 눌러 주세요.', false); return; }
+        fin();
+      };
+      try { synth.speak(u); } catch (err) { fin(); }
+    };
+    setTimeout(next, 80);
+  }
+  const TIMING = (() => { try { return JSON.parse($('#voiceTiming').textContent); } catch (e) { return {}; } })();
+  const player = $('#voice');
+  $('#rateSel').addEventListener('change', e => { rate = +e.target.value; store.set('rate', rate); player.playbackRate = rate; });
+  function playKey(key, onDone) {
+    const info = TIMING[key];
+    if (!info) return false;
+    stopSpeech();
+    const my = ++token; speaking = true; refreshButtons();
+    let ci = -1;
+    player.src = 'audio/' + key + '.mp3';
+    player.defaultPlaybackRate = rate; player.playbackRate = rate;
+    player.ontimeupdate = () => {
+      if (my !== token) return;
+      const t = player.currentTime; let i = info.cues.length - 1;
+      while (i > 0 && info.cues[i].t > t) i--;
+      if (i !== ci) { ci = i; setCaption(info.cues[i].text, true); }
+      $('#aprogBar').style.width = Math.min(100, t / info.dur * 100) + '%';
+    };
+    player.onended = () => {
+      if (my !== token) return;
+      speaking = false; refreshButtons(); $('#aprogBar').style.width = '0';
+      setCaption(auto ? '' : IDLE, false); onDone && onDone();
+    };
+    player.onerror = () => { if (my !== token) return; speakText(info.cues.map(c => c.text).join(' '), onDone); };
+    setCaption(info.cues[0].text, true);
+    const pr = player.play();
+    if (pr) pr.catch(err => {
+      if (my !== token || (err && err.name === 'AbortError')) return;
+      speaking = false; auto = false; refreshButtons();
+      setCaption('소리를 켜려면 아래 재생 버튼을 한 번 눌러 주세요.', false);
+    });
+    return true;
+  }
+  function preload(i) {
+    const s = slides[i]; if (!s || !TIMING['n_' + s.dataset.id]) return;
+    try { const a = new Audio(); a.preload = 'auto'; a.src = 'audio/n_' + s.dataset.id + '.mp3'; } catch (e) {}
+  }
+  function narrate() {
+    const s = slides[cur];
+    preload(cur + 1);
+    const after = () => {
+      if (!auto) return;
+      if (s.dataset.stop || cur >= slides.length - 1) { auto = false; refreshButtons(); setCaption(cur >= slides.length - 1 ? '끝까지 잘 봤어요! 목차에서 다시 보고 싶은 장을 골라 보세요.' : '여기부터는 직접 해 보는 활동이에요. 천천히 풀어 보세요.', false); return; }
+      autoTimer = setTimeout(() => go(cur + 1), 1100);
+    };
+    if (!playKey('n_' + s.dataset.id, after)) speakText(NARR[s.dataset.id] || '', after);
+  }
+  $('#aiTest').addEventListener('click', () => { auto = false; closeAll(); playKey('n_cover', null); });
+  let wake = null;
+  function keepAwake(on) {
+    try {
+      if (on && navigator.wakeLock && !wake) navigator.wakeLock.request('screen').then(w => { wake = w; }).catch(() => {});
+      if (!on && wake) { wake.release().catch(() => {}); wake = null; }
+    } catch (e) {}
+  }
+  function refreshButtons() {
+    $('#lbAuto').textContent = auto ? '멈추기' : '영상처럼 보기';
+    $('#icAuto').innerHTML = auto ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+    $('#lbListen').textContent = (speaking && !auto) ? '그만 듣기' : '이 장 듣기';
+    keepAwake(auto);
+  }
+  function startAuto() { auto = true; refreshButtons(); narrate(); }
+  $('#btnAuto').addEventListener('click', () => { if (auto) { auto = false; stopSpeech(); setCaption(IDLE, false); } else startAuto(); });
+  $('#btnListen').addEventListener('click', () => {
+    if (speaking && !auto) { stopSpeech(); setCaption(IDLE, false); return; }
+    auto = false; narrate();
+  });
+  $('#btnStartAuto').addEventListener('click', () => { startAuto(); });
+  $('#btnStartManual').addEventListener('click', () => go(1));
+
+  /* ---------- 서술형 연습 ---------- */
+  const ESSAYS = [
+    { q: '온도를 손으로 느끼는 것보다 온도계로 재는 것이 좋은 까닭을 쓰세요.',
+      keys: [['사람·상황마다 다르게 느낌', ['다르게', '다르']], ['정확하지 않음', ['정확']], ['숫자로 나타냄', ['숫자']]],
+      model: '손으로 느끼는 차갑고 따뜻한 정도는 사람이나 상황에 따라 다르게 느껴지기 때문에 정확하지 않습니다. 온도계로 재면 온도를 숫자로 나타낼 수 있어서 누구나 같은 값으로 정확하게 알 수 있습니다.' },
+    { q: '따뜻한 물에 차가운 물이 든 캔을 넣었을 때 두 물의 온도는 어떻게 변하는지, 그 까닭과 함께 쓰세요.',
+      keys: [['따뜻한 물: 낮아짐', ['낮아']], ['차가운 물: 높아짐', ['높아']], ['온도가 같아짐', ['같아']], ['열이 이동', ['이동']]],
+      model: '따뜻한 물의 온도는 점점 낮아지고 차가운 물의 온도는 점점 높아지다가, 시간이 지나면 두 물의 온도가 같아집니다. 그 까닭은 온도가 높은 따뜻한 물에서 온도가 낮은 차가운 물로 열이 이동했기 때문입니다.' },
+    { q: '얼음을 손에 쥐면 손이 차가워지는 까닭을 열의 이동으로 설명하세요.',
+      keys: [['손에서 열이 나감', ['손에서', '손의열', '손의 열']], ['얼음으로 이동', ['얼음으로']], ['손의 온도가 낮아짐', ['낮아']], ['얼음이 녹음', ['녹']]],
+      model: '손의 온도가 얼음보다 높기 때문에 손에서 얼음으로 열이 이동합니다. 손은 열을 잃어 온도가 낮아지므로 차갑게 느껴지고, 얼음은 열을 받아 녹습니다. 얼음의 차가움이 손으로 이동하는 것이 아닙니다.' },
+    { q: '알코올 온도계로 물의 온도를 잴 때 주의할 점을 두 가지 쓰세요.',
+      keys: [['바닥·옆면에 닿지 않게', ['닿지']], ['액체 기둥이 멈추면', ['멈추', '움직이지']], ['눈높이 맞추기', ['눈높이']]],
+      model: '온도계의 액체샘이 그릇의 바닥이나 옆면에 닿지 않도록 합니다. 빨간 액체 기둥의 움직임이 멈추면, 액체 기둥 끝이 닿은 눈금을 눈높이를 맞추어 읽습니다.' },
+    { q: '생활 속에서 열의 이동을 볼 수 있는 예를 하나 들고, 열이 어디에서 어디로 이동하는지 쓰세요.',
+      keys: [['생활 속 예', ['프라이팬', '얼음', '손난로', '냉장고', '국', '숟가락', '난로', '찜질', '컵']], ['어디에서', ['에서']], ['열이 이동', ['이동']], ['온도 변화', ['높아', '낮아', '따뜻해', '시원해', '익']]],
+      model: '프라이팬으로 달걀을 익히는 것은 열의 이동을 볼 수 있는 예입니다. 온도가 높은 프라이팬에서 온도가 낮은 달걀로 열이 이동하여 달걀의 온도가 높아지고 익게 됩니다.' }
+  ];
+  const essayBox = $('#essays');
+  const drafts = store.get('essays', {});
+  ESSAYS.forEach((e, i) => {
+    const art = document.createElement('article'); art.className = 'essay';
+    art.innerHTML = `<h3><span class="qn">문제 ${i + 1}</span>${e.q}</h3>
+      <label class="sr" for="essay${i}">문제 ${i + 1} 내 답</label>
+      <textarea id="essay${i}" rows="4" placeholder="여기에 내 답을 써 보세요. (문장 틀: ~에서 ~로 열이 이동한다. 그래서 ~의 온도는 ~.)"></textarea>
+      <div class="row"><button class="btn" type="button" data-a="check">내 답 점검하기</button><button class="btn" type="button" data-a="model">모범 답안 보기</button><button class="btn" type="button" data-a="listen">모범 답안 듣기</button></div>
+      <div class="chips" hidden></div>
+      <div class="model" hidden><b>모범 답안</b><p>${e.model}</p></div>`;
+    const ta = art.querySelector('textarea'); ta.value = drafts[i] || '';
+    ta.addEventListener('input', () => { drafts[i] = ta.value; store.set('essays', drafts); });
+    art.querySelector('[data-a="check"]').addEventListener('click', () => {
+      const v = ta.value.replace(/\s+/g, '').toLowerCase();
+      const chips = art.querySelector('.chips');
+      if (!v) { chips.hidden = false; chips.innerHTML = '<span>먼저 답을 써 보세요.</span>'; return; }
+      let got = 0;
+      const html = e.keys.map(([label, words]) => {
+        const ok = words.some(w => v.includes(w.replace(/\s+/g, '').toLowerCase())); if (ok) got++;
+        return `<span class="chip ${ok ? 'yes' : 'no'}">${ok ? '✓' : '＋'} ${label}</span>`;
+      }).join('');
+      const msg = got === e.keys.length ? '핵심 낱말이 모두 들어 있어요! 문장이 자연스러운지 소리 내어 읽어 보세요.' : `핵심 낱말 ${e.keys.length}개 중 ${got}개가 들어 있어요. 점선으로 표시된 내용을 넣어 다시 써 보세요.`;
+      chips.hidden = false; chips.innerHTML = html + `<span style="flex-basis:100%;color:var(--muted)">${msg}</span>`;
+    });
+    art.querySelector('[data-a="model"]').addEventListener('click', ev => {
+      const m = art.querySelector('.model'); m.hidden = !m.hidden; ev.currentTarget.textContent = m.hidden ? '모범 답안 보기' : '모범 답안 숨기기';
+    });
+    art.querySelector('[data-a="listen"]').addEventListener('click', () => { auto = false; if (!playKey('e_' + i, null)) speakText(e.model, null); });
+    essayBox.appendChild(art);
+  });
+
+  /* ---------- 열의 이동 설명 카드 ---------- */
+  const PRESET = {
+    pan: { thumb: '<use href="#sym-pan"/>', name: '프라이팬에 달걀 익히기', hot: '뜨거운 프라이팬', cold: '날달걀', change: '달걀의 온도는 높아지고, 프라이팬의 온도는 조금 낮아져요.', explain: '온도가 높은 프라이팬에서 온도가 낮은 달걀로 열이 이동해서 달걀이 익어요.' },
+    icepack: { thumb: '<use href="#sym-ice"/>', name: '얼음주머니로 이마 식히기', hot: '뜨거운 이마', cold: '얼음주머니', change: '이마의 온도는 낮아지고, 얼음주머니의 온도는 높아져요.', explain: '이마에서 얼음주머니로 열이 이동해서 이마가 시원해져요. 얼음주머니 속 얼음은 열을 받아 녹아요.' },
+    warmer: { thumb: '<use href="#sym-warmer"/>', name: '손난로로 손 녹이기', hot: '따뜻한 손난로', cold: '차가운 손', change: '손의 온도는 높아지고, 손난로의 온도는 조금씩 낮아져요.', explain: '온도가 높은 손난로에서 온도가 낮은 손으로 열이 이동해서 손이 따뜻해져요.' },
+    soup: { thumb: '<use href="#sym-soup"/>', name: '뜨거운 국에 숟가락 담그기', hot: '뜨거운 국', cold: '숟가락', change: '숟가락의 온도는 높아지고, 국의 온도는 조금 낮아져요.', explain: '국에서 숟가락으로 열이 이동하고, 숟가락 안에서도 전도로 열이 손잡이 쪽까지 이동해서 손잡이가 따뜻해져요.' },
+    fridge: { thumb: '<use href="#sym-fridge"/>', name: '냉장고에 수박 넣기', hot: '수박', cold: '냉장고 안의 차가운 공기', change: '수박의 온도는 낮아지고, 주변 공기의 온도는 조금 높아져요.', explain: '수박에서 차가운 공기로 열이 이동해서 수박이 시원해져요.' }
+  };
+  const F = ['Name', 'Hot', 'Cold', 'Change', 'Explain'];
+  const cardSaved = store.get('card', null);
+  function renderCard() {
+    const p = PRESET[$('#cardArt').value];
+    $('#cardThumb').innerHTML = p.thumb;
+    F.forEach(f => { const v = $('#card' + f).value.trim(); $('#pv' + f).textContent = v || (f === 'Name' ? '상황 이름' : '-'); });
+    const data = { art: $('#cardArt').value }; F.forEach(f => data[f] = $('#card' + f).value); store.set('card', data);
+  }
+  function fillExample() { const p = PRESET[$('#cardArt').value]; F.forEach(f => { $('#card' + f).value = p[f.toLowerCase()]; }); renderCard(); }
+  function onlyPresetText() { return F.every(f => { const v = $('#card' + f).value.trim(); return !v || Object.values(PRESET).some(p => p[f.toLowerCase()] === v); }); }
+  if (cardSaved) { $('#cardArt').value = cardSaved.art || 'pan'; F.forEach(f => { $('#card' + f).value = cardSaved[f] || ''; }); renderCard(); }
+  else fillExample();
+  $('#cardForm').addEventListener('input', renderCard);
+  $('#cardForm').addEventListener('submit', e => e.preventDefault());
+  $('#cardArt').addEventListener('change', () => { if (onlyPresetText()) fillExample(); else renderCard(); });
+  $('#cardEx').addEventListener('click', fillExample);
+  $('#cardClear').addEventListener('click', () => { F.forEach(f => { $('#card' + f).value = ''; }); renderCard(); $('#cardName').focus(); });
+  $('#cardSay').addEventListener('click', () => {
+    const v = f => $('#card' + f).value.trim();
+    if (!v('Name')) { setCaption('먼저 상황 이름을 써 주세요.', false); $('#cardName').focus(); return; }
+    auto = false;
+    const art = $('#cardArt').value, p = PRESET[art];
+    if (F.every(f => v(f) === p[f.toLowerCase()]) && playKey('c_' + art, null)) return;
+    const script = `제가 설명할 상황은 ${v('Name')}입니다. ` + (v('Hot') ? `온도가 높은 물체는 ${v('Hot')}, ` : '') + (v('Cold') ? `온도가 낮은 물체는 ${v('Cold')}입니다. ` : '') + (v('Change') ? v('Change') + ' ' : '') + (v('Explain') ? v('Explain') + ' ' : '') + '들어 주셔서 감사합니다.';
+    speakText(script, null);
+  });
+
+  /* ---------- 퀴즈 ---------- */
+  const QUIZ = [
+    ['물질의 차갑거나 따뜻한 정도를 숫자로 나타낸 것은?', ['온도', '열', '무게', '부피'], '온도는 차갑고 따뜻한 정도를 숫자로 나타낸 것이에요. 열은 이동하면서 온도를 바꾸는 것이에요.'],
+    ['온도의 단위 ℃를 읽는 말은?', ['섭씨도', '킬로그램', '센티미터', '리터'], '℃는 섭씨도라고 읽어요. 25.0 ℃는 섭씨 이십오 점 영 도예요.'],
+    ['고체 물체의 표면 온도를 닿지 않고 재기 좋은 온도계는?', ['적외선 온도계', '알코올 온도계', '귀 체온계', '막대자'], '적외선 온도계는 물체에 닿지 않고 표면 온도를 재요.'],
+    ['알코올 온도계를 읽는 방법으로 옳은 것은?', ['액체 기둥이 멈추면 끝의 눈금을 눈높이에 맞춰 읽는다', '물에 넣자마자 바로 읽는다', '위에서 내려다보며 읽는다', '액체샘을 그릇 바닥에 꼭 붙인다'], '액체 기둥의 움직임이 멈추면, 끝이 닿은 눈금을 눈높이를 맞추어 읽어요.'],
+    ['온도가 다른 두 물체가 닿아 있을 때 열은 어느 쪽으로 이동할까요?', ['온도가 높은 물체 → 낮은 물체', '온도가 낮은 물체 → 높은 물체', '무거운 물체 → 가벼운 물체', '이동하지 않는다'], '열은 언제나 온도가 높은 곳에서 낮은 곳으로 이동해요.'],
+    ['따뜻한 물에 차가운 물이 든 캔을 넣고 시간이 충분히 지나면?', ['두 물의 온도가 같아진다', '따뜻한 물이 더 뜨거워진다', '차가운 물이 더 차가워진다', '두 물 모두 변하지 않는다'], '열이 이동해서 두 물의 온도가 같아지고, 그 뒤로는 변하지 않아요.'],
+    ['얼음을 쥔 손이 차가워지는 까닭은?', ['손의 열이 얼음으로 이동해서', '얼음의 차가움이 손으로 이동해서', '손이 얼음을 눌러서', '공기가 없어져서'], '차가움이 이동하는 것이 아니라, 손의 열이 얼음으로 이동해요.'],
+    ['고체에서 열이 물체를 따라 이동하는 것은?', ['전도', '대류', '단열', '증발'], '구리판이나 숟가락처럼 고체에서는 전도로 열이 이동해요.'],
+    ['에어컨을 방의 위쪽에 다는 까닭과 관계 깊은 것은?', ['대류', '전도', '단열', '그림자'], '차가운 공기는 아래로 내려오고 따뜻한 공기는 위로 올라가는 대류 때문이에요.'],
+    ['단열을 이용한 예가 아닌 것은?', ['프라이팬으로 달걀 익히기', '보온병', '집의 이중창', '아이스박스'], '프라이팬은 열이 잘 이동하도록(전도) 이용한 예예요. 나머지는 열의 이동을 줄이는 단열이에요.']
+  ];
+  let qScore = 0, qDone = 0;
+  function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+  function renderQuiz() {
+    qScore = 0; qDone = 0; $('#qScore').textContent = '0'; $('#qTotal').textContent = QUIZ.length;
+    const box = $('#quiz'); box.innerHTML = '';
+    QUIZ.forEach(([q, opts, exp], i) => {
+      const d = document.createElement('div'); d.className = 'qbox';
+      d.innerHTML = `<h3>${i + 1}. ${q}</h3><div class="opts"></div><p class="exp" hidden></p>`;
+      const ob = d.querySelector('.opts');
+      shuffle(opts.map((o, k) => [o, k === 0])).forEach(([o, right]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
+        if (right) b.dataset.right = '1';
+        b.addEventListener('click', () => {
+          d.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (x.dataset.right) x.classList.add('right'); });
+          if (right) qScore++; else b.classList.add('wrong');
+          qDone++; $('#qScore').textContent = qScore;
+          const p = d.querySelector('.exp'); p.hidden = false; p.textContent = (right ? '정답이에요! ' : '아쉬워요. ') + exp;
+          if (qDone === QUIZ.length) setCaption(qScore >= 9 ? `${qScore}개 맞혔어요. 열 박사네요!` : qScore >= 7 ? `${qScore}개 맞혔어요. 틀린 문제 설명만 다시 읽으면 완벽해요.` : `${qScore}개 맞혔어요. 정리 표를 한 번 더 보고 다시 풀어 봐요.`, false);
+        });
+        ob.appendChild(b);
+      });
+      box.appendChild(d);
+    });
+  }
+  renderQuiz();
+  $('#qReset').addEventListener('click', () => { renderQuiz(); slides[cur].scrollTop = 0; });
+
+  /* ---------- 체크리스트 ---------- */
+  const CHECK = ['손으로 느끼는 온도가 정확하지 않은 까닭을 말할 수 있어요.', '온도의 뜻과 단위(℃)를 말하고 바르게 읽을 수 있어요.', '상황에 알맞은 온도계를 고를 수 있어요.', '알코올 온도계의 눈금을 바르게 읽을 수 있어요.', '열의 뜻을 온도와 구별해서 말할 수 있어요.', '닿아 있는 두 물체의 온도가 어떻게 변하는지 설명할 수 있어요.', '얼음을 쥐면 손이 차가워지는 까닭을 열의 이동으로 설명할 수 있어요.', '전도, 대류, 단열의 뜻과 예를 말할 수 있어요.', '생활 속 열의 이동 예를 하나 골라 30초 동안 설명할 수 있어요.'];
+  const checked = store.get('check', {});
+  CHECK.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<label for="chk${i}"><input type="checkbox" id="chk${i}"><span>${t}</span></label>`;
+    const cb = li.querySelector('input'); cb.checked = !!checked[i];
+    cb.addEventListener('change', () => { checked[i] = cb.checked; store.set('check', checked); });
+    $('#checklist').appendChild(li);
+  });
+
+  updateUI();
+})();
+</script>
+
+</body></html>
