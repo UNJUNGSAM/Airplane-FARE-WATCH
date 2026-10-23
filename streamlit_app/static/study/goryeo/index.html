@@ -1,0 +1,1437 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>고려 문화 탐험노트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: 한 화면에 한 장씩 넘기는 '박물관 웹진' — 왼쪽 전시 진열장(그림) + 오른쪽 해설 칸, 아래에 자막과 재생 막대 */
+:root{
+  --bg:#e8eee9; --surface:#f8faf6; --ink:#1b2725; --muted:#53635e; --line:#cbd7cf;
+  --accent:#2d6a5a; --accent-ink:#ffffff; --soft:#dbeae3; --gold:#94640f; --red:#a63f2b;
+  --ok:#25784a; --bad:#b0372a; --scrim:rgba(8,14,13,.55);
+  --stage:#16201e; --stage-2:#22302d; --stage-ink:#eef2ec; --stage-muted:#a9b9b3;
+  --jade-1:#4c7e6f; --jade-2:#8fbcaa; --jade-3:#b4d6c7; --wood-1:#c08a52; --wood-2:#86592f; --wood-end:#5a391d;
+  --bronze-1:#c7a35a; --bronze-2:#6e5426; --paper:#efe6d2; --paper-ink:#2a2622;
+  --f-display:'Gowun Batang','Nanum Myeongjo','AppleMyungjo','Batang',serif;
+  --f-body:'Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1413; --surface:#162120; --ink:#e3ebe7; --muted:#9bada7; --line:#2a3836;
+    --accent:#8cc6b2; --accent-ink:#0e1413; --soft:#1c2e2a; --gold:#e2b45c; --red:#ec8c73;
+    --ok:#72d29a; --bad:#ff8b7b; --scrim:rgba(0,0,0,.6);
+    --stage:#0a100f; --stage-2:#16211f; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1413; --surface:#162120; --ink:#e3ebe7; --muted:#9bada7; --line:#2a3836;
+  --accent:#8cc6b2; --accent-ink:#0e1413; --soft:#1c2e2a; --gold:#e2b45c; --red:#ec8c73;
+  --ok:#72d29a; --bad:#ff8b7b; --scrim:rgba(0,0,0,.6);
+  --stage:#0a100f; --stage-2:#16211f; color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.7;word-break:keep-all;overflow-wrap:anywhere;overflow:hidden;-webkit-text-size-adjust:100%}
+#app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding-inline:16px;max-width:1280px;margin-inline:auto}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.3;margin:0}
+p{margin:0}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px;padding-block:10px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.brand svg{flex:none}
+.brand b{font-family:var(--f-display);font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--muted);font-size:.8rem;white-space:nowrap}
+.pager{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.progress{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:-1px}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .5s ease}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;font-size:.95rem;line-height:1.2;text-decoration:none;color:var(--ink);transition:transform .15s ease, background .2s}
+.btn:hover{background:var(--soft)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn svg{width:18px;height:18px;flex:none}
+.btn.icon{padding:9px 12px}
+
+/* stage */
+.stage{position:relative;overflow:hidden;min-height:0}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;opacity:0;visibility:hidden;transform:translateX(40px);transition:opacity .5s ease,transform .6s cubic-bezier(.2,.7,.2,1),visibility 0s linear .6s;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.slide.back{transform:translateX(-40px)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .5s ease,transform .6s cubic-bezier(.2,.7,.2,1),visibility 0s}
+.lesson{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:32px;align-items:center;min-height:100%;padding-block:22px}
+.full{padding-block:22px 28px;max-width:1040px;margin-inline:auto}
+.art{position:relative;margin:0;background:var(--stage);border-radius:16px;overflow:hidden;aspect-ratio:4/3;max-width:100%;box-shadow:0 18px 40px -24px rgba(0,0,0,.6)}
+.art>svg{display:block;width:100%;height:100%}
+.art figcaption{position:absolute;left:0;right:0;bottom:0;padding:22px 14px 10px;font-size:.78rem;color:var(--stage-muted);background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.txt{display:flex;flex-direction:column;gap:14px;min-width:0}
+.eyebrow{font-size:.82rem;letter-spacing:.08em;color:var(--accent);font-weight:700}
+.txt h2{font-size:clamp(1.55rem,3.2vw,2.3rem);font-weight:700}
+.txt p{max-width:38em}
+.txt b,.full b{color:var(--ink)}
+.mark{background:linear-gradient(transparent 58%,color-mix(in srgb,var(--gold) 30%,transparent) 58%);padding-inline:2px}
+.know{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--surface)}
+.know h3{font-family:var(--f-body);font-size:.85rem;letter-spacing:.06em;color:var(--gold);margin-bottom:4px}
+.know ul{margin:0;padding-left:1.1em}
+.know li::marker{color:var(--gold)}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-size:.85rem;padding:4px 10px;border-radius:999px;background:var(--soft);color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stats div{border-top:2px solid var(--accent);padding-top:6px}
+.stats b{display:block;font-family:var(--f-display);font-size:clamp(1.3rem,2.6vw,1.8rem);font-variant-numeric:tabular-nums;line-height:1.2}
+.stats small{color:var(--muted);font-size:.82rem}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:st}
+.steps li{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;align-items:start;counter-increment:st}
+.steps li::before{content:counter(st);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.9rem;margin-top:2px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.two>div{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface);min-width:0}
+.two h3{font-family:var(--f-body);font-size:.9rem;color:var(--accent);margin-bottom:2px}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{font-size:.88rem;color:var(--accent);text-decoration:none;border-bottom:1px dashed currentColor}
+.rows{display:grid;gap:6px}
+.rows div{display:grid;grid-template-columns:5.5em minmax(0,1fr);gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rows b{font-family:var(--f-display)}
+
+/* cover */
+.cover h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:700;line-height:1.22}
+.cover .lead{font-size:1.08rem;color:var(--muted)}
+.route{display:flex;flex-wrap:wrap;gap:6px;font-size:.85rem;color:var(--muted)}
+.route span{padding:3px 10px;border:1px solid var(--line);border-radius:999px}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+.cta .btn{padding:12px 20px;font-size:1rem}
+.hint{font-size:.85rem;color:var(--muted)}
+
+/* timeline art */
+.tlart{aspect-ratio:auto;padding:26px 22px 40px;color:var(--stage-ink)}
+.tl{list-style:none;margin:0;padding:0 0 0 26px;position:relative;display:grid;gap:14px}
+.tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--stage-2)}
+.tl::after{content:"";position:absolute;left:7px;top:6px;width:2px;height:0;background:var(--jade-2)}
+.slide.active .tl::after{animation:grow 2.4s .3s ease-out forwards}
+@keyframes grow{to{height:calc(100% - 12px)}}
+.tl li{position:relative;display:grid;grid-template-columns:6.2em minmax(0,1fr);gap:10px;align-items:baseline}
+.tl li::before{content:"";position:absolute;left:-24px;top:.55em;width:12px;height:12px;border-radius:50%;background:var(--stage);border:2px solid var(--jade-2)}
+.tl li.big::before{background:var(--jade-2)}
+.tl time{font-family:var(--f-display);font-weight:700;color:var(--jade-3);font-variant-numeric:tabular-nums}
+.tl span{color:var(--stage-ink)}
+.tl small{display:block;color:var(--stage-muted);font-size:.8rem}
+
+/* summary table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.95rem}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);background:var(--soft);font-size:.92rem}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700;white-space:nowrap}
+.sechead{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.sechead h2{font-size:clamp(1.5rem,3vw,2.1rem)}
+.sechead p{color:var(--muted);max-width:44em}
+
+/* assessment */
+.grid4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.panel{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface);min-width:0}
+.panel h3{font-size:1.08rem;margin-bottom:4px}
+.panel p{color:var(--muted);font-size:.95rem}
+.frame{border:2px dashed var(--accent);border-radius:14px;padding:14px 18px;margin-top:16px;background:var(--soft)}
+.frame h3{font-family:var(--f-body);font-size:.9rem;color:var(--accent);margin-bottom:6px}
+.frame p{font-family:var(--f-display);font-size:1.08rem}
+.frame u{text-decoration:none;border-bottom:2px solid var(--gold);padding-inline:4px;color:var(--gold)}
+.rubric{margin-top:16px}
+.rubric td:first-child{white-space:normal}
+
+.essay{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--surface);display:grid;gap:10px}
+.essays{display:grid;gap:14px}
+.essay h3{font-size:1.08rem;font-family:var(--f-body);font-weight:700}
+.qn{display:inline-block;font-size:.78rem;padding:2px 8px;border-radius:999px;background:var(--accent);color:var(--accent-ink);margin-right:6px;vertical-align:2px}
+textarea,input[type=text],select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);line-height:1.6}
+textarea{resize:vertical;min-height:96px}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.row .btn{font-size:.88rem;padding:7px 13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.88rem}
+.chip{padding:3px 10px;border-radius:999px;border:1px solid var(--line)}
+.chip.yes{border-color:var(--ok);color:var(--ok)}
+.chip.no{border-color:var(--bad);color:var(--bad);border-style:dashed}
+.model{border-left:4px solid var(--gold);padding:8px 14px;background:var(--bg);border-radius:0 10px 10px 0}
+.model b{font-size:.85rem;color:var(--gold)}
+
+.maker{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.form{display:grid;gap:10px}
+.form label{font-size:.85rem;font-weight:700;color:var(--muted);display:block;margin-bottom:3px}
+.card{position:sticky;top:0;border-radius:16px;overflow:hidden;background:var(--paper);color:var(--paper-ink);box-shadow:0 18px 40px -24px rgba(0,0,0,.6);border:1px solid rgba(0,0,0,.08)}
+.card .thumb{background:var(--stage);aspect-ratio:16/9;display:grid;place-items:center}
+.card .thumb svg{width:56%;height:80%}
+.card .cb{padding:16px 18px 18px;display:grid;gap:8px}
+.card .tag{font-size:.75rem;letter-spacing:.1em;color:#7a5a1c;font-weight:700}
+.card h3{font-size:1.5rem;color:#1d1b18}
+.card dl{margin:0;display:grid;gap:8px}
+.card dt{font-size:.78rem;font-weight:700;color:#6b5a3f}
+.card dd{margin:0;font-size:.95rem;line-height:1.6;color:#2a2622;white-space:pre-wrap}
+.card .sign{font-size:.8rem;color:#6b5a3f;text-align:right}
+
+.quiz{display:grid;gap:12px}
+.qbox{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface);display:grid;gap:10px}
+.qbox h3{font-family:var(--f-body);font-size:1.02rem;font-weight:700}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.opt{text-align:left;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);cursor:pointer;line-height:1.45}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--bg));font-weight:700}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--bg))}
+.opt:disabled{cursor:default}
+.exp{font-size:.92rem;color:var(--muted)}
+.score{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-radius:12px;background:var(--soft);border:1px solid var(--line);margin-bottom:12px;flex-wrap:wrap}
+.score b{font-family:var(--f-display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check label{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer}
+.check input{width:20px;height:20px;margin-top:4px;accent-color:var(--accent);flex:none}
+.check input:checked+span{color:var(--muted);text-decoration:line-through}
+
+/* bottom bar */
+.bottom{border-top:1px solid var(--line);padding-block:8px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px}
+.caption{min-height:3.2em;display:flex;align-items:center;justify-content:center;text-align:center;font-size:1rem;line-height:1.5;padding:4px 8px;color:var(--muted)}
+.caption.on{color:var(--ink);font-weight:600}
+.caption.on::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:10px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.aprog{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.aprog i{display:block;height:100%;width:0;background:var(--red);transition:width .25s linear}
+.controls{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:nowrap}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:20}
+.sheet{width:min(560px,100%);max-height:86%;overflow:auto;background:var(--surface);border-radius:18px;padding:18px 20px;display:grid;gap:12px;border:1px solid var(--line)}
+.sheet header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet h2{font-size:1.3rem}
+.toclist{list-style:none;margin:0;padding:0;display:grid;gap:4px;counter-reset:tc}
+.toclist button{width:100%;text-align:left;display:grid;grid-template-columns:2.2em minmax(0,1fr);gap:8px;padding:8px 10px;border-radius:10px;border:0;background:transparent;cursor:pointer}
+.toclist button:hover,.toclist button[aria-current="true"]{background:var(--soft)}
+.toclist span:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.note{font-size:.88rem;color:var(--muted)}
+
+/* motion inside slides */
+.slide.active .txt>*,.slide.active .full>*{animation:rise .65s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 90ms + 120ms)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.slide.active .art>svg{animation:kb 18s ease-in-out infinite alternate;transform-origin:50% 55%}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.07) translate(-1%,-1.2%)}}
+.bob{animation:bob 4s ease-in-out infinite alternate}
+.bob.d2{animation-duration:5s;animation-delay:-1.5s}
+.bob.d3{animation-duration:3.6s;animation-delay:-2.2s}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+.slide.active .drop{animation:drop .55s cubic-bezier(.3,1.4,.5,1) both;animation-delay:var(--d,0s)}
+@keyframes drop{from{opacity:0;transform:translateY(-46px)}to{opacity:1;transform:none}}
+.wind{stroke-dasharray:14 12;animation:wind 2.4s linear infinite}
+@keyframes wind{to{stroke-dashoffset:-104}}
+.slide.active .ship1{animation:s1 11s ease-in-out infinite}
+.slide.active .ship2{animation:s2 13s ease-in-out infinite}
+.slide.active .ship3{animation:s3 15s ease-in-out infinite}
+@keyframes s1{0%{transform:translate(-40px,-10px)}50%{transform:translate(330px,30px)}100%{transform:translate(-40px,-10px)}}
+@keyframes s2{0%{transform:translate(60px,70px)}50%{transform:translate(-30px,-150px)}100%{transform:translate(60px,70px)}}
+@keyframes s3{0%{transform:translate(-20px,40px)}50%{transform:translate(300px,-160px)}100%{transform:translate(-20px,40px)}}
+.slide.active .pull{animation:pull 5s ease-in-out infinite}
+@keyframes pull{0%,15%{transform:translateY(-14px)}45%,100%{transform:none}}
+.slide.active .step-a{animation:stp 6s infinite}
+.slide.active .step-b{animation:stp 6s 2s infinite}
+.slide.active .step-c{animation:stp 6s 4s infinite}
+@keyframes stp{0%,30%{opacity:1}36%,94%{opacity:.35}100%{opacity:1}}
+.slide.active .beam{animation:tilt 4s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes tilt{0%{transform:rotate(-6deg)}40%,100%{transform:rotate(0)}}
+.slide.active .scan{animation:scan 7s ease-in-out infinite alternate}
+@keyframes scan{from{transform:translate(0,0)}to{transform:translate(360px,30px)}}
+.twinkle{animation:tw 3s ease-in-out infinite alternate}
+@keyframes tw{from{opacity:.25}to{opacity:1}}
+
+@media (max-width:860px){
+  .lesson{grid-template-columns:minmax(0,1fr);align-items:start;gap:16px;min-height:0;padding-block:14px 22px}
+  .maker{grid-template-columns:minmax(0,1fr)}
+  .card{position:static}
+}
+@media (max-width:600px){
+  body{font-size:16px}
+  .grid4,.two,.opts{grid-template-columns:minmax(0,1fr)}
+  .brand small{display:none}
+  .hide-s{display:none}
+  .stats b{font-size:1.2rem}
+  .caption{font-size:.93rem;min-height:3em}
+  .btn{padding:9px 13px}
+}
+@media (max-width:420px){
+  .hide-xs{display:none}
+  .controls .btn{padding:9px 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+[hidden]{display:none!important}
+.dots{margin:0;padding-left:1.1em;display:grid;gap:6px}
+.dots li::marker{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+
+<!-- 공용 그림 부품 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gJade" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#46786a"/><stop offset=".3" stop-color="#8dbba9"/><stop offset=".48" stop-color="#b3d5c6"/><stop offset=".75" stop-color="#78a796"/><stop offset="1" stop-color="#3f6c5f"/>
+    </linearGradient>
+    <radialGradient id="gSpot" cx=".5" cy=".42" r=".65"><stop offset="0" stop-color="#2f413d"/><stop offset="1" stop-color="#0d1413"/></radialGradient>
+    <linearGradient id="gWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c79157"/><stop offset="1" stop-color="#8a5c31"/></linearGradient>
+    <linearGradient id="gBronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d1ad62"/><stop offset="1" stop-color="#6d5326"/></linearGradient>
+    <linearGradient id="gNight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1730"/><stop offset="1" stop-color="#2c3a58"/></linearGradient>
+    <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#235667"/><stop offset="1" stop-color="#0f2e3b"/></linearGradient>
+    <radialGradient id="gLamp" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd59a" stop-opacity=".9"/><stop offset="1" stop-color="#ffb35a" stop-opacity="0"/></radialGradient>
+    <pattern id="pBlocks" width="13" height="44" patternUnits="userSpaceOnUse"><rect x="1" y="4" width="10" height="38" fill="#a8743f"/><rect x="1" y="4" width="10" height="5" fill="#5a391d"/></pattern>
+    <symbol id="crane" viewBox="0 0 40 26">
+      <path d="M15 12Q9 2 1 1Q8 8 13 13Z" fill="#f6f3ea"/>
+      <path d="M17 14Q12 22 4 25Q13 21 20 15Z" fill="#f6f3ea"/>
+      <ellipse cx="19" cy="13" rx="7" ry="3" fill="#f6f3ea"/>
+      <path d="M25 12L36 6" stroke="#f6f3ea" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="36.5" cy="5.7" r="1.7" fill="#1d2422"/>
+      <path d="M37.8 5.5L40 5" stroke="#1d2422" stroke-width="1.1"/>
+      <path d="M12 14L1 18" stroke="#1d2422" stroke-width="1.1"/>
+    </symbol>
+    <symbol id="cloud" viewBox="0 0 30 14">
+      <path d="M2 11C2 6 7 5 9 8C10 3 17 2 18 7C20 4 26 5 25 9C28 9 28 12 25 12H4C2 12 2 11 2 11Z" fill="none" stroke="#f6f3ea" stroke-width="1.3"/>
+      <path d="M9 12q-3 2-7 1" fill="none" stroke="#1d2422" stroke-width="1"/>
+    </symbol>
+    <symbol id="maebyeong" viewBox="0 0 300 420">
+      <path d="M128 20h44v10c0 6-4 8-6 12C232 52 268 100 268 168C268 250 216 320 200 392H100C84 320 32 250 32 168C32 100 68 52 134 42c-2-4-6-6-6-12Z" fill="url(#gJade)"/>
+      <rect x="100" y="390" width="100" height="12" rx="3" fill="#4f7a6a"/>
+      <path d="M78 76Q150 54 222 76" fill="none" stroke="#f3efe3" stroke-width="2"/>
+      <path d="M66 92Q150 66 234 92" fill="none" stroke="#1f2a27" stroke-width="1.4"/>
+      <path d="M84 86q8-10 16 0q8-10 16 0q8-10 16 0q8-10 16 0q8-10 16 0q8-10 16 0q8-10 16 0q8-10 16 0" fill="none" stroke="#f3efe3" stroke-width="1.4"/>
+      <g fill="none">
+        <circle cx="102" cy="160" r="34" stroke="#f3efe3" stroke-width="3"/><circle cx="102" cy="160" r="28" stroke="#1f2a27" stroke-width="1.2"/>
+        <circle cx="198" cy="160" r="34" stroke="#f3efe3" stroke-width="3"/><circle cx="198" cy="160" r="28" stroke="#1f2a27" stroke-width="1.2"/>
+        <circle cx="150" cy="246" r="34" stroke="#f3efe3" stroke-width="3"/><circle cx="150" cy="246" r="28" stroke="#1f2a27" stroke-width="1.2"/>
+        <circle cx="118" cy="320" r="24" stroke="#f3efe3" stroke-width="2.6"/><circle cx="182" cy="320" r="24" stroke="#f3efe3" stroke-width="2.6"/>
+      </g>
+      <use href="#crane" x="84" y="148" width="36" height="24" transform="rotate(-35 102 160)"/>
+      <use href="#crane" x="180" y="148" width="36" height="24" transform="rotate(-35 198 160)"/>
+      <use href="#crane" x="132" y="234" width="36" height="24" transform="rotate(-35 150 246)"/>
+      <use href="#crane" x="104" y="311" width="28" height="18" transform="rotate(-35 118 320)"/>
+      <use href="#crane" x="168" y="311" width="28" height="18" transform="rotate(-35 182 320)"/>
+      <use href="#crane" x="134" y="112" width="32" height="21" transform="rotate(150 150 122)"/>
+      <use href="#crane" x="46" y="226" width="30" height="20" transform="rotate(150 61 236)"/>
+      <use href="#crane" x="222" y="226" width="30" height="20" transform="rotate(150 237 236)"/>
+      <use href="#crane" x="136" y="284" width="28" height="18" transform="rotate(150 150 293)"/>
+      <use href="#cloud" x="140" y="160" width="22" height="10"/><use href="#cloud" x="58" y="196" width="22" height="10"/>
+      <use href="#cloud" x="220" y="196" width="22" height="10"/><use href="#cloud" x="96" y="262" width="20" height="9"/>
+      <use href="#cloud" x="186" y="262" width="20" height="9"/><use href="#cloud" x="140" y="340" width="20" height="9"/>
+      <path d="M104 374q8-18 16 0q8-18 16 0q8-18 16 0q8-18 16 0q8-18 16 0q8-18 16 0" fill="none" stroke="#f3efe3" stroke-width="2"/>
+      <path d="M70 150C72 110 95 80 125 64" stroke="#fff" stroke-opacity=".32" stroke-width="10" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="sym-block" viewBox="0 0 120 60">
+      <rect x="8" y="4" width="104" height="52" rx="2" fill="url(#gWood)"/>
+      <rect x="0" y="2" width="10" height="56" rx="2" fill="#5a391d"/><rect x="110" y="2" width="10" height="56" rx="2" fill="#5a391d"/>
+      <g stroke="#5a391d" stroke-width="2" opacity=".7"><path d="M24 12v36M36 12v36M48 12v36M60 12v36M72 12v36M84 12v36M96 12v36"/></g>
+    </symbol>
+    <symbol id="sym-book" viewBox="0 0 60 80">
+      <rect x="4" y="2" width="52" height="76" rx="2" fill="#d9ccab"/>
+      <path d="M4 10h6M4 30h6M4 50h6M4 70h6" stroke="#6b5a3f" stroke-width="2"/>
+      <rect x="30" y="10" width="16" height="50" fill="#efe6d2" stroke="#6b5a3f"/>
+      <text x="38" y="30" font-size="12" text-anchor="middle" fill="#2a2622" font-family="serif">直</text>
+      <text x="38" y="48" font-size="12" text-anchor="middle" fill="#2a2622" font-family="serif">指</text>
+    </symbol>
+    <symbol id="sym-hall" viewBox="0 0 120 80">
+      <path d="M2 34Q20 32 26 22H94Q100 32 118 34Q90 31 60 32Q30 31 2 34Z" fill="#2b2b30"/>
+      <path d="M30 22L44 8H76L90 22Z" fill="#3a3a40"/>
+      <rect x="18" y="34" width="84" height="6" fill="#3f6b5c"/>
+      <g fill="#b07a4a"><path d="M24 40c-2 12-2 20 0 28h6c2-8 2-16 0-28z"/><path d="M50 40c-2 12-2 20 0 28h6c2-8 2-16 0-28z"/><path d="M64 40c-2 12-2 20 0 28h6c2-8 2-16 0-28z"/><path d="M90 40c-2 12-2 20 0 28h6c2-8 2-16 0-28z"/></g>
+      <rect x="10" y="68" width="100" height="8" fill="#8c8577"/>
+    </symbol>
+    <symbol id="sym-ship" viewBox="0 0 60 50">
+      <path d="M4 34H56L48 46H12Z" fill="#6b4a2f"/>
+      <path d="M29 6V34" stroke="#3a2a1a" stroke-width="2"/>
+      <path d="M31 8Q46 14 48 30H31Z" fill="#e9dfc6"/>
+      <path d="M27 10Q16 16 14 30H27Z" fill="#d7c9a6"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <svg width="26" height="34" viewBox="0 0 300 420" aria-hidden="true"><use href="#maebyeong"/></svg>
+      <div style="min-width:0;display:flex;flex-direction:column;line-height:1.25">
+        <b>고려 문화 탐험노트</b>
+        <small>초등 사회 · 유적과 유물로 살펴본 옛 사람들의 생활</small>
+      </div>
+    </div>
+    <span class="pager" id="pager">1 / 18</span>
+    <button class="btn icon ghost" id="btnToc" type="button" aria-label="목차 열기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="hide-s">목차</span>
+    </button>
+    <button class="btn icon ghost" id="btnSet" type="button" aria-label="목소리 설정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/></svg><span class="hide-s">목소리</span>
+    </button>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="progress" style="position:absolute;top:0;left:0;right:0;z-index:3"><i id="bar"></i></div>
+
+    <!-- 0 표지 -->
+    <section class="slide active" data-id="cover" data-title="표지 · 시작하기">
+      <div class="lesson cover">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="구름과 학 무늬가 새겨진 고려청자 매병 그림">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <ellipse cx="400" cy="528" rx="170" ry="20" fill="#000" opacity=".4"/>
+            <use href="#maebyeong" x="250" y="100" width="300" height="420"/>
+            <g class="bob"><use href="#crane" x="95" y="120" width="90" height="58"/></g>
+            <g class="bob d2"><use href="#crane" x="610" y="80" width="70" height="46" transform="scale(-1 1) translate(-1290 0)"/></g>
+            <g class="bob d3"><use href="#crane" x="140" y="380" width="60" height="40"/></g>
+            <g class="bob d2" opacity=".7"><use href="#cloud" x="590" y="400" width="110" height="52"/></g>
+            <g class="bob" opacity=".6"><use href="#cloud" x="60" y="250" width="90" height="42"/></g>
+          </svg>
+          <figcaption>청자 상감운학문 매병을 본떠 그린 그림</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">초등 사회 · 수행평가 대비 학습 자료</p>
+          <h1>고려의 문화와<br>사람들의 생활 모습</h1>
+          <p class="lead">유물 그림을 보고, 선생님 목소리 설명을 듣고, 마지막에는 수행평가 연습까지 해 봐요.</p>
+          <div class="route"><span>고려는 어떤 나라</span><span>고려청자</span><span>팔만대장경</span><span>직지</span><span>불교문화</span><span>벽란도</span><span>생활 모습</span><span>수행평가 연습</span></div>
+          <div class="cta">
+            <button class="btn primary" type="button" id="btnStartAuto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>영상처럼 보기</button>
+            <button class="btn" type="button" id="btnStartManual">한 장씩 넘겨 보기<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+          <p class="hint">'영상처럼 보기'를 누르면 목소리로 읽어 주면서 다음 장으로 저절로 넘어가요. 화면을 옆으로 밀거나 ← → 키로도 넘길 수 있어요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 고려는 어떤 나라 -->
+    <section class="slide" data-id="goryeo" data-title="고려는 어떤 나라였을까?">
+      <div class="lesson">
+        <figure class="art tlart">
+          <ol class="tl">
+            <li class="big"><time>918년</time><span>왕건이 고려를 세움<small>수도: 개경(지금의 개성)</small></span></li>
+            <li class="big"><time>936년</time><span>후삼국을 하나로 통일</span></li>
+            <li><time>993년</time><span>서희의 외교 담판으로 거란을 물리침</span></li>
+            <li><time>1019년</time><span>강감찬의 귀주 대첩</span></li>
+            <li><time>12세기</time><span>상감청자가 크게 발달</span></li>
+            <li class="big"><time>1236~51년</time><span>팔만대장경을 새김<small>몽골이 쳐들어온 시기</small></span></li>
+            <li class="big"><time>1377년</time><span>금속활자로 『직지』를 찍음</span></li>
+            <li><time>1392년</time><span>고려가 끝나고 조선이 세워짐</span></li>
+          </ol>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">들어가기 · 고려는 어떤 나라</p>
+          <h2>918년, 왕건이 세운 나라 고려</h2>
+          <p>고려는 <b>918년 왕건</b>이 세운 나라예요. 수도는 <b>개경</b>이고, 936년에 후삼국을 통일한 뒤 1392년까지 약 470년 동안 이어졌어요.</p>
+          <p>'고려'라는 이름에는 <span class="mark">고구려를 이어받는다</span>는 뜻이 담겨 있어요. 오늘날 우리나라의 영어 이름 <b>Korea</b>도 고려에서 나왔어요.</p>
+          <div class="facts"><span>세운 사람: 왕건</span><span>수도: 개경</span><span>918년 ~ 1392년</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 유적과 유물 -->
+    <section class="slide" data-id="relic" data-title="유적과 유물은 무엇이 다를까?">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="왼쪽은 옮길 수 없는 유적인 석탑, 오른쪽은 옮길 수 있는 유물인 청자와 책">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <path d="M400 70V540" stroke="#a9b9b3" stroke-dasharray="6 8" stroke-width="2"/>
+            <rect x="40" y="470" width="320" height="16" fill="#5b4a37"/>
+            <g fill="#b9b4a6" stroke="#6f6a5e" stroke-width="2">
+              <rect x="150" y="440" width="100" height="30"/>
+              <rect x="160" y="400" width="80" height="40"/>
+              <path d="M130 400H270L250 388H150Z"/>
+              <rect x="168" y="360" width="64" height="28"/>
+              <path d="M140 360H260L242 348H158Z"/>
+              <rect x="174" y="322" width="52" height="26"/>
+              <path d="M148 322H252L236 310H164Z"/>
+              <rect x="180" y="286" width="40" height="24"/>
+              <path d="M156 286H244L230 274H170Z"/>
+              <rect x="185" y="252" width="30" height="22"/>
+              <path d="M163 252H237L224 240H176Z"/>
+              <rect x="190" y="220" width="20" height="20"/>
+              <path d="M170 220H230L218 208H182Z"/>
+            </g>
+            <path d="M200 208V160" stroke="#d1ad62" stroke-width="4"/><circle cx="200" cy="170" r="6" fill="#d1ad62"/><circle cx="200" cy="186" r="6" fill="#d1ad62"/>
+            <text x="200" y="120" text-anchor="middle" font-size="44" font-weight="700" fill="#eef2ec" font-family="Gowun Batang, serif">유적</text>
+            <text x="200" y="530" text-anchor="middle" font-size="21" fill="#a9b9b3" font-family="Gowun Dodum, sans-serif">땅에 남아 옮길 수 없어요</text>
+            <text x="200" y="560" text-anchor="middle" font-size="18" fill="#a9b9b3" font-family="Gowun Dodum, sans-serif">건물 · 탑 · 무덤 · 집터</text>
+            <ellipse cx="560" cy="470" rx="80" ry="12" fill="#000" opacity=".4"/>
+            <use href="#maebyeong" x="480" y="230" width="160" height="240"/>
+            <ellipse cx="700" cy="474" rx="46" ry="8" fill="#000" opacity=".4"/>
+            <use href="#sym-book" x="660" y="360" width="80" height="110"/>
+            <text x="600" y="120" text-anchor="middle" font-size="44" font-weight="700" fill="#eef2ec" font-family="Gowun Batang, serif">유물</text>
+            <text x="600" y="530" text-anchor="middle" font-size="21" fill="#a9b9b3" font-family="Gowun Dodum, sans-serif">옮길 수 있는 물건이에요</text>
+            <text x="600" y="560" text-anchor="middle" font-size="18" fill="#a9b9b3" font-family="Gowun Dodum, sans-serif">그릇 · 책 · 도구 · 장신구</text>
+            <g class="scan"><circle cx="190" cy="300" r="46" fill="#ffffff14" stroke="#d1ad62" stroke-width="5"/><path d="M222 334L262 374" stroke="#d1ad62" stroke-width="10" stroke-linecap="round"/></g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">들어가기 · 꼭 알아야 할 낱말</p>
+          <h2>유적과 유물은 옛 사람들이 남긴 단서</h2>
+          <div class="two">
+            <div><h3>유적</h3><p>옛 사람들이 남긴 건물, 탑, 무덤, 집터처럼 <b>옮길 수 없는</b> 흔적</p></div>
+            <div><h3>유물</h3><p>그릇, 책, 도구처럼 옛 사람들이 쓰던 <b>옮길 수 있는</b> 물건</p></div>
+          </div>
+          <p>유적과 유물을 자세히 살펴보면 그때 사람들이 <span class="mark">무엇을 믿고, 어떤 기술을 가졌고, 어떻게 살았는지</span> 알아낼 수 있어요. 탐정처럼 단서를 찾아봐요!</p>
+          <div class="know"><h3>수행평가 꿀팁</h3><ul><li>"이 유물을 통해 ~을 알 수 있다"로 생활 모습과 꼭 연결해서 쓰기</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 고려청자 -->
+    <section class="slide" data-id="celadon" data-title="고려청자 ① 비색의 아름다움">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="청자 상감운학문 매병의 각 부분 설명">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <ellipse cx="330" cy="545" rx="150" ry="18" fill="#000" opacity=".4"/>
+            <use href="#maebyeong" x="190" y="110" width="280" height="440"/>
+            <g font-family="Gowun Dodum, sans-serif" font-size="21" fill="#eef2ec">
+              <path d="M335 132L560 100" stroke="#d1ad62" stroke-width="2"/><circle cx="335" cy="132" r="5" fill="#d1ad62"/>
+              <text x="566" y="96">작은 입</text>
+              <path d="M440 210L580 200" stroke="#d1ad62" stroke-width="2"/><circle cx="440" cy="210" r="5" fill="#d1ad62"/>
+              <text x="586" y="196">넓고 둥근 어깨</text>
+              <path d="M372 266L580 300" stroke="#d1ad62" stroke-width="2"/><circle cx="372" cy="266" r="5" fill="#d1ad62"/>
+              <text x="586" y="296">원 안의 학: 위로</text>
+              <path d="M396 340L580 380" stroke="#d1ad62" stroke-width="2"/><circle cx="396" cy="340" r="5" fill="#d1ad62"/>
+              <text x="586" y="376">원 밖의 학: 아래로</text>
+              <path d="M370 470L580 460" stroke="#d1ad62" stroke-width="2"/><circle cx="370" cy="470" r="5" fill="#d1ad62"/>
+              <text x="586" y="456">잘록한 아랫부분</text>
+            </g>
+            <text x="40" y="70" font-size="30" fill="#b4d6c7" font-family="Gowun Batang, serif" font-weight="700">翡色 비색</text>
+            <text x="40" y="100" font-size="18" fill="#a9b9b3" font-family="Gowun Dodum, sans-serif">맑은 물총새 깃털 같은 푸른빛</text>
+          </svg>
+          <figcaption>청자 상감운학문 매병(국보) · 이해를 돕기 위해 다시 그린 그림</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">유물 ① · 고려청자</p>
+          <h2>비색으로 빛나는 고려청자</h2>
+          <p>고려청자는 맑고 푸른빛을 띠는 자기예요. 고려 사람들은 이 빛깔을 <b>비색</b>이라고 불렀고, 송나라 사람도 <span class="mark">"고려 비색은 천하제일"</span>이라며 칭찬했어요.</p>
+          <p>그림은 <b>청자 상감운학문 매병</b>이에요. '운학문'은 <b>구름(운)과 학 무늬</b>라는 뜻이에요. 동그라미 안의 학은 위로, 밖의 학은 아래로 날아요.</p>
+          <div class="facts"><span>국보</span><span>12세기 무렵</span><span>높이 약 42cm</span><span>간송미술관 소장</span></div>
+          <div class="links"><a href="https://www.google.com/search?tbm=isch&amp;q=청자+상감운학문+매병" target="_blank" rel="noopener">진짜 사진 보기 ↗</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 상감 기법 -->
+    <section class="slide" data-id="sanggam" data-title="고려청자 ② 상감 기법">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="상감 기법 세 단계: 무늬 파기, 흙 메우기, 유약 바르고 굽기">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <g font-family="Gowun Dodum, sans-serif" text-anchor="middle">
+              <g class="step-a">
+                <rect x="30" y="150" width="230" height="230" rx="14" fill="#8b6a4f"/>
+                <path d="M80 300c20-60 60-80 100-70M95 250c30-20 70-10 90 20" stroke="#4a3626" stroke-width="10" fill="none" stroke-linecap="round"/>
+                <path d="M190 190l40-40" stroke="#c9c9c9" stroke-width="8" stroke-linecap="round"/><path d="M180 200l14-14" stroke="#6b4a2f" stroke-width="12" stroke-linecap="round"/>
+                <text x="145" y="420" font-size="24" fill="#eef2ec" font-weight="700">① 무늬 파내기</text>
+                <text x="145" y="452" font-size="18" fill="#a9b9b3">마르기 전 그릇에 새겨요</text>
+              </g>
+              <g class="step-b">
+                <rect x="285" y="150" width="230" height="230" rx="14" fill="#8b6a4f"/>
+                <path d="M335 300c20-60 60-80 100-70" stroke="#f1ede2" stroke-width="10" fill="none" stroke-linecap="round"/>
+                <path d="M350 250c30-20 70-10 90 20" stroke="#a5452c" stroke-width="10" fill="none" stroke-linecap="round"/>
+                <text x="400" y="420" font-size="24" fill="#eef2ec" font-weight="700">② 흙 메우기</text>
+                <text x="400" y="452" font-size="18" fill="#a9b9b3">흰 흙 · 붉은 흙을 채워요</text>
+              </g>
+              <g class="step-c">
+                <rect x="540" y="150" width="230" height="230" rx="14" fill="url(#gJade)"/>
+                <path d="M590 300c20-60 60-80 100-70" stroke="#f6f3ea" stroke-width="10" fill="none" stroke-linecap="round"/>
+                <path d="M605 250c30-20 70-10 90 20" stroke="#1d2422" stroke-width="10" fill="none" stroke-linecap="round"/>
+                <text x="655" y="420" font-size="24" fill="#eef2ec" font-weight="700">③ 유약 바르고 굽기</text>
+                <text x="655" y="452" font-size="18" fill="#a9b9b3">흰 흙은 하얗게, 붉은 흙은 검게</text>
+              </g>
+              <path d="M262 265h20M517 265h20" stroke="#d1ad62" stroke-width="4"/>
+              <text x="400" y="90" font-size="34" fill="#eef2ec" font-family="Gowun Batang, serif" font-weight="700">상감(象嵌) 기법</text>
+              <text x="400" y="122" font-size="18" fill="#a9b9b3">고려 사람들이 처음으로 청자에 쓴 독창적인 기술</text>
+            </g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">유물 ① · 고려청자의 비밀</p>
+          <h2>고려만의 특별한 기술, 상감 기법</h2>
+          <ol class="steps">
+            <li><span>그릇 겉면에 원하는 무늬를 <b>파내요</b>.</span></li>
+            <li><span>파낸 자리에 <b>흰 흙과 붉은 흙</b>을 메워 넣어요.</span></li>
+            <li><span>유약을 바르고 가마에서 구우면 <b>흰 흙은 하얗게, 붉은 흙은 검게</b> 무늬가 나타나요.</span></li>
+          </ol>
+          <p>청자는 주로 <b>귀족</b>이 썼어요. 찻잔, 주전자, 향로, 베개, 지붕 기와까지 청자로 만들었어요.</p>
+          <div class="know"><h3>이것으로 알 수 있어요</h3><ul><li>고려 사람들의 도자기 기술과 예술 감각이 뛰어났어요.</li><li>귀족들은 차를 즐겨 마시며 화려하게 생활했어요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 팔만대장경 -->
+    <section class="slide" data-id="tripitaka" data-title="팔만대장경 ① 나라를 지키려는 마음">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="글자가 좌우 반대로 새겨진 대장경판과, 찍어 낸 종이">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <text x="80" y="44" font-size="20" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">경판(나무판): 글자를 좌우 반대로 새겼어요</text>
+            <g transform="translate(80 60)">
+              <rect x="0" y="0" width="640" height="240" rx="4" fill="url(#gWood)"/>
+              <rect x="-14" y="-4" width="30" height="248" rx="3" fill="#5a391d"/><rect x="624" y="-4" width="30" height="248" rx="3" fill="#5a391d"/>
+              <rect x="-14" y="-4" width="30" height="22" fill="url(#gBronze)"/><rect x="-14" y="222" width="30" height="22" fill="url(#gBronze)"/>
+              <rect x="624" y="-4" width="30" height="22" fill="url(#gBronze)"/><rect x="624" y="222" width="30" height="22" fill="url(#gBronze)"/>
+              <rect x="30" y="14" width="580" height="212" fill="none" stroke="#5a391d" stroke-width="2"/>
+              <g id="blockChars" transform="translate(640 0) scale(-1 1)"></g>
+            </g>
+            <g class="pull">
+              <g transform="translate(100 326)">
+                <rect x="6" y="8" width="600" height="230" fill="#000" opacity=".35"/>
+                <rect x="0" y="0" width="600" height="230" fill="#efe6d2"/>
+                <g id="printChars"></g>
+              </g>
+            </g>
+            <text x="700" y="590" text-anchor="end" font-size="20" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">종이에 찍으면 바르게 보여요</text>
+          </svg>
+          <figcaption>합천 해인사 대장경판 · 이해를 돕기 위해 다시 그린 그림</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">유물 ② · 팔만대장경</p>
+          <h2>나라를 지키려는 마음을 새긴 팔만대장경</h2>
+          <p><b>대장경</b>은 부처님의 가르침을 모은 책이에요. 고려는 <b>몽골이 쳐들어오자</b> 부처님의 힘으로 나라를 지키려고 1236년부터 1251년까지 <b>16년 동안</b> 대장경판을 새겼어요.</p>
+          <div class="stats">
+            <div><b data-count="81258">81,258</b><small>경판 수(장)</small></div>
+            <div><b>약 5,200만</b><small>새긴 글자 수</small></div>
+            <div><b data-count="16">16</b><small>만든 기간(년)</small></div>
+          </div>
+          <p>그 많은 글자 중에 <span class="mark">틀린 글자가 거의 없을 만큼</span> 정성을 다했어요.</p>
+          <div class="know"><h3>이것으로 알 수 있어요</h3><ul><li>고려 사람들은 불교를 깊이 믿었어요.</li><li>힘을 모아 외적의 침입에서 나라를 지키려 했어요.</li><li>목판 인쇄 기술이 뛰어났어요.</li></ul></div>
+          <div class="links"><a href="https://www.google.com/search?tbm=isch&amp;q=합천+해인사+대장경판" target="_blank" rel="noopener">진짜 사진 보기 ↗</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 장경판전 -->
+    <section class="slide" data-id="janggyeong" data-title="팔만대장경 ② 장경판전의 과학">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="장경판전 단면 그림: 앞뒤 창 크기가 달라 바람이 통하고 바닥에 숯과 소금을 깔았다">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <rect x="0" y="440" width="800" height="160" fill="#3a2f25"/>
+            <rect x="180" y="440" width="440" height="22" fill="#1c1c1c"/>
+            <rect x="180" y="462" width="440" height="20" fill="#d9d4c7"/>
+            <rect x="180" y="482" width="440" height="20" fill="#f3f1ea"/>
+            <rect x="180" y="502" width="440" height="22" fill="#c9a86a"/>
+            <g font-family="Gowun Dodum, sans-serif" font-size="17" fill="#eef2ec">
+              <text x="630" y="457">숯</text><text x="630" y="477">횟가루</text><text x="630" y="497">소금</text><text x="630" y="519">모래</text>
+            </g>
+            <path d="M120 236H680L610 150H190Z" fill="#2b2b30"/>
+            <path d="M90 244Q110 240 130 230H670Q690 240 710 244Q560 238 400 240Q240 238 90 244Z" fill="#3a3a40"/>
+            <rect x="180" y="236" width="440" height="204" fill="#241c16"/>
+            <rect x="180" y="236" width="22" height="204" fill="#7a5532"/>
+            <rect x="598" y="236" width="22" height="204" fill="#7a5532"/>
+            <rect x="180" y="256" width="22" height="22" fill="#0d1413"/>
+            <rect x="180" y="340" width="22" height="84" fill="#0d1413"/>
+            <rect x="598" y="250" width="22" height="80" fill="#0d1413"/>
+            <rect x="598" y="404" width="22" height="20" fill="#0d1413"/>
+            <g fill="url(#pBlocks)"><rect x="240" y="262" width="130" height="44"/><rect x="240" y="318" width="130" height="44"/><rect x="240" y="374" width="130" height="44"/>
+            <rect x="430" y="262" width="130" height="44"/><rect x="430" y="318" width="130" height="44"/><rect x="430" y="374" width="130" height="44"/></g>
+            <g stroke="#7a5532" stroke-width="3"><path d="M234 312H376M234 368H376M234 424H376M424 312H566M424 368H566M424 424H566"/></g>
+            <path class="wind" d="M30 382H200C300 382 330 300 400 300S560 290 620 290H770" stroke="#9fd6ff" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path class="wind" d="M30 268H200C300 268 380 250 440 260S560 380 620 412H770" stroke="#9fd6ff" stroke-opacity=".55" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M760 280l14 10-14 10" stroke="#9fd6ff" stroke-width="4" fill="none"/>
+            <g font-family="Gowun Dodum, sans-serif" fill="#eef2ec" font-size="19">
+              <text x="30" y="120">남쪽(앞)</text><text x="30" y="146" fill="#a9b9b3" font-size="16">아래 창이 커요</text>
+              <text x="770" y="120" text-anchor="end">북쪽(뒤)</text><text x="770" y="146" text-anchor="end" fill="#a9b9b3" font-size="16">위 창이 커요</text>
+              <text x="400" y="60" text-anchor="middle" font-family="Gowun Batang, serif" font-size="30" font-weight="700">바람길과 습기 조절</text>
+              <text x="400" y="575" text-anchor="middle" fill="#a9b9b3" font-size="17">바닥 흙이 습기를 빨아들이고 내뿜어 알맞게 맞춰요</text>
+            </g>
+          </svg>
+          <figcaption>해인사 장경판전 단면 · 원리를 쉽게 보여 주려고 그린 그림</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">유적 · 해인사 장경판전</p>
+          <h2>750년 넘게 경판을 지킨 비밀</h2>
+          <div class="rows">
+            <div><b>창문</b><span>앞쪽은 아래 창이, 뒤쪽은 위 창이 커서 바람이 건물 안을 골고루 돌아 나가요.</span></div>
+            <div><b>바닥</b><span>숯, 횟가루, 소금, 모래를 깔아 습기를 알맞게 조절해요.</span></div>
+            <div><b>경판</b><span>나무를 바닷물에 담그고 소금물에 삶아 말린 뒤 옻칠을 해서 썩거나 뒤틀리지 않게 했어요.</span></div>
+          </div>
+          <div class="facts"><span>장경판전: 유네스코 세계유산(1995)</span><span>대장경판: 세계기록유산(2007)</span></div>
+          <div class="know"><h3>이것으로 알 수 있어요</h3><ul><li>고려 사람들은 자연의 원리를 이용한 <b>과학적인 지혜</b>를 가졌어요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 금속활자 -->
+    <section class="slide" data-id="jikji" data-title="금속활자와 직지">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="금속활자를 판에 모으는 모습과, 직지와 구텐베르크 성서의 시대 비교">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <text x="270" y="50" text-anchor="middle" font-size="20" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">금속활자를 판에 모아 찍어요</text>
+            <rect x="90" y="70" width="380" height="306" rx="6" fill="#1c1712" stroke="url(#gBronze)" stroke-width="6"/>
+            <g id="typeGrid"></g>
+            <g transform="translate(540 90)">
+              <rect x="8" y="10" width="190" height="266" fill="#000" opacity=".35"/>
+              <use href="#sym-book" x="0" y="0" width="190" height="266"/>
+            </g>
+            <text x="635" y="396" text-anchor="middle" font-size="20" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">『직지』 하권</text>
+            <g font-family="Gowun Dodum, sans-serif">
+              <path d="M90 480H720" stroke="#a9b9b3" stroke-width="2"/>
+              <path d="M225 500V470" stroke="#d1ad62" stroke-width="5"/><circle cx="225" cy="480" r="10" fill="#d1ad62"/>
+              <path d="M615 500V470" stroke="#a9b9b3" stroke-width="5"/><circle cx="615" cy="480" r="10" fill="#a9b9b3"/>
+              <text x="225" y="530" text-anchor="middle" font-size="22" fill="#e2b45c" font-weight="700">1377년 직지</text>
+              <text x="615" y="530" text-anchor="middle" font-size="20" fill="#eef2ec">1455년 무렵 구텐베르크 성서</text>
+              <path d="M235 446Q420 410 605 446" stroke="#e2b45c" stroke-width="3" fill="none" stroke-dasharray="6 6"/>
+              <text x="420" y="430" text-anchor="middle" font-size="24" fill="#e2b45c" font-weight="700">78년 먼저!</text>
+            </g>
+          </svg>
+          <figcaption>활자에도 글자가 좌우 반대로 새겨져 있어요 · 다시 그린 그림</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">유물 ③ · 금속활자와 직지</p>
+          <h2>세계에서 가장 오래된 금속활자본, 직지</h2>
+          <div class="two">
+            <div><h3>목판</h3><p>한 판에 한 쪽을 통째로 새겨서 <b>그 책만</b> 찍을 수 있어요.</p></div>
+            <div><h3>금속활자</h3><p>글자를 하나씩 만들어 <b>조합하면 여러 책</b>을 찍을 수 있고, 단단해서 오래 써요.</p></div>
+          </div>
+          <p><b>1377년 청주 흥덕사</b>에서 찍은 『직지심체요절』은 지금 남아 있는 금속활자 책 가운데 <span class="mark">세계에서 가장 오래되었어요</span>.</p>
+          <div class="facts"><span>유네스코 세계기록유산(2001)</span><span>프랑스 국립도서관 보관(하권 1권)</span></div>
+          <div class="know"><h3>이것으로 알 수 있어요</h3><ul><li>고려의 인쇄 기술이 세계에서 앞서 있었어요.</li><li>책과 지식을 소중히 여겼어요.</li></ul></div>
+          <div class="links"><a href="https://www.google.com/search?tbm=isch&amp;q=직지심체요절" target="_blank" rel="noopener">진짜 사진 보기 ↗</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 불교문화 -->
+    <section class="slide" data-id="buddhism" data-title="불교문화: 연등회와 무량수전">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="밤하늘에 연등이 떠오르는 부석사 무량수전, 배흘림기둥 강조">
+            <rect width="800" height="600" fill="url(#gNight)"/>
+            <g fill="#fff"><circle class="twinkle" cx="80" cy="60" r="2"/><circle class="twinkle" cx="300" cy="40" r="1.6"/><circle class="twinkle" cx="520" cy="70" r="2"/><circle class="twinkle" cx="720" cy="40" r="1.6"/><circle class="twinkle" cx="640" cy="120" r="1.4"/><circle class="twinkle" cx="160" cy="130" r="1.4"/></g>
+            <rect x="110" y="476" width="580" height="44" fill="#8c8577"/>
+            <rect x="80" y="520" width="640" height="80" fill="#5b5548"/>
+            <g fill="#e8dcc2" stroke="#7d5b3a" stroke-width="2">
+              <rect x="181" y="350" width="68" height="126"/><rect x="271" y="350" width="68" height="126"/><rect x="361" y="350" width="78" height="126"/><rect x="461" y="350" width="68" height="126"/><rect x="551" y="350" width="68" height="126"/>
+            </g>
+            <g stroke="#7d5b3a" stroke-width="1.5" opacity=".7"><path d="M181 392H619M181 434H619M215 350V476M305 350V476M400 350V476M495 350V476M585 350V476"/></g>
+            <g fill="#b07a4a">
+              <path d="M161 340C155 395 155 430 161 476H181C187 430 187 395 181 340Z"/>
+              <path d="M251 340C245 395 245 430 251 476H271C277 430 277 395 271 340Z"/>
+              <path d="M341 340C335 395 335 430 341 476H361C367 430 367 395 361 340Z"/>
+              <path d="M439 340C433 395 433 430 439 476H459C465 430 465 395 459 340Z"/>
+              <path d="M529 340C523 395 523 430 529 476H549C555 430 555 395 549 340Z"/>
+              <path d="M619 340C613 395 613 430 619 476H639C645 430 645 395 639 340Z"/>
+            </g>
+            <rect x="140" y="320" width="520" height="24" fill="#3f6b5c"/>
+            <rect x="140" y="320" width="520" height="6" fill="#c0423a"/>
+            <path d="M40 318Q110 306 150 262H650Q690 306 760 318Q600 300 400 304Q200 300 40 318Z" fill="#2b2b33"/>
+            <path d="M190 262L290 198H510L610 262Z" fill="#35353d"/>
+            <path d="M270 198Q400 186 530 198" stroke="#1f1f25" stroke-width="8" fill="none"/>
+            <circle cx="171" cy="420" r="40" fill="none" stroke="#e2b45c" stroke-width="3" stroke-dasharray="6 5"/>
+            <text x="171" y="560" text-anchor="middle" font-size="19" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">배흘림기둥</text>
+            <path d="M171 462V540" stroke="#e2b45c" stroke-width="2"/>
+            <g class="bob"><circle cx="110" cy="200" r="34" fill="url(#gLamp)"/><ellipse cx="110" cy="200" rx="15" ry="18" fill="#f3a35a"/><path d="M110 182V170" stroke="#d1ad62" stroke-width="2"/></g>
+            <g class="bob d2"><circle cx="690" cy="180" r="34" fill="url(#gLamp)"/><ellipse cx="690" cy="180" rx="15" ry="18" fill="#ef7f9d"/><path d="M690 162V150" stroke="#d1ad62" stroke-width="2"/></g>
+            <g class="bob d3"><circle cx="400" cy="120" r="40" fill="url(#gLamp)"/><ellipse cx="400" cy="120" rx="18" ry="21" fill="#f6c25d"/><path d="M400 99V86" stroke="#d1ad62" stroke-width="2"/></g>
+            <g class="bob"><circle cx="250" cy="110" r="28" fill="url(#gLamp)"/><ellipse cx="250" cy="110" rx="12" ry="15" fill="#ef7f9d"/></g>
+            <g class="bob d2"><circle cx="560" cy="100" r="28" fill="url(#gLamp)"/><ellipse cx="560" cy="100" rx="12" ry="15" fill="#f3a35a"/></g>
+          </svg>
+          <figcaption>부석사 무량수전과 연등 · 이해를 돕기 위해 다시 그린 그림</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">유적 · 고려의 불교문화</p>
+          <h2>부처님께 비는 마음, 연등회와 무량수전</h2>
+          <p>고려는 불교를 크게 받들었어요. 나라에서 <b>연등회</b>와 <b>팔관회</b>를 열었어요. 연등회는 등불을 밝혀 복을 비는 행사로, 지금도 이어져 2020년 유네스코 인류무형문화유산이 되었어요.</p>
+          <p>영주 <b>부석사 무량수전</b>은 고려 때 지은 오래된 나무 건물이에요. 기둥 아래쪽이 살짝 볼록한 <span class="mark">배흘림기둥</span>으로 유명해요. 멀리서 볼 때 기둥이 가늘어 보이지 않고 든든해 보여요.</p>
+          <div class="know"><h3>이것으로 알 수 있어요</h3><ul><li>불교가 나라와 백성의 생활 속에 깊이 자리 잡았어요.</li><li>건축 기술과 아름다움을 보는 눈이 뛰어났어요.</li></ul></div>
+          <div class="links"><a href="https://www.google.com/search?tbm=isch&amp;q=부석사+무량수전+배흘림기둥" target="_blank" rel="noopener">무량수전 사진 ↗</a><a href="https://www.google.com/search?tbm=isch&amp;q=연등회" target="_blank" rel="noopener">연등회 사진 ↗</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 벽란도 -->
+    <section class="slide" data-id="byeokrando" data-title="벽란도: 세계로 열린 항구">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="송나라, 일본, 아라비아 배가 벽란도 항구로 모여드는 그림">
+            <rect width="800" height="600" fill="url(#gSea)"/>
+            <path d="M440 0H800V300Q740 290 690 240Q640 220 610 200Q560 150 520 90Q480 40 440 0Z" fill="#4d6b3f"/>
+            <path d="M800 120Q720 140 660 180Q630 196 610 200" stroke="#2f6f86" stroke-width="16" fill="none" stroke-linecap="round"/>
+            <circle cx="606" cy="204" r="14" fill="#e2b45c"/><circle cx="606" cy="204" r="26" fill="none" stroke="#e2b45c" stroke-width="2" opacity=".6"/>
+            <g font-family="Gowun Dodum, sans-serif" fill="#eef2ec">
+              <text x="640" y="250" font-size="26" font-weight="700" font-family="Gowun Batang, serif">벽란도</text>
+              <text x="680" y="105" font-size="18">예성강</text>
+              <text x="700" y="40" font-size="20">개경 ↗</text>
+            </g>
+            <g class="ship1"><use href="#sym-ship" x="40" y="160" width="80" height="66"/><text x="80" y="246" text-anchor="middle" font-size="18" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">송나라</text></g>
+            <g class="ship2"><use href="#sym-ship" x="600" y="440" width="76" height="62"/><text x="638" y="522" text-anchor="middle" font-size="18" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">일본</text></g>
+            <g class="ship3"><use href="#sym-ship" x="60" y="440" width="96" height="80"/><text x="108" y="540" text-anchor="middle" font-size="18" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">아라비아</text></g>
+            <g stroke="#ffffff22" stroke-width="2" fill="none"><path d="M40 330q20-8 40 0t40 0M260 400q20-8 40 0t40 0M420 520q20-8 40 0t40 0M200 90q20-8 40 0t40 0"/></g>
+            <text x="30" y="575" font-size="20" fill="#e2b45c" font-family="Gowun Dodum, sans-serif" font-weight="700">Corea → Korea</text>
+          </svg>
+          <figcaption>벽란도의 위치와 교류를 쉽게 보여 주는 그림(지도와 축척이 다름)</figcaption>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">유적 · 벽란도</p>
+          <h2>세계로 열린 항구, 벽란도</h2>
+          <p>수도 개경 가까이, 예성강 어귀에 있던 <b>국제 무역항</b>이에요. 송나라, 일본, 멀리 <b>아라비아 상인</b>까지 찾아왔어요.</p>
+          <div class="two">
+            <div><h3>고려가 판 물건</h3><p>인삼, 나전칠기, 화문석, 종이, 먹</p></div>
+            <div><h3>고려가 사 온 물건</h3><p>비단, 책, 약재, 향료</p></div>
+          </div>
+          <p>아라비아 상인을 통해 <span class="mark">'고려(Corea)'가 서양에 알려졌고</span>, 오늘날 Korea라는 이름이 되었어요.</p>
+          <div class="know"><h3>이것으로 알 수 있어요</h3><ul><li>고려는 여러 나라와 활발하게 교류한 열린 나라였어요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 신분 -->
+    <section class="slide" data-id="status" data-title="생활 모습 ① 신분과 생활">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="고려의 신분 구조: 귀족, 중류층, 양민, 천민">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <g font-family="Gowun Batang, serif" font-weight="700" text-anchor="middle">
+              <path d="M300 60L230 185H370Z" fill="#c9a24e"/><text x="300" y="165" font-size="26" fill="#1d1b18">귀족</text>
+              <path d="M230 195H370L430 300H170Z" fill="#6fa595"/><text x="300" y="262" font-size="26" fill="#10201b">중류층</text>
+              <path d="M170 310H430L500 430H100Z" fill="#a98c6a"/><text x="300" y="384" font-size="28" fill="#1d1b18">양민</text>
+              <path d="M100 440H500L540 520H60Z" fill="#7d7a73"/><text x="300" y="492" font-size="26" fill="#f2f0ea">천민</text>
+            </g>
+            <g font-family="Gowun Dodum, sans-serif" font-size="18" fill="#eef2ec">
+              <text x="520" y="120">높은 벼슬 · 청자와 차</text>
+              <text x="520" y="250">관청 실무 · 향리 · 군인</text>
+              <text x="560" y="372">농민이 대부분</text><text x="560" y="398" fill="#a9b9b3">상인 · 수공업자 · 세금 냄</text>
+              <text x="580" y="492">노비 등</text>
+              <path d="M380 112H510M440 245H510M510 380H550M548 486H570" stroke="#a9b9b3" stroke-width="1.5"/>
+            </g>
+            <text x="300" y="565" text-anchor="middle" font-size="18" fill="#a9b9b3" font-family="Gowun Dodum, sans-serif">신분에 따라 하는 일과 생활이 달랐어요</text>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">생활 모습 ① · 신분</p>
+          <h2>고려 사람들은 어떻게 살았을까?</h2>
+          <div class="rows">
+            <div><b>귀족</b><span>높은 벼슬을 하며 청자와 나전칠기를 쓰고 차를 즐겼어요.</span></div>
+            <div><b>중류층</b><span>관청의 실무를 맡거나 지방을 다스리는 일을 도왔어요.</span></div>
+            <div><b>양민</b><span>대부분 농사를 지었고, 상인과 물건 만드는 사람도 있었어요. 세금을 냈어요.</span></div>
+            <div><b>천민</b><span>노비처럼 가장 낮은 대우를 받았어요.</span></div>
+          </div>
+          <div class="know"><h3>이것으로 알 수 있어요</h3><ul><li>고려는 신분 사회였고, 신분에 따라 생활 모습이 달랐어요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 여성 -->
+    <section class="slide" data-id="women" data-title="생활 모습 ② 여성과 가족">
+      <div class="lesson">
+        <figure class="art">
+          <svg viewBox="0 0 800 600" role="img" aria-label="태어난 순서대로 적힌 호적과, 아들과 딸에게 재산을 똑같이 나누는 저울">
+            <rect width="800" height="600" fill="url(#gSpot)"/>
+            <g transform="rotate(-3 250 300)">
+              <rect x="86" y="96" width="330" height="410" fill="#000" opacity=".35"/>
+              <rect x="80" y="88" width="330" height="410" fill="#efe6d2"/>
+              <g font-family="Gowun Batang, serif" fill="#2a2622">
+                <text x="245" y="150" text-anchor="middle" font-size="38" font-weight="700">호적</text>
+                <path d="M110 172H380" stroke="#8a7a5c" stroke-width="2"/>
+                <text x="115" y="230" font-size="25">첫째  딸   ○○  15세</text>
+                <text x="115" y="290" font-size="25">둘째  아들  ○○  12세</text>
+                <text x="115" y="350" font-size="25">셋째  딸   ○○   9세</text>
+                <text x="115" y="410" font-size="25">넷째  아들  ○○   6세</text>
+              </g>
+              <text x="245" y="470" text-anchor="middle" font-size="19" fill="#a63f2b" font-family="Gowun Dodum, sans-serif" font-weight="700">아들딸 구별 없이 태어난 순서대로!</text>
+            </g>
+            <g transform="translate(470 120)">
+              <path d="M150 40V330" stroke="#d1ad62" stroke-width="8"/>
+              <rect x="90" y="330" width="120" height="16" rx="4" fill="#d1ad62"/>
+              <g class="beam">
+                <rect x="20" y="36" width="260" height="10" rx="5" fill="#d1ad62"/>
+                <path d="M40 46L10 150M40 46L70 150M260 46L230 150M260 46L290 150" stroke="#a9b9b3" stroke-width="2"/>
+                <path d="M0 150H80Q40 185 0 150Z" fill="#d1ad62"/><path d="M220 150H300Q260 185 220 150Z" fill="#d1ad62"/>
+                <g fill="#f6c25d" stroke="#94640f"><circle cx="30" cy="140" r="9"/><circle cx="50" cy="140" r="9"/><circle cx="40" cy="126" r="9"/><circle cx="250" cy="140" r="9"/><circle cx="270" cy="140" r="9"/><circle cx="260" cy="126" r="9"/></g>
+                <text x="40" y="210" text-anchor="middle" font-size="24" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">딸</text>
+                <text x="260" y="210" text-anchor="middle" font-size="24" fill="#eef2ec" font-family="Gowun Dodum, sans-serif">아들</text>
+              </g>
+              <text x="150" y="390" text-anchor="middle" font-size="22" fill="#e2b45c" font-family="Gowun Dodum, sans-serif" font-weight="700">재산은 똑같이</text>
+            </g>
+          </svg>
+        </figure>
+        <div class="txt">
+          <p class="eyebrow">생활 모습 ② · 여성과 가족</p>
+          <h2>아들딸 차별이 적었던 고려</h2>
+          <ul class="dots"><li>부모의 <b>재산</b>은 아들과 딸이 <b>똑같이</b> 나누어 받았어요.</li><li><b>호적</b>에는 아들딸 구별 없이 <b>태어난 순서대로</b> 적었어요.</li><li>부모님 <b>제사</b>도 아들과 딸이 <b>돌아가며</b> 지냈어요.</li><li>여성의 다시 결혼(재혼)도 비교적 자유로웠어요.</li></ul>
+          <div class="know"><h3>이것으로 알 수 있어요</h3><ul><li>고려 시대에는 여성의 지위가 비교적 높았어요.</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 한눈에 정리 -->
+    <section class="slide" data-id="summary" data-title="한눈에 정리하기">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">정리 · 유물과 유적으로 본 고려</p><h2>한눈에 정리하기</h2><p>왼쪽 칸을 가리고 오른쪽만 보며 무엇인지 맞혀 보세요. 반대로도 해 보면 실력이 쑥쑥!</p></div>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>유물 · 유적</th><th>특징</th><th>알 수 있는 생활 모습</th></tr></thead>
+            <tbody>
+              <tr><td>고려청자</td><td>비색, 상감 기법, 귀족이 사용</td><td>뛰어난 도자기 기술과 예술 감각, 귀족의 화려한 생활과 차 문화</td></tr>
+              <tr><td>팔만대장경판</td><td>1236~1251년, 81,258장, 좌우 반대로 새김</td><td>불교를 믿음, 힘을 모아 몽골의 침입에서 나라를 지키려 함</td></tr>
+              <tr><td>해인사 장경판전</td><td>창 크기가 다름, 바닥에 숯·횟가루·소금·모래</td><td>자연을 이용한 과학적 지혜</td></tr>
+              <tr><td>직지심체요절</td><td>1377년 청주 흥덕사, 세계에서 가장 오래된 금속활자본</td><td>세계적으로 앞선 인쇄 기술, 지식을 소중히 여김</td></tr>
+              <tr><td>연등회 · 무량수전</td><td>등불 행사, 배흘림기둥</td><td>불교가 생활 깊이 자리 잡음, 뛰어난 건축 기술</td></tr>
+              <tr><td>벽란도</td><td>개경 가까운 국제 무역항, 아라비아 상인</td><td>여러 나라와 활발히 교류한 열린 나라, Korea의 유래</td></tr>
+              <tr><td>호적 · 재산 상속</td><td>태어난 순서대로 기록, 아들딸 똑같이 상속</td><td>여성의 지위가 비교적 높았음</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 수행평가 안내 -->
+    <section class="slide" data-id="guide" data-title="수행평가 ① 이렇게 준비해요">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">수행평가 준비 ①</p><h2>수행평가, 이렇게 준비해요</h2><p>학교마다 방법은 조금씩 다르지만, 이 단원에서는 아래 같은 활동이 자주 나와요. 선생님께 받은 안내문과 함께 비교해 보세요.</p></div>
+        <div class="grid4">
+          <div class="panel"><h3>유물 소개하기</h3><p>유물 하나를 골라 이름, 특징, 알 수 있는 생활 모습을 소개해요.</p></div>
+          <div class="panel"><h3>서술형 쓰기</h3><p>"○○을 통해 알 수 있는 고려 사람들의 생활 모습을 쓰시오" 같은 문제예요.</p></div>
+          <div class="panel"><h3>안내문 · 포스터 만들기</h3><p>박물관 안내 카드나 문화유산 홍보 포스터를 꾸며요.</p></div>
+          <div class="panel"><h3>발표하기</h3><p>내가 만든 카드나 글을 친구들 앞에서 30초~1분 동안 발표해요.</p></div>
+        </div>
+        <div class="frame">
+          <h3>어떤 문제든 통하는 문장 틀</h3>
+          <p><u>(유물 이름)</u>은/는 <u>(특징)</u>하게 만들어졌다. 이를 통해 고려 사람들이 <u>(생활 모습)</u>했음을 알 수 있다. 나는 <u>(내 생각)</u>라고 생각한다.</p>
+        </div>
+        <div class="tbl rubric">
+          <table>
+            <thead><tr><th>채점에서 보는 점</th><th>잘했어요 체크</th></tr></thead>
+            <tbody>
+              <tr><td>정확성</td><td>유물의 이름, 만든 때, 특징을 바르게 썼나요?</td></tr>
+              <tr><td>생활 모습과 연결</td><td>"이를 통해 ~을 알 수 있다"처럼 고려 사람들의 생활과 연결했나요?</td></tr>
+              <tr><td>나의 생각</td><td>느낀 점이나 자랑스러운 점을 한 문장 넣었나요?</td></tr>
+              <tr><td>표현</td><td>문장이 바르고, 알아보기 쉽게 정리했나요?</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 서술형 -->
+    <section class="slide" data-id="essay" data-title="수행평가 ② 서술형 연습" data-stop="1">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">수행평가 준비 ②</p><h2>서술형 연습</h2><p>먼저 스스로 써 보고 <b>내 답 점검하기</b>를 누르세요. 꼭 들어가야 할 핵심 낱말이 있는지 알려 줘요. 쓴 답은 이 기기에 저장돼요.</p></div>
+        <div class="essays" id="essays"></div>
+      </div>
+    </section>
+
+    <!-- 15 유물 카드 -->
+    <section class="slide" data-id="card" data-title="수행평가 ③ 유물 소개 카드 만들기" data-stop="1">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">수행평가 준비 ③</p><h2>유물 소개 카드 만들기</h2><p>유물을 고르고 빈칸을 채우면 카드가 완성돼요. 다 쓰면 <b>발표 읽어 주기</b>로 발표 연습을 해 보세요. 예시 그대로면 AI 성우가, 직접 고쳐 쓰면 기기 목소리가 읽어 줘요.</p></div>
+        <div class="maker">
+          <form class="form" id="cardForm" autocomplete="off">
+            <div><label for="cardArt">소개할 유물</label>
+              <select id="cardArt">
+                <option value="celadon">고려청자</option><option value="tripitaka">팔만대장경판</option><option value="jikji">직지심체요절</option><option value="hall">부석사 무량수전</option><option value="port">벽란도</option>
+              </select></div>
+            <div><label for="cardName">이름</label><input type="text" id="cardName"></div>
+            <div><label for="cardWhen">만든 때</label><input type="text" id="cardWhen"></div>
+            <div><label for="cardLook">생김새와 특징</label><textarea id="cardLook" rows="3"></textarea></div>
+            <div><label for="cardLife">이것으로 알 수 있는 생활 모습</label><textarea id="cardLife" rows="3"></textarea></div>
+            <div><label for="cardThink">나의 생각</label><textarea id="cardThink" rows="2"></textarea></div>
+            <div class="row">
+              <button class="btn" type="button" id="cardEx">예시 채우기</button>
+              <button class="btn" type="button" id="cardClear">지우기</button>
+              <button class="btn primary" type="button" id="cardSay">발표 읽어 주기</button>
+            </div>
+          </form>
+          <div class="card" aria-live="polite">
+            <div class="thumb"><svg viewBox="0 0 120 80" id="cardThumb"><use href="#maebyeong" x="35" y="4" width="50" height="72"/></svg></div>
+            <div class="cb">
+              <p class="tag">고려 문화유산 소개 카드</p>
+              <h3 id="pvName">유물 이름</h3>
+              <dl>
+                <div><dt>만든 때</dt><dd id="pvWhen">-</dd></div>
+                <div><dt>생김새와 특징</dt><dd id="pvLook">-</dd></div>
+                <div><dt>알 수 있는 생활 모습</dt><dd id="pvLife">-</dd></div>
+                <div><dt>나의 생각</dt><dd id="pvThink">-</dd></div>
+              </dl>
+              <p class="sign">고려 문화 탐험노트</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16 퀴즈 -->
+    <section class="slide" data-id="quiz" data-title="실력 확인 퀴즈 10문제" data-stop="1">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">마무리 · 실력 확인</p><h2>실력 확인 퀴즈</h2><p>답을 누르면 바로 정답과 설명이 나와요. 틀린 문제는 설명을 꼭 읽어 보세요.</p></div>
+        <div class="score"><span>맞힌 문제 <b id="qScore">0</b> / <span id="qTotal">10</span></span><button class="btn" type="button" id="qReset">다시 풀기</button></div>
+        <div class="quiz" id="quiz"></div>
+      </div>
+    </section>
+
+    <!-- 17 마무리 -->
+    <section class="slide" data-id="end" data-title="마무리 체크리스트">
+      <div class="full">
+        <div class="sechead"><p class="eyebrow">마무리</p><h2>스스로 확인하는 체크리스트</h2><p>말로 설명할 수 있으면 체크하세요. 모두 체크하면 수행평가 준비 끝!</p></div>
+        <ul class="check" id="checklist"></ul>
+        <div class="sechead" style="margin-top:22px;margin-bottom:8px"><h2 style="font-size:1.25rem">진짜 유물 사진 · 더 알아보기</h2><p>아래 링크는 새 창으로 열려요. 어른과 함께 찾아보세요.</p></div>
+        <div class="links">
+          <a href="https://www.google.com/search?tbm=isch&amp;q=청자+상감운학문+매병" target="_blank" rel="noopener">청자 상감운학문 매병 ↗</a>
+          <a href="https://www.google.com/search?tbm=isch&amp;q=해인사+장경판전" target="_blank" rel="noopener">해인사 장경판전 ↗</a>
+          <a href="https://www.google.com/search?tbm=isch&amp;q=직지심체요절" target="_blank" rel="noopener">직지심체요절 ↗</a>
+          <a href="https://www.google.com/search?tbm=isch&amp;q=부석사+무량수전" target="_blank" rel="noopener">부석사 무량수전 ↗</a>
+          <a href="https://www.google.com/search?tbm=isch&amp;q=고려+나전칠기" target="_blank" rel="noopener">고려 나전칠기 ↗</a>
+          <a href="https://www.emuseum.go.kr" target="_blank" rel="noopener">e뮤지엄(전국 박물관 유물) ↗</a>
+          <a href="https://www.heritage.go.kr" target="_blank" rel="noopener">국가유산포털 ↗</a>
+          <a href="https://www.museum.go.kr" target="_blank" rel="noopener">국립중앙박물관 ↗</a>
+        </div>
+        <p class="note" style="margin-top:18px">음성: Supertone의 공개 AI 음성 모델 Supertonic 3(MIT 라이선스)로 만든 AI 성우 음성이에요. 그림은 이해를 돕기 위해 새로 그렸어요.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottom">
+    <div class="aprog" aria-hidden="true"><i id="aprogBar"></i></div>
+    <audio id="voice" preload="auto"></audio>
+    <div class="caption" id="caption" aria-live="polite">재생 버튼을 누르면 선생님 목소리로 읽어 줘요.</div>
+    <div class="controls">
+      <button class="btn icon" type="button" id="btnPrev" aria-label="이전 장"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span class="hide-s">이전</span></button>
+      <button class="btn primary" type="button" id="btnAuto"><svg viewBox="0 0 24 24" fill="currentColor" id="icAuto"><path d="M7 4v16l13-8z"/></svg><span id="lbAuto">영상처럼 보기</span></button>
+      <button class="btn" type="button" id="btnListen" aria-label="이 장 듣기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg><span id="lbListen" class="hide-xs">이 장 듣기</span></button>
+      <button class="btn icon" type="button" id="btnNext" aria-label="다음 장"><span class="hide-s">다음</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<div class="overlay" id="tocBox" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tocTitle">
+    <header><h2 id="tocTitle">목차</h2><button class="btn" type="button" data-close>닫기</button></header>
+    <ol class="toclist" id="tocList"></ol>
+  </div>
+</div>
+
+<div class="overlay" id="setBox" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <header><h2 id="setTitle">목소리 설정</h2><button class="btn" type="button" data-close>닫기</button></header>
+    <p class="note">설명, 모범 답안, 카드 예시는 <b>AI 성우 음성(Supertonic 3)</b>으로 미리 녹음해 두었어요.</p>
+    <div><label for="rateSel" style="font-weight:700;font-size:.9rem">읽는 빠르기</label>
+      <select id="rateSel"><option value="0.9">천천히</option><option value="1" selected>보통</option><option value="1.15">조금 빠르게</option></select></div>
+    <div class="row"><button class="btn primary" type="button" id="aiTest">AI 성우 목소리 들어 보기</button></div>
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <div><label for="voiceSel" style="font-weight:700;font-size:.9rem">기기 목소리 (직접 고쳐 쓴 카드를 읽을 때만 써요)</label><select id="voiceSel"></select></div>
+    <div class="row"><button class="btn" type="button" id="voiceTest">기기 목소리 들어 보기</button></div>
+    <p class="note" id="voiceNote">기기에 설치된 한국어 목소리 중 여성 목소리를 먼저 골라 두었어요.</p>
+  </div>
+</div>
+
+<script type="application/json" id="voiceTiming">{"n_cover":{"dur":23.33,"cues":[{"t":0.15,"text":"안녕하세요!"},{"t":1.3,"text":"오늘은 유적과 유물로 살펴본 옛 사람들의 생활 단원에서, 고려의 문화와 사람들의 생활 모습을 함께 공부해 볼 거예요."},{"t":11.23,"text":"고려청자, 팔만대장경, 금속활자처럼 고려 사람들이 남긴 보물을 하나씩 살펴보고, 마지막에는 수행평가 연습까지 해 봐요."},{"t":21.02,"text":"준비됐나요?"},{"t":22.2,"text":"그럼 출발!"}]},"n_goryeo":{"dur":23.15,"cues":[{"t":0.15,"text":"고려는 918년에 왕건이 세운 나라예요."},{"t":3.24,"text":"수도는 개경, 지금의 개성이에요."},{"t":5.49,"text":"고려는 936년에 후삼국을 하나로 통일했고, 1392년까지 약 470년 동안 이어졌어요."},{"t":13.76,"text":"고려라는 이름에는 고구려를 이어받는다는 뜻이 담겨 있어요."},{"t":17.77,"text":"그리고 오늘날 우리나라의 영어 이름 코리아도 바로 이 고려에서 나왔답니다."}]},"n_relic":{"dur":31.0,"cues":[{"t":0.15,"text":"공부를 시작하기 전에 두 낱말을 먼저 알아 둬요."},{"t":3.64,"text":"유적은 옛 사람들이 남긴 건물이나 탑, 무덤, 집터처럼 옮길 수 없는 흔적이에요."},{"t":10.14,"text":"유물은 그릇, 책, 도구처럼 옮길 수 있는 물건이에요."},{"t":14.34,"text":"유적과 유물을 자세히 살펴보면, 그때 사람들이 무엇을 믿고 어떤 기술을 가졌으며 어떻게 살았는지 알아낼 수 있어요."},{"t":23.24,"text":"수행평가에서는 이 유물을 통해 무엇을 알 수 있다, 이렇게 생활 모습과 꼭 연결해서 쓰는 것이 중요해요."}]},"n_celadon":{"dur":26.68,"cues":[{"t":0.15,"text":"가장 먼저 만날 유물은 고려청자예요."},{"t":2.74,"text":"고려청자는 맑고 푸른빛을 띠는 자기인데, 고려 사람들은 이 빛깔을 비색이라고 불렀어요."},{"t":9.53,"text":"송나라 사람도 고려 비색은 천하제일이라며 칭찬했대요."},{"t":13.51,"text":"그림 속 유물은 청자 상감운학문 매병이에요."},{"t":16.82,"text":"운학문은 구름과 학 무늬라는 뜻이에요."},{"t":19.59,"text":"동그라미 안의 학은 위로 날아오르고, 동그라미 밖의 학은 아래로 내려오는 모습이 참 재미있지요?"}]},"n_sanggam":{"dur":36.47,"cues":[{"t":0.15,"text":"고려청자에는 고려만의 특별한 기술이 숨어 있어요."},{"t":3.72,"text":"바로 상감 기법이에요."},{"t":5.3,"text":"먼저 그릇 겉면에 무늬를 파내요."},{"t":7.44,"text":"그다음 파낸 자리에 흰 흙과 붉은 흙을 메워 넣어요."},{"t":11.04,"text":"마지막으로 유약을 바르고 가마에서 구우면, 흰 흙은 하얗게, 붉은 흙은 검게 변해서 무늬가 또렷하게 나타나요."},{"t":19.75,"text":"청자는 주로 귀족들이 썼어요."},{"t":21.82,"text":"찻잔, 주전자, 향로, 베개, 지붕 기와까지 청자로 만들었답니다."},{"t":27.08,"text":"그래서 고려청자를 보면 고려 사람들의 뛰어난 기술과 예술 감각, 그리고 차를 즐기던 귀족들의 화려한 생활을 알 수 있어요."}]},"n_tripitaka":{"dur":39.38,"cues":[{"t":0.15,"text":"다음은 팔만대장경이에요."},{"t":2.0,"text":"대장경은 부처님의 가르침을 모은 책이고, 그것을 찍어 내려고 나무판에 글자를 새긴 것이 대장경판이에요."},{"t":10.49,"text":"고려는 몽골이 쳐들어왔을 때, 부처님의 힘으로 나라를 지키고 싶은 마음을 모아 1236년부터 1251년까지 16년 동안 대장경판을 만들었어요."},{"t":23.42,"text":"경판이 8만 장이 넘어서 팔만대장경이라고 불러요."},{"t":27.32,"text":"그림을 잘 보세요."},{"t":28.67,"text":"종이에 찍었을 때 바르게 나오도록 글자를 좌우 반대로 새겼어요."},{"t":33.23,"text":"5천만 자가 넘는 글자 가운데 틀린 글자가 거의 없을 정도로 정성을 다했답니다."}]},"n_janggyeong":{"dur":38.67,"cues":[{"t":0.15,"text":"팔만대장경판은 경상남도 합천 해인사의 장경판전에 보관되어 있어요."},{"t":5.54,"text":"나무로 만든 경판이 750년이 넘도록 썩지 않은 비밀은 무엇일까요?"},{"t":10.88,"text":"첫째, 건물 앞쪽은 아래 창을, 뒤쪽은 위 창을 크게 만들어 바람이 건물 안을 골고루 돌아 나가게 했어요."},{"t":19.53,"text":"둘째, 바닥에 숯과 횟가루, 소금, 모래를 깔아 습기를 알맞게 조절했어요."},{"t":25.3,"text":"셋째, 나무를 바닷물에 담그고 소금물에 삶아 말린 뒤 옻칠을 해서 썩거나 뒤틀리지 않게 했어요."},{"t":32.98,"text":"그래서 장경판전은 유네스코 세계유산, 대장경판은 세계기록유산이 되었어요."}]},"n_jikji":{"dur":39.22,"cues":[{"t":0.15,"text":"고려 사람들은 금속활자도 만들었어요."},{"t":2.7,"text":"목판은 한 판에 한 쪽을 통째로 새기니까 그 책만 찍을 수 있어요."},{"t":7.73,"text":"하지만 금속활자는 글자를 하나씩 만들어 두고 필요한 대로 조합해서 여러 가지 책을 찍을 수 있고, 단단해서 오래 쓸 수 있어요."},{"t":17.21,"text":"1377년 청주 흥덕사에서 금속활자로 찍은 직지심체요절은 지금 남아 있는 금속활자 책 가운데 세계에서 가장 오래되었어요."},{"t":28.02,"text":"독일 구텐베르크의 성서보다 78년이나 앞섰답니다."},{"t":32.24,"text":"직지는 2001년 유네스코 세계기록유산이 되었고, 지금은 프랑스 국립도서관에 보관되어 있어요."}]},"n_buddhism":{"dur":29.57,"cues":[{"t":0.15,"text":"고려 사람들은 불교를 깊이 믿었어요."},{"t":2.62,"text":"나라에서는 연등회와 팔관회 같은 큰 행사를 열었어요."},{"t":6.57,"text":"연등회는 등불을 밝혀 부처님께 복을 비는 행사로, 오늘날까지 이어져 유네스코 인류무형문화유산이 되었어요."},{"t":15.4,"text":"경상북도 영주 부석사의 무량수전도 고려 시대에 지어진 오래된 나무 건물이에요."},{"t":21.34,"text":"기둥 아래쪽이 살짝 볼록한 배흘림기둥이 유명해요."},{"t":24.96,"text":"이렇게 하면 멀리서 볼 때 기둥이 가늘어 보이지 않고 든든해 보여요."}]},"n_byeokrando":{"dur":32.47,"cues":[{"t":0.15,"text":"고려의 수도 개경 가까이에는 벽란도라는 큰 항구가 있었어요."},{"t":4.42,"text":"이곳에는 송나라와 일본, 그리고 멀리 아라비아에서 온 상인들까지 모여 물건을 사고팔았어요."},{"t":11.69,"text":"고려는 인삼과 나전칠기, 화문석, 종이와 먹 등을 팔고, 비단과 책, 약재, 향료 등을 사 왔어요."},{"t":19.35,"text":"아라비아 상인들을 통해 고려가 서양에 알려졌고, 그래서 우리나라를 코리아라고 부르게 되었어요."},{"t":26.43,"text":"벽란도를 보면 고려가 여러 나라와 활발히 교류한 열린 나라였다는 것을 알 수 있어요."}]},"n_status":{"dur":27.8,"cues":[{"t":0.15,"text":"고려 사회에는 신분이 있었어요."},{"t":2.16,"text":"가장 위에는 높은 벼슬을 하던 귀족이 있었고, 그 아래에 관청의 실무를 맡은 중류층, 농사를 짓거나 물건을 만들고 장사를 하던 양민, 그리고 노비 같은 천민이 있었어요."},{"t":15.17,"text":"귀족들은 청자와 나전칠기를 쓰며 차를 마시는 등 화려하게 살았어요."},{"t":20.48,"text":"백성의 대부분은 농사를 지으며 세금을 냈답니다."},{"t":23.82,"text":"이처럼 고려 사람들은 신분에 따라 생활 모습이 달랐어요."}]},"n_women":{"dur":21.53,"cues":[{"t":0.15,"text":"고려 여성의 생활에는 지금 생각해도 놀라운 점이 많아요."},{"t":4.35,"text":"부모의 재산은 아들과 딸이 똑같이 나누어 받았어요."},{"t":7.97,"text":"집안의 기록인 호적에는 아들딸 구별 없이 태어난 순서대로 이름을 적었어요."},{"t":13.29,"text":"부모님 제사도 아들과 딸이 돌아가며 지냈어요."},{"t":16.42,"text":"이를 보면 고려 시대에는 여성의 지위가 비교적 높았다는 것을 알 수 있어요."}]},"n_summary":{"dur":26.37,"cues":[{"t":0.15,"text":"지금까지 배운 내용을 한눈에 정리해 볼까요?"},{"t":3.14,"text":"고려청자로는 뛰어난 기술과 귀족의 생활을, 팔만대장경으로는 불교를 믿으며 나라를 지키려던 마음을, 장경판전으로는 과학적인 지혜를 알 수 있어요."},{"t":14.8,"text":"직지로는 앞선 인쇄 기술을, 벽란도로는 활발한 교류를, 호적과 재산 상속으로는 여성의 높은 지위를 알 수 있어요."},{"t":23.7,"text":"표를 보며 소리 내어 한 번 읽어 보세요."}]},"n_guide":{"dur":30.31,"cues":[{"t":0.15,"text":"이제 수행평가를 준비해 볼게요."},{"t":2.28,"text":"이 단원에서는 유물 하나를 골라 소개하기, 생활 모습을 서술형으로 쓰기, 안내문이나 포스터 만들기, 발표하기 같은 활동이 자주 나와요."},{"t":12.51,"text":"어떤 문제든 통하는 문장 틀을 기억하세요."},{"t":15.38,"text":"무엇은 어떻게 만들어졌다."},{"t":17.27,"text":"이를 통해 고려 사람들이 어떻게 생활했음을 알 수 있다."},{"t":20.96,"text":"나는 이렇게 생각한다."},{"t":22.56,"text":"그리고 채점할 때는 정확성, 생활 모습과의 연결, 나의 생각, 바른 표현을 본다는 것도 꼭 기억해요."}]},"n_essay":{"dur":17.88,"cues":[{"t":0.15,"text":"서술형 문제를 연습해 볼게요."},{"t":2.33,"text":"먼저 스스로 답을 써 보고, 내 답 점검하기 버튼을 눌러 보세요."},{"t":7.11,"text":"꼭 들어가야 할 핵심 낱말이 들어 있는지 알려 줘요."},{"t":10.51,"text":"그다음 모범 답안과 비교해 보세요."},{"t":12.9,"text":"여기부터는 직접 해 보는 활동이니까, 자동 재생은 잠시 멈출게요."}]},"n_card":{"dur":14.41,"cues":[{"t":0.15,"text":"유물 소개 카드를 만들어 볼까요?"},{"t":2.24,"text":"소개하고 싶은 유물을 고르고 빈칸을 채우면 카드가 완성돼요."},{"t":6.57,"text":"예시 채우기 버튼을 누르면 예시 답을 볼 수 있어요."},{"t":9.87,"text":"다 만들었으면 발표 읽어 주기 버튼으로 발표 연습도 해 보세요."}]},"n_quiz":{"dur":8.01,"cues":[{"t":0.15,"text":"마지막으로 실력 확인 퀴즈예요."},{"t":2.14,"text":"열 문제를 풀고 몇 개 맞혔는지 확인해 보세요."},{"t":5.44,"text":"틀린 문제는 설명을 꼭 읽어 보세요."}]},"n_end":{"dur":11.85,"cues":[{"t":0.15,"text":"오늘 공부 정말 잘했어요!"},{"t":2.07,"text":"체크리스트를 보며 스스로 설명할 수 있는지 확인해 보고, 진짜 유물 사진도 찾아보세요."},{"t":8.57,"text":"수행평가도 분명 잘 해낼 거예요."},{"t":10.86,"text":"화이팅!"}]},"e_0":{"dur":24.96,"cues":[{"t":0.15,"text":"고려청자는 그릇에 무늬를 파고 흰 흙과 붉은 흙을 메워 굽는 상감 기법으로 만들어졌습니다."},{"t":6.91,"text":"이를 통해 고려 사람들의 도자기 만드는 기술이 뛰어나고 예술 감각이 높았다는 것을 알 수 있습니다."},{"t":14.18,"text":"또 귀족들이 청자로 만든 찻잔과 주전자, 베개 등을 사용한 것으로 보아 귀족들이 차를 즐겨 마시며 화려하게 생활했다는 것을 알 수 있습니다."}]},"e_1":{"dur":31.6,"cues":[{"t":0.15,"text":"고려 사람들은 몽골이 쳐들어왔을 때 부처님의 힘으로 나라를 지키려는 마음을 모아 팔만대장경을 만들었습니다."},{"t":8.55,"text":"대장경판을 보관한 해인사 장경판전은 앞뒤 창문의 크기를 다르게 하여 바람이 잘 통하게 하였고, 바닥에 숯과 횟가루, 소금, 모래를 깔아 습기를 조절하였습니다."},{"t":21.23,"text":"또 경판을 바닷물에 담그고 소금물에 삶아 말린 뒤 옻칠을 하여 썩거나 뒤틀리지 않게 했기 때문에 오늘날까지 잘 보존되었습니다."}]},"e_2":{"dur":29.87,"cues":[{"t":0.15,"text":"목판은 한 판으로 한 가지 책만 찍을 수 있지만, 금속활자는 글자를 조합하여 여러 가지 책을 찍을 수 있고 단단해서 오래 사용할 수 있습니다."},{"t":10.52,"text":"1377년 청주 흥덕사에서 금속활자로 찍은 직지심체요절은 현재 남아 있는 금속활자 책 가운데 세계에서 가장 오래된 것으로, 2001년 유네스코 세계기록유산이 되었습니다."},{"t":24.71,"text":"이를 통해 고려의 인쇄 기술이 세계적으로 앞서 있었음을 알 수 있습니다."}]},"e_3":{"dur":22.89,"cues":[{"t":0.15,"text":"벽란도는 수도 개경 가까이에 있던 국제 무역항으로, 송나라와 일본뿐 아니라 멀리 아라비아 상인까지 와서 물건을 사고팔았습니다."},{"t":10.66,"text":"이를 통해 고려가 여러 나라와 활발하게 교류한 열린 나라였음을 알 수 있습니다."},{"t":16.48,"text":"또 아라비아 상인을 통해 고려가 서양에 알려져 오늘날 코리아라는 이름이 생겼습니다."}]},"e_4":{"dur":17.56,"cues":[{"t":0.15,"text":"고려에서는 부모의 재산을 아들과 딸이 똑같이 나누어 받았고, 호적에는 아들딸 구별 없이 태어난 순서대로 이름을 적었습니다."},{"t":9.35,"text":"부모의 제사도 아들과 딸이 돌아가며 지냈습니다."},{"t":12.54,"text":"이를 통해 고려 시대에는 여성의 지위가 비교적 높았음을 알 수 있습니다."}]},"c_celadon":{"dur":36.27,"cues":[{"t":0.15,"text":"제가 소개할 유물은 청자 상감운학문 매병입니다."},{"t":3.94,"text":"만든 때는 고려 시대 (12세기 무렵)입니다."},{"t":7.0,"text":"생김새와 특징을 말씀드리겠습니다."},{"t":9.51,"text":"맑고 푸른 비색을 띠고, 입이 작고 어깨가 넓은 병이에요."},{"t":13.84,"text":"상감 기법으로 구름과 학 무늬를 넣었어요."},{"t":16.69,"text":"이 유물로 알 수 있는 생활 모습은 이렇습니다."},{"t":19.63,"text":"고려 사람들의 도자기 기술과 예술 감각이 뛰어났고, 귀족들이 아름다운 물건을 즐겨 썼다는 것을 알 수 있어요."},{"t":28.13,"text":"제 생각은 이렇습니다."},{"t":29.81,"text":"천 년 가까이 된 그릇이 지금도 이렇게 아름다운 것이 자랑스러워요."},{"t":34.61,"text":"들어 주셔서 감사합니다."}]},"c_tripitaka":{"dur":37.04,"cues":[{"t":0.15,"text":"제가 소개할 유물은 팔만대장경판입니다."},{"t":3.24,"text":"만든 때는 고려 시대 (1236년~1251년)입니다."},{"t":8.26,"text":"생김새와 특징을 말씀드리겠습니다."},{"t":10.77,"text":"나무판 8만 1천여 장에 부처님의 가르침을 좌우 반대로 새겼어요."},{"t":15.83,"text":"해인사 장경판전에 보관되어 있어요."},{"t":18.54,"text":"이 유물로 알 수 있는 생활 모습은 이렇습니다."},{"t":21.48,"text":"고려 사람들이 불교를 믿었고, 힘을 모아 몽골의 침입에서 나라를 지키려 했다는 것을 알 수 있어요."},{"t":28.88,"text":"제 생각은 이렇습니다."},{"t":30.56,"text":"16년 동안 틀린 글자 없이 새긴 정성과 끈기가 정말 대단해요."},{"t":35.38,"text":"들어 주셔서 감사합니다."}]},"c_jikji":{"dur":34.59,"cues":[{"t":0.15,"text":"제가 소개할 유물은 직지심체요절입니다."},{"t":3.03,"text":"만든 때는 고려 시대 (1377년)입니다."},{"t":6.54,"text":"생김새와 특징을 말씀드리겠습니다."},{"t":9.05,"text":"청주 흥덕사에서 금속활자로 찍은 책이에요."},{"t":12.26,"text":"지금 남아 있는 금속활자 책 중 세계에서 가장 오래되었어요."},{"t":16.68,"text":"이 유물로 알 수 있는 생활 모습은 이렇습니다."},{"t":19.62,"text":"고려의 인쇄 기술이 세계에서 앞서 있었고, 책과 지식을 소중히 여겼다는 것을 알 수 있어요."},{"t":26.32,"text":"제 생각은 이렇습니다."},{"t":28.0,"text":"직지가 프랑스에 있어서 아쉬워요."},{"t":30.33,"text":"언젠가 우리나라에서 직접 보고 싶어요."},{"t":32.93,"text":"들어 주셔서 감사합니다."}]},"c_hall":{"dur":30.9,"cues":[{"t":0.15,"text":"제가 소개할 유물은 부석사 무량수전입니다."},{"t":3.12,"text":"만든 때는 고려 시대입니다."},{"t":5.02,"text":"생김새와 특징을 말씀드리겠습니다."},{"t":7.53,"text":"경상북도 영주 부석사에 있는 오래된 나무 건물이에요."},{"t":11.49,"text":"기둥 아래쪽이 볼록한 배흘림기둥이 유명해요."},{"t":14.71,"text":"이 유물로 알 수 있는 생활 모습은 이렇습니다."},{"t":17.65,"text":"고려 사람들이 불교를 깊이 믿었고, 건축 기술이 뛰어났다는 것을 알 수 있어요."},{"t":23.37,"text":"제 생각은 이렇습니다."},{"t":25.05,"text":"기둥 하나에도 보기 좋게 만들려는 지혜가 담겨 있어 신기해요."},{"t":29.24,"text":"들어 주셔서 감사합니다."}]},"c_port":{"dur":29.67,"cues":[{"t":0.15,"text":"제가 소개할 유물은 벽란도입니다."},{"t":2.55,"text":"만든 때는 고려 시대입니다."},{"t":4.45,"text":"생김새와 특징을 말씀드리겠습니다."},{"t":6.96,"text":"수도 개경 가까운 예성강 어귀에 있던 국제 무역항이에요."},{"t":11.25,"text":"송, 일본, 아라비아 상인이 찾아왔어요."},{"t":13.94,"text":"이 유물로 알 수 있는 생활 모습은 이렇습니다."},{"t":16.88,"text":"고려가 여러 나라와 활발하게 교류한 열린 나라였다는 것을 알 수 있어요."},{"t":22.14,"text":"제 생각은 이렇습니다."},{"t":23.81,"text":"우리나라 이름 코리아가 고려에서 나왔다는 것이 재미있어요."},{"t":28.01,"text":"들어 주셔서 감사합니다."}]}}</script>
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('goryeo:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('goryeo:' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const SVGNS = 'http://www.w3.org/2000/svg';
+
+  /* ---------- 내레이션(선생님 목소리 대본) ---------- */
+  const NARR = {
+    cover: '안녕하세요! 오늘은 유적과 유물로 살펴본 옛 사람들의 생활 단원에서, 고려의 문화와 사람들의 생활 모습을 함께 공부해 볼 거예요. 고려청자, 팔만대장경, 금속활자처럼 고려 사람들이 남긴 보물을 하나씩 살펴보고, 마지막에는 수행평가 연습까지 해 봐요. 준비됐나요? 그럼 출발!',
+    goryeo: '고려는 918년에 왕건이 세운 나라예요. 수도는 개경, 지금의 개성이에요. 고려는 936년에 후삼국을 하나로 통일했고, 1392년까지 약 470년 동안 이어졌어요. 고려라는 이름에는 고구려를 이어받는다는 뜻이 담겨 있어요. 그리고 오늘날 우리나라의 영어 이름 코리아도 바로 이 고려에서 나왔답니다.',
+    relic: '공부를 시작하기 전에 두 낱말을 먼저 알아 둬요. 유적은 옛 사람들이 남긴 건물이나 탑, 무덤, 집터처럼 옮길 수 없는 흔적이에요. 유물은 그릇, 책, 도구처럼 옮길 수 있는 물건이에요. 유적과 유물을 자세히 살펴보면, 그때 사람들이 무엇을 믿고 어떤 기술을 가졌으며 어떻게 살았는지 알아낼 수 있어요. 수행평가에서는 이 유물을 통해 무엇을 알 수 있다, 이렇게 생활 모습과 꼭 연결해서 쓰는 것이 중요해요.',
+    celadon: '가장 먼저 만날 유물은 고려청자예요. 고려청자는 맑고 푸른빛을 띠는 자기인데, 고려 사람들은 이 빛깔을 비색이라고 불렀어요. 송나라 사람도 고려 비색은 천하제일이라며 칭찬했대요. 그림 속 유물은 청자 상감운학문 매병이에요. 운학문은 구름과 학 무늬라는 뜻이에요. 동그라미 안의 학은 위로 날아오르고, 동그라미 밖의 학은 아래로 내려오는 모습이 참 재미있지요?',
+    sanggam: '고려청자에는 고려만의 특별한 기술이 숨어 있어요. 바로 상감 기법이에요. 먼저 그릇 겉면에 무늬를 파내요. 그다음 파낸 자리에 흰 흙과 붉은 흙을 메워 넣어요. 마지막으로 유약을 바르고 가마에서 구우면, 흰 흙은 하얗게, 붉은 흙은 검게 변해서 무늬가 또렷하게 나타나요. 청자는 주로 귀족들이 썼어요. 찻잔, 주전자, 향로, 베개, 지붕 기와까지 청자로 만들었답니다. 그래서 고려청자를 보면 고려 사람들의 뛰어난 기술과 예술 감각, 그리고 차를 즐기던 귀족들의 화려한 생활을 알 수 있어요.',
+    tripitaka: '다음은 팔만대장경이에요. 대장경은 부처님의 가르침을 모은 책이고, 그것을 찍어 내려고 나무판에 글자를 새긴 것이 대장경판이에요. 고려는 몽골이 쳐들어왔을 때, 부처님의 힘으로 나라를 지키고 싶은 마음을 모아 1236년부터 1251년까지 16년 동안 대장경판을 만들었어요. 경판이 8만 장이 넘어서 팔만대장경이라고 불러요. 그림을 잘 보세요. 종이에 찍었을 때 바르게 나오도록 글자를 좌우 반대로 새겼어요. 5천만 자가 넘는 글자 가운데 틀린 글자가 거의 없을 정도로 정성을 다했답니다.',
+    janggyeong: '팔만대장경판은 경상남도 합천 해인사의 장경판전에 보관되어 있어요. 나무로 만든 경판이 750년이 넘도록 썩지 않은 비밀은 무엇일까요? 첫째, 건물 앞쪽은 아래 창을, 뒤쪽은 위 창을 크게 만들어 바람이 건물 안을 골고루 돌아 나가게 했어요. 둘째, 바닥에 숯과 횟가루, 소금, 모래를 깔아 습기를 알맞게 조절했어요. 셋째, 나무를 바닷물에 담그고 소금물에 삶아 말린 뒤 옻칠을 해서 썩거나 뒤틀리지 않게 했어요. 그래서 장경판전은 유네스코 세계유산, 대장경판은 세계기록유산이 되었어요.',
+    jikji: '고려 사람들은 금속활자도 만들었어요. 목판은 한 판에 한 쪽을 통째로 새기니까 그 책만 찍을 수 있어요. 하지만 금속활자는 글자를 하나씩 만들어 두고 필요한 대로 조합해서 여러 가지 책을 찍을 수 있고, 단단해서 오래 쓸 수 있어요. 1377년 청주 흥덕사에서 금속활자로 찍은 직지심체요절은 지금 남아 있는 금속활자 책 가운데 세계에서 가장 오래되었어요. 독일 구텐베르크의 성서보다 78년이나 앞섰답니다. 직지는 2001년 유네스코 세계기록유산이 되었고, 지금은 프랑스 국립도서관에 보관되어 있어요.',
+    buddhism: '고려 사람들은 불교를 깊이 믿었어요. 나라에서는 연등회와 팔관회 같은 큰 행사를 열었어요. 연등회는 등불을 밝혀 부처님께 복을 비는 행사로, 오늘날까지 이어져 유네스코 인류무형문화유산이 되었어요. 경상북도 영주 부석사의 무량수전도 고려 시대에 지어진 오래된 나무 건물이에요. 기둥 아래쪽이 살짝 볼록한 배흘림기둥이 유명해요. 이렇게 하면 멀리서 볼 때 기둥이 가늘어 보이지 않고 든든해 보여요.',
+    byeokrando: '고려의 수도 개경 가까이에는 벽란도라는 큰 항구가 있었어요. 이곳에는 송나라와 일본, 그리고 멀리 아라비아에서 온 상인들까지 모여 물건을 사고팔았어요. 고려는 인삼과 나전칠기, 화문석, 종이와 먹 등을 팔고, 비단과 책, 약재, 향료 등을 사 왔어요. 아라비아 상인들을 통해 고려가 서양에 알려졌고, 그래서 우리나라를 코리아라고 부르게 되었어요. 벽란도를 보면 고려가 여러 나라와 활발히 교류한 열린 나라였다는 것을 알 수 있어요.',
+    status: '고려 사회에는 신분이 있었어요. 가장 위에는 높은 벼슬을 하던 귀족이 있었고, 그 아래에 관청의 실무를 맡은 중류층, 농사를 짓거나 물건을 만들고 장사를 하던 양민, 그리고 노비 같은 천민이 있었어요. 귀족들은 청자와 나전칠기를 쓰며 차를 마시는 등 화려하게 살았어요. 백성의 대부분은 농사를 지으며 세금을 냈답니다. 이처럼 고려 사람들은 신분에 따라 생활 모습이 달랐어요.',
+    women: '고려 여성의 생활에는 지금 생각해도 놀라운 점이 많아요. 부모의 재산은 아들과 딸이 똑같이 나누어 받았어요. 집안의 기록인 호적에는 아들딸 구별 없이 태어난 순서대로 이름을 적었어요. 부모님 제사도 아들과 딸이 돌아가며 지냈어요. 이를 보면 고려 시대에는 여성의 지위가 비교적 높았다는 것을 알 수 있어요.',
+    summary: '지금까지 배운 내용을 한눈에 정리해 볼까요? 고려청자로는 뛰어난 기술과 귀족의 생활을, 팔만대장경으로는 불교를 믿으며 나라를 지키려던 마음을, 장경판전으로는 과학적인 지혜를 알 수 있어요. 직지로는 앞선 인쇄 기술을, 벽란도로는 활발한 교류를, 호적과 재산 상속으로는 여성의 높은 지위를 알 수 있어요. 표를 보며 소리 내어 한 번 읽어 보세요.',
+    guide: '이제 수행평가를 준비해 볼게요. 이 단원에서는 유물 하나를 골라 소개하기, 생활 모습을 서술형으로 쓰기, 안내문이나 포스터 만들기, 발표하기 같은 활동이 자주 나와요. 어떤 문제든 통하는 문장 틀을 기억하세요. 무엇은 어떻게 만들어졌다. 이를 통해 고려 사람들이 어떻게 생활했음을 알 수 있다. 나는 이렇게 생각한다. 그리고 채점할 때는 정확성, 생활 모습과의 연결, 나의 생각, 바른 표현을 본다는 것도 꼭 기억해요.',
+    essay: '서술형 문제를 연습해 볼게요. 먼저 스스로 답을 써 보고, 내 답 점검하기 버튼을 눌러 보세요. 꼭 들어가야 할 핵심 낱말이 들어 있는지 알려 줘요. 그다음 모범 답안과 비교해 보세요. 여기부터는 직접 해 보는 활동이니까, 자동 재생은 잠시 멈출게요.',
+    card: '유물 소개 카드를 만들어 볼까요? 소개하고 싶은 유물을 고르고 빈칸을 채우면 카드가 완성돼요. 예시 채우기 버튼을 누르면 예시 답을 볼 수 있어요. 다 만들었으면 발표 읽어 주기 버튼으로 발표 연습도 해 보세요.',
+    quiz: '마지막으로 실력 확인 퀴즈예요. 열 문제를 풀고 몇 개 맞혔는지 확인해 보세요. 틀린 문제는 설명을 꼭 읽어 보세요.',
+    end: '오늘 공부 정말 잘했어요! 체크리스트를 보며 스스로 설명할 수 있는지 확인해 보고, 진짜 유물 사진도 찾아보세요. 수행평가도 분명 잘 해낼 거예요. 화이팅!'
+  };
+  const IDLE = '재생 버튼을 누르면 선생님 목소리로 읽어 줘요.';
+
+  /* ---------- 경판·활자 글자 채우기 ---------- */
+  const SUTRA = '觀自在菩薩行深般若波羅蜜多時照見五蘊皆空度一切苦厄舍利子色不異空空不異色色卽是空空卽是色受想行識亦復如是舍利子是諸法空相不生不滅不垢不淨不增不減是故空中無色無受想行識無眼耳鼻舌身意無色聲香味觸法無眼界乃至無意識界無無明亦無無明盡乃至無老死亦無老死盡無苦集滅道無智亦無得以無所得故';
+  function fillColumns(g, opt) {
+    if (!g) return;
+    const { cols, rows, x0, y0, dx, dy, size, fill } = opt;
+    for (let i = 0; i < cols * rows && i < SUTRA.length; i++) {
+      const c = Math.floor(i / rows), r = i % rows;
+      const t = document.createElementNS(SVGNS, 'text');
+      t.setAttribute('x', x0 - c * dx); t.setAttribute('y', y0 + r * dy);
+      t.setAttribute('font-size', size); t.setAttribute('fill', fill);
+      t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-family', 'serif');
+      t.textContent = SUTRA[i];
+      g.appendChild(t);
+    }
+  }
+  fillColumns($('#blockChars'), { cols: 19, rows: 7, x0: 585, y0: 44, dx: 29, dy: 28, size: 22, fill: '#4a2f17' });
+  fillColumns($('#printChars'), { cols: 19, rows: 7, x0: 565, y0: 38, dx: 28, dy: 28, size: 21, fill: '#2a2622' });
+  (function typeGrid() {
+    const g = $('#typeGrid'); const chars = '宣光七年白雲和尙抄錄佛祖直指心體要節';
+    let k = 0;
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 5; c++) {
+      const x = 110 + c * 72, y = 90 + r * 70, cx = x + 32;
+      const wrap = document.createElementNS(SVGNS, 'g');
+      wrap.setAttribute('class', 'drop'); wrap.style.setProperty('--d', (k * 0.09).toFixed(2) + 's');
+      wrap.innerHTML = `<rect x="${x}" y="${y}" width="64" height="62" rx="3" fill="url(#gBronze)"/>`
+        + `<text x="${cx}" y="${y + 44}" font-size="38" text-anchor="middle" fill="#2b1f0c" font-family="serif" transform="translate(${2 * cx} 0) scale(-1 1)">${chars[k] || ''}</text>`;
+      g.appendChild(wrap); k++;
+    }
+  })();
+
+  /* ---------- 슬라이드 넘기기 ---------- */
+  const slides = $$('.slide');
+  let cur = 0, auto = false, autoTimer = null;
+  slides.forEach(s => { [...s.querySelectorAll('.txt, .full')].forEach(box => [...box.children].forEach((el, i) => el.style.setProperty('--i', i))); });
+  $('#pager').textContent = `1 / ${slides.length}`;
+
+  function countUp(s) {
+    s.querySelectorAll('[data-count]').forEach(el => {
+      const end = +el.dataset.count, t0 = performance.now(), dur = 1300;
+      const step = now => { const p = Math.min(1, (now - t0) / dur); el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))).toLocaleString('ko-KR'); if (p < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    });
+  }
+  function updateUI() {
+    $('#pager').textContent = `${cur + 1} / ${slides.length}`;
+    $('#bar').style.width = ((cur + 1) / slides.length * 100) + '%';
+    $('#btnPrev').disabled = cur === 0; $('#btnNext').disabled = cur === slides.length - 1;
+    $$('#tocList button').forEach((b, i) => b.setAttribute('aria-current', i === cur ? 'true' : 'false'));
+  }
+  function go(i) {
+    if (i < 0 || i >= slides.length || i === cur) return;
+    const dirBack = i < cur;
+    clearTimeout(autoTimer);
+    slides[cur].classList.remove('active');
+    slides.forEach(s => s.classList.toggle('back', dirBack));
+    cur = i;
+    const s = slides[cur];
+    s.scrollTop = 0; s.classList.add('active');
+    countUp(s); updateUI();
+    if (auto) narrate(); else { stopSpeech(); setCaption(IDLE, false); }
+  }
+  $('#btnPrev').addEventListener('click', () => go(cur - 1));
+  $('#btnNext').addEventListener('click', () => go(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select')) return;
+    if (!$('#tocBox').hidden || !$('#setBox').hidden) { if (e.key === 'Escape') closeAll(); return; }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  });
+  let tx = 0, ty = 0, tOk = false;
+  const stage = $('#stage');
+  stage.addEventListener('touchstart', e => { tOk = !e.target.closest('input, textarea, select, .tbl, button, a'); tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (!tOk) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.6) go(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  /* ---------- 목차 · 설정 창 ---------- */
+  const toc = $('#tocList');
+  slides.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button"><span>${i + 1}</span><span>${s.dataset.title}</span></button>`;
+    li.firstChild.addEventListener('click', () => { closeAll(); go(i); });
+    toc.appendChild(li);
+  });
+  function closeAll() { $('#tocBox').hidden = true; $('#setBox').hidden = true; }
+  $('#btnToc').addEventListener('click', () => { $('#tocBox').hidden = false; });
+  $('#btnSet').addEventListener('click', () => { loadVoices(); $('#setBox').hidden = false; });
+  $$('[data-close]').forEach(b => b.addEventListener('click', closeAll));
+  $$('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeAll(); }));
+
+  /* ---------- 목소리(음성 합성) ---------- */
+  const synth = window.speechSynthesis || null;
+  let voices = [], voice = null, rate = +store.get('rate2', 1), token = 0, speaking = false;
+  $('#rateSel').value = String(rate);
+  function voiceScore(v) {
+    const n = (v.name + ' ' + (v.voiceURI || '')).toLowerCase();
+    let s = 0;
+    if (/female|여성|여자|yuna|sora|heami|sunhi|sun-hi|seoyeon|jimin|nara|나래|유나|google 한국|ko-kr-x-ism|ko-kr-x-kob|kyuri|yujin/.test(n)) s += 10;
+    else if (/\bmale\b|남성|남자|injoon|in-joon|hyunsu|minsu|jian|bongjin|gookmin|ko-kr-x-koc|ko-kr-x-kod|minjun/.test(n)) s -= 10;
+    if (/natural|online|neural|premium|enhanced/.test(n)) s += 3;
+    return s;
+  }
+  function loadVoices() {
+    if (!synth) { $('#voiceNote').textContent = '이 브라우저는 읽어 주기 기능을 지원하지 않아요. 자막을 보며 공부하거나, 크롬·사파리·엣지로 열어 보세요.'; return; }
+    const all = synth.getVoices();
+    const ko = all.filter(v => /^ko/i.test(v.lang) || /korean|한국/i.test(v.name)).sort((a, b) => voiceScore(b) - voiceScore(a));
+    if (ko.length === voices.length && voice) return;
+    voices = ko;
+    const sel = $('#voiceSel'); sel.innerHTML = '';
+    if (!ko.length) {
+      sel.innerHTML = '<option value="">기본 목소리</option>';
+      if (all.length) $('#voiceNote').textContent = '이 기기에서 한국어 목소리를 찾지 못했어요. 기본 목소리로 읽어 보고, 소리가 이상하면 자막을 보며 공부하세요. (휴대폰 설정 > 텍스트 음성 변환에서 한국어를 추가할 수 있어요.)';
+      return;
+    }
+    const saved = store.get('voice', '');
+    ko.forEach((v, i) => {
+      const o = document.createElement('option');
+      o.value = String(i); o.textContent = v.name + (voiceScore(v) >= 10 ? ' (여성 추천)' : '');
+      sel.appendChild(o);
+    });
+    let idx = ko.findIndex(v => v.name === saved); if (idx < 0) idx = 0;
+    sel.value = String(idx); voice = ko[idx];
+  }
+  if (synth) { loadVoices(); synth.onvoiceschanged = loadVoices; setTimeout(loadVoices, 600); setTimeout(loadVoices, 2000); }
+  $('#voiceSel').addEventListener('change', e => { voice = voices[+e.target.value] || null; if (voice) store.set('voice', voice.name); });
+  $('#rateSel').addEventListener('change', e => { rate = +e.target.value; store.set('rate2', rate); player.playbackRate = rate; });
+  $('#voiceTest').addEventListener('click', () => speakText('안녕하세요. 고려 문화 탐험노트를 읽어 줄 목소리예요.', null));
+
+  let unlocked = false;
+  function unlockVoice() {
+    if (unlocked || !synth) return; unlocked = true;
+    try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {}
+  }
+  document.addEventListener('click', unlockVoice, true);
+  document.addEventListener('touchend', unlockVoice, true);
+  function setCaption(t, on) { const c = $('#caption'); c.textContent = t; c.classList.toggle('on', !!on); }
+  function splitSentences(t) { return (t.match(/[^.!?]+[.!?]?/g) || [t]).map(s => s.trim()).filter(Boolean); }
+  function stopSpeech() {
+    token++; speaking = false; clearTimeout(autoTimer);
+    if (synth) try { synth.cancel(); } catch (e) {}
+    try { player.pause(); } catch (e) {}
+    $('#aprogBar').style.width = '0';
+    refreshButtons();
+  }
+  function speakText(text, onDone) {
+    stopSpeech();
+    const my = ++token; speaking = true; refreshButtons();
+    const list = splitSentences(text); let k = 0;
+    const next = () => {
+      if (my !== token) return;
+      if (k >= list.length) { speaking = false; refreshButtons(); setCaption(auto ? '' : IDLE, false); onDone && onDone(); return; }
+      const line = list[k++]; setCaption(line, true);
+      if (!synth) { autoTimer = setTimeout(next, Math.max(1800, line.length * 120 / rate)); return; }
+      const u = new SpeechSynthesisUtterance(line);
+      u.lang = 'ko-KR'; if (voice) u.voice = voice; u.rate = rate * 0.95; u.pitch = 1.05;
+      let done = false;
+      const fin = () => { if (done) return; done = true; clearTimeout(guard); if (my === token) setTimeout(next, 160); };
+      const guard = setTimeout(fin, (line.length * 380 + 5000) / rate);
+      u.onend = fin;
+      u.onerror = e => {
+        if (my !== token) return;
+        if (e.error === 'not-allowed') { clearTimeout(guard); done = true; auto = false; speaking = false; refreshButtons(); setCaption('소리를 켜려면 아래 재생 버튼을 한 번 눌러 주세요.', false); return; }
+        fin();
+      };
+      try { synth.speak(u); } catch (err) { fin(); }
+    };
+    setTimeout(next, 80);
+  }
+  const TIMING = (() => { try { return JSON.parse($('#voiceTiming').textContent); } catch (e) { return {}; } })();
+  const player = $('#voice');
+  function playKey(key, onDone) {
+    const info = TIMING[key];
+    if (!info) return false;
+    stopSpeech();
+    const my = ++token; speaking = true; refreshButtons();
+    let ci = -1;
+    player.src = 'audio/' + key + '.mp3';
+    player.defaultPlaybackRate = rate; player.playbackRate = rate;
+    player.ontimeupdate = () => {
+      if (my !== token) return;
+      const t = player.currentTime; let i = info.cues.length - 1;
+      while (i > 0 && info.cues[i].t > t) i--;
+      if (i !== ci) { ci = i; setCaption(info.cues[i].text, true); }
+      $('#aprogBar').style.width = Math.min(100, t / info.dur * 100) + '%';
+    };
+    player.onended = () => {
+      if (my !== token) return;
+      speaking = false; refreshButtons(); $('#aprogBar').style.width = '0';
+      setCaption(auto ? '' : IDLE, false); onDone && onDone();
+    };
+    player.onerror = () => {
+      if (my !== token) return;
+      const txt = info.cues.map(c => c.text).join(' ');
+      speakText(txt, onDone);
+    };
+    setCaption(info.cues[0].text, true);
+    const pr = player.play();
+    if (pr) pr.catch(err => {
+      if (my !== token || (err && err.name === 'AbortError')) return;
+      speaking = false; auto = false; refreshButtons();
+      setCaption('소리를 켜려면 아래 재생 버튼을 한 번 눌러 주세요.', false);
+    });
+    return true;
+  }
+  function preload(i) {
+    const s = slides[i]; if (!s || !TIMING['n_' + s.dataset.id]) return;
+    try { const a = new Audio(); a.preload = 'auto'; a.src = 'audio/n_' + s.dataset.id + '.mp3'; } catch (e) {}
+  }
+  function narrate() {
+    const s = slides[cur];
+    preload(cur + 1);
+    const after = () => {
+      if (!auto) return;
+      if (s.dataset.stop || cur >= slides.length - 1) { auto = false; refreshButtons(); setCaption(cur >= slides.length - 1 ? '끝까지 잘 봤어요! 목차에서 다시 보고 싶은 장을 골라 보세요.' : '여기부터는 직접 해 보는 활동이에요. 천천히 풀어 보세요.', false); return; }
+      autoTimer = setTimeout(() => go(cur + 1), 1100);
+    };
+    if (!playKey('n_' + s.dataset.id, after)) speakText(NARR[s.dataset.id] || '', after);
+  }
+  $('#aiTest').addEventListener('click', () => { auto = false; closeAll(); playKey('n_cover', null); });
+  let wake = null;
+  function keepAwake(on) {
+    try {
+      if (on && navigator.wakeLock && !wake) navigator.wakeLock.request('screen').then(w => { wake = w; }).catch(() => {});
+      if (!on && wake) { wake.release().catch(() => {}); wake = null; }
+    } catch (e) {}
+  }
+  function refreshButtons() {
+    $('#lbAuto').textContent = auto ? '멈추기' : '영상처럼 보기';
+    $('#icAuto').innerHTML = auto ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+    $('#lbListen').textContent = (speaking && !auto) ? '그만 듣기' : '이 장 듣기';
+    keepAwake(auto);
+  }
+  function startAuto() { auto = true; refreshButtons(); narrate(); }
+  $('#btnAuto').addEventListener('click', () => { if (auto) { auto = false; stopSpeech(); setCaption(IDLE, false); } else startAuto(); });
+  $('#btnListen').addEventListener('click', () => {
+    if (speaking && !auto) { stopSpeech(); setCaption(IDLE, false); return; }
+    auto = false; narrate();
+  });
+  $('#btnStartAuto').addEventListener('click', () => { startAuto(); });
+  $('#btnStartManual').addEventListener('click', () => go(1));
+
+  /* ---------- 서술형 연습 ---------- */
+  const ESSAYS = [
+    { q: '고려청자를 통해 알 수 있는 고려 사람들의 생활 모습을 두 가지 쓰세요.',
+      keys: [['상감 기법', ['상감']], ['뛰어난 기술', ['기술', '솜씨']], ['귀족', ['귀족']], ['차 · 화려한 생활', ['차를', '찻잔', '화려', '차문화', '차 문화']]],
+      model: '고려청자는 그릇에 무늬를 파고 흰 흙과 붉은 흙을 메워 굽는 상감 기법으로 만들어졌습니다. 이를 통해 고려 사람들의 도자기 만드는 기술이 뛰어나고 예술 감각이 높았다는 것을 알 수 있습니다. 또 귀족들이 청자로 만든 찻잔과 주전자, 베개 등을 사용한 것으로 보아 귀족들이 차를 즐겨 마시며 화려하게 생활했다는 것을 알 수 있습니다.' },
+    { q: '고려 사람들이 팔만대장경을 만든 까닭과, 대장경판이 오늘날까지 잘 보존된 까닭을 쓰세요.',
+      keys: [['몽골의 침입', ['몽골']], ['부처님의 힘', ['부처', '불교']], ['나라를 지키려고', ['지키']], ['바람이 잘 통함', ['바람', '창']], ['습기 조절', ['습기', '숯', '소금']]],
+      model: '고려 사람들은 몽골이 쳐들어왔을 때 부처님의 힘으로 나라를 지키려는 마음을 모아 팔만대장경을 만들었습니다. 대장경판을 보관한 해인사 장경판전은 앞뒤 창문의 크기를 다르게 하여 바람이 잘 통하게 하였고, 바닥에 숯과 횟가루, 소금, 모래를 깔아 습기를 조절하였습니다. 또 경판을 바닷물에 담그고 소금물에 삶아 말린 뒤 옻칠을 하여 썩거나 뒤틀리지 않게 했기 때문에 오늘날까지 잘 보존되었습니다.' },
+    { q: '금속활자가 목판보다 좋은 점과 『직지심체요절』의 가치를 쓰세요.',
+      keys: [['여러 책을 찍음', ['여러', '조합']], ['오래 씀', ['오래', '단단']], ['1377년', ['1377']], ['세계에서 가장 오래됨', ['가장오래', '가장 오래']], ['세계기록유산', ['기록유산']]],
+      model: '목판은 한 판으로 한 가지 책만 찍을 수 있지만, 금속활자는 글자를 조합하여 여러 가지 책을 찍을 수 있고 단단해서 오래 사용할 수 있습니다. 1377년 청주 흥덕사에서 금속활자로 찍은 직지심체요절은 현재 남아 있는 금속활자 책 가운데 세계에서 가장 오래된 것으로, 2001년 유네스코 세계기록유산이 되었습니다. 이를 통해 고려의 인쇄 기술이 세계적으로 앞서 있었음을 알 수 있습니다.' },
+    { q: '벽란도를 통해 알 수 있는 고려의 모습을 쓰세요.',
+      keys: [['무역 · 교류', ['무역', '교류', '사고팔']], ['여러 나라 상인', ['송', '일본', '아라비아']], ['코리아의 유래', ['코리아', 'corea', 'korea']], ['열린 나라', ['열린', '활발']]],
+      model: '벽란도는 수도 개경 가까이에 있던 국제 무역항으로, 송나라와 일본뿐 아니라 멀리 아라비아 상인까지 와서 물건을 사고팔았습니다. 이를 통해 고려가 여러 나라와 활발하게 교류한 열린 나라였음을 알 수 있습니다. 또 아라비아 상인을 통해 고려가 서양에 알려져 오늘날 코리아라는 이름이 생겼습니다.' },
+    { q: '고려 여성의 생활 모습을 두 가지 쓰고, 이를 통해 알 수 있는 점을 쓰세요.',
+      keys: [['재산을 똑같이', ['재산', '상속']], ['태어난 순서대로 호적', ['호적', '태어난 순서']], ['제사를 돌아가며', ['제사']], ['여성의 지위', ['지위']]],
+      model: '고려에서는 부모의 재산을 아들과 딸이 똑같이 나누어 받았고, 호적에는 아들딸 구별 없이 태어난 순서대로 이름을 적었습니다. 부모의 제사도 아들과 딸이 돌아가며 지냈습니다. 이를 통해 고려 시대에는 여성의 지위가 비교적 높았음을 알 수 있습니다.' }
+  ];
+  const essayBox = $('#essays');
+  const drafts = store.get('essays', {});
+  ESSAYS.forEach((e, i) => {
+    const art = document.createElement('article'); art.className = 'essay';
+    art.innerHTML = `<h3><span class="qn">문제 ${i + 1}</span>${e.q}</h3>
+      <label class="sr" for="essay${i}">문제 ${i + 1} 내 답</label>
+      <textarea id="essay${i}" rows="4" placeholder="여기에 내 답을 써 보세요. (문장 틀: ~은 ~하게 만들어졌다. 이를 통해 ~을 알 수 있다.)"></textarea>
+      <div class="row"><button class="btn" type="button" data-a="check">내 답 점검하기</button><button class="btn" type="button" data-a="model">모범 답안 보기</button><button class="btn" type="button" data-a="listen">모범 답안 듣기</button></div>
+      <div class="chips" hidden></div>
+      <div class="model" hidden><b>모범 답안</b><p>${e.model}</p></div>`;
+    const ta = art.querySelector('textarea'); ta.value = drafts[i] || '';
+    ta.addEventListener('input', () => { drafts[i] = ta.value; store.set('essays', drafts); });
+    art.querySelector('[data-a="check"]').addEventListener('click', () => {
+      const v = ta.value.replace(/\s+/g, '').toLowerCase();
+      const chips = art.querySelector('.chips');
+      if (!v) { chips.hidden = false; chips.innerHTML = '<span>먼저 답을 써 보세요.</span>'; return; }
+      let got = 0;
+      const html = e.keys.map(([label, words]) => {
+        const ok = words.some(w => v.includes(w.replace(/\s+/g, '').toLowerCase())); if (ok) got++;
+        return `<span class="chip ${ok ? 'yes' : 'no'}">${ok ? '✓' : '＋'} ${label}</span>`;
+      }).join('');
+      const msg = got === e.keys.length ? '핵심 낱말이 모두 들어 있어요! 문장이 자연스러운지 소리 내어 읽어 보세요.' : `핵심 낱말 ${e.keys.length}개 중 ${got}개가 들어 있어요. 점선으로 표시된 내용을 넣어 다시 써 보세요.`;
+      chips.hidden = false; chips.innerHTML = html + `<span style="flex-basis:100%;color:var(--muted)">${msg}</span>`;
+    });
+    art.querySelector('[data-a="model"]').addEventListener('click', ev => {
+      const m = art.querySelector('.model'); m.hidden = !m.hidden; ev.currentTarget.textContent = m.hidden ? '모범 답안 보기' : '모범 답안 숨기기';
+    });
+    art.querySelector('[data-a="listen"]').addEventListener('click', () => { auto = false; if (!playKey('e_' + i, null)) speakText(e.model, null); });
+    essayBox.appendChild(art);
+  });
+
+  /* ---------- 유물 소개 카드 ---------- */
+  const PRESET = {
+    celadon: { thumb: '<use href="#maebyeong" x="35" y="4" width="50" height="72"/>', name: '청자 상감운학문 매병', when: '고려 시대 (12세기 무렵)', look: '맑고 푸른 비색을 띠고, 입이 작고 어깨가 넓은 병이에요. 상감 기법으로 구름과 학 무늬를 넣었어요.', life: '고려 사람들의 도자기 기술과 예술 감각이 뛰어났고, 귀족들이 아름다운 물건을 즐겨 썼다는 것을 알 수 있어요.', think: '천 년 가까이 된 그릇이 지금도 이렇게 아름다운 것이 자랑스러워요.' },
+    tripitaka: { thumb: '<use href="#sym-block" x="10" y="10" width="100" height="60"/>', name: '팔만대장경판', when: '고려 시대 (1236년~1251년)', look: '나무판 8만 1천여 장에 부처님의 가르침을 좌우 반대로 새겼어요. 해인사 장경판전에 보관되어 있어요.', life: '고려 사람들이 불교를 믿었고, 힘을 모아 몽골의 침입에서 나라를 지키려 했다는 것을 알 수 있어요.', think: '16년 동안 틀린 글자 없이 새긴 정성과 끈기가 정말 대단해요.' },
+    jikji: { thumb: '<use href="#sym-book" x="38" y="4" width="44" height="72"/>', name: '직지심체요절', when: '고려 시대 (1377년)', look: '청주 흥덕사에서 금속활자로 찍은 책이에요. 지금 남아 있는 금속활자 책 중 세계에서 가장 오래되었어요.', life: '고려의 인쇄 기술이 세계에서 앞서 있었고, 책과 지식을 소중히 여겼다는 것을 알 수 있어요.', think: '직지가 프랑스에 있어서 아쉬워요. 언젠가 우리나라에서 직접 보고 싶어요.' },
+    hall: { thumb: '<use href="#sym-hall" x="5" y="2" width="110" height="74"/>', name: '부석사 무량수전', when: '고려 시대', look: '경상북도 영주 부석사에 있는 오래된 나무 건물이에요. 기둥 아래쪽이 볼록한 배흘림기둥이 유명해요.', life: '고려 사람들이 불교를 깊이 믿었고, 건축 기술이 뛰어났다는 것을 알 수 있어요.', think: '기둥 하나에도 보기 좋게 만들려는 지혜가 담겨 있어 신기해요.' },
+    port: { thumb: '<use href="#sym-ship" x="30" y="6" width="60" height="50"/><path d="M0 64q15-6 30 0t30 0 30 0 30 0" stroke="#9fd6ff" stroke-width="2" fill="none"/>', name: '벽란도', when: '고려 시대', look: '수도 개경 가까운 예성강 어귀에 있던 국제 무역항이에요. 송, 일본, 아라비아 상인이 찾아왔어요.', life: '고려가 여러 나라와 활발하게 교류한 열린 나라였다는 것을 알 수 있어요.', think: '우리나라 이름 코리아가 고려에서 나왔다는 것이 재미있어요.' }
+  };
+  const F = ['Name', 'When', 'Look', 'Life', 'Think'];
+  const cardSaved = store.get('card', null);
+  function renderCard() {
+    const p = PRESET[$('#cardArt').value];
+    $('#cardThumb').innerHTML = p.thumb;
+    F.forEach(f => { const v = $('#card' + f).value.trim(); $('#pv' + f).textContent = v || (f === 'Name' ? '유물 이름' : '-'); });
+    const data = { art: $('#cardArt').value }; F.forEach(f => data[f] = $('#card' + f).value); store.set('card', data);
+  }
+  function fillExample() { const p = PRESET[$('#cardArt').value]; F.forEach(f => { $('#card' + f).value = p[f.toLowerCase()]; }); renderCard(); }
+  if (cardSaved) { $('#cardArt').value = cardSaved.art || 'celadon'; F.forEach(f => { $('#card' + f).value = cardSaved[f] || ''; }); renderCard(); }
+  else fillExample();
+  $('#cardForm').addEventListener('input', renderCard);
+  $('#cardForm').addEventListener('submit', e => e.preventDefault());
+  $('#cardArt').addEventListener('change', () => { const anyText = F.some(f => $('#card' + f).value.trim()); if (!anyText || confirmSwap()) fillExample(); else renderCard(); });
+  function confirmSwap() { return F.every(f => { const v = $('#card' + f).value.trim(); return !v || Object.values(PRESET).some(p => p[f.toLowerCase()] === v); }); }
+  $('#cardEx').addEventListener('click', fillExample);
+  $('#cardClear').addEventListener('click', () => { F.forEach(f => { $('#card' + f).value = ''; }); renderCard(); $('#cardName').focus(); });
+  $('#cardSay').addEventListener('click', () => {
+    const v = f => $('#card' + f).value.trim();
+    if (!v('Name')) { setCaption('먼저 유물 이름을 써 주세요.', false); $('#cardName').focus(); return; }
+    const script = `제가 소개할 유물은 ${v('Name')}입니다. ` + (v('When') ? `만든 때는 ${v('When')}입니다. ` : '') + (v('Look') ? `생김새와 특징을 말씀드리겠습니다. ${v('Look')} ` : '') + (v('Life') ? `이 유물로 알 수 있는 생활 모습은 이렇습니다. ${v('Life')} ` : '') + (v('Think') ? `제 생각은 이렇습니다. ${v('Think')} ` : '') + '들어 주셔서 감사합니다.';
+    auto = false;
+    const art = $('#cardArt').value, p = PRESET[art];
+    const same = F.every(f => v(f) === p[f.toLowerCase()]);
+    if (same && playKey('c_' + art, null)) return;
+    speakText(script, null);
+  });
+
+  /* ---------- 퀴즈 ---------- */
+  const QUIZ = [
+    ['고려를 세운 사람은 누구일까요?', ['왕건', '이성계', '궁예', '견훤'], '918년 왕건이 고려를 세웠어요. 이성계는 조선을 세운 사람이에요.'],
+    ['그릇 겉면에 무늬를 파고 흰 흙과 붉은 흙을 메워 굽는 기법은?', ['상감 기법', '금속활자', '배흘림', '옻칠'], '상감 기법은 고려 사람들이 청자에 처음 쓴 독창적인 기술이에요.'],
+    ['팔만대장경을 만든 가장 큰 까닭은?', ['몽골의 침입을 부처님의 힘으로 물리치려고', '다른 나라에 팔려고', '왕의 생일을 축하하려고', '글자 연습을 하려고'], '몽골이 쳐들어오자 부처님의 힘으로 나라를 지키려는 마음을 모아 만들었어요.'],
+    ['팔만대장경판을 보관하고 있는 곳은?', ['합천 해인사 장경판전', '영주 부석사 무량수전', '청주 흥덕사', '프랑스 국립도서관'], '해인사 장경판전은 바람길과 습기 조절로 경판을 지켜 왔어요.'],
+    ['지금 남아 있는 금속활자 책 가운데 세계에서 가장 오래된 것은?', ['직지심체요절', '팔만대장경', '훈민정음', '구텐베르크 성서'], '직지는 1377년에 찍었어요. 구텐베르크 성서보다 78년 앞서요.'],
+    ['직지심체요절이 지금 보관된 곳은?', ['프랑스 국립도서관', '국립중앙박물관', '해인사', '영국 박물관'], '직지 하권 1권이 프랑스 국립도서관에 있어요.'],
+    ['아라비아 상인까지 찾아온 고려의 국제 무역항은?', ['벽란도', '청해진', '제물포', '부산포'], '벽란도는 개경 가까운 예성강 어귀에 있었어요. 청해진은 통일 신라 때 장보고가 세운 곳이에요.'],
+    ['고려 여성의 생활 모습으로 옳은 것은?', ['재산을 아들딸이 똑같이 물려받았다', '호적에 아들만 적었다', '제사는 맏아들만 지냈다', '여성은 재산을 가질 수 없었다'], '고려에서는 재산 상속, 호적, 제사에서 아들딸 차별이 적었어요.'],
+    ['기둥 아래쪽이 볼록한 배흘림기둥으로 유명한 고려 건물은?', ['부석사 무량수전', '경복궁 근정전', '수원 화성', '석굴암'], '영주 부석사 무량수전은 고려 시대에 지은 오래된 나무 건물이에요.'],
+    ['유적과 유물을 바르게 짝지은 것은?', ['유적: 장경판전 / 유물: 고려청자', '유적: 고려청자 / 유물: 장경판전', '유적: 직지 / 유물: 벽란도 터', '유적: 금속활자 / 유물: 무량수전'], '유적은 옮길 수 없는 건물이나 터, 유물은 옮길 수 있는 물건이에요.']
+  ];
+  let qScore = 0, qDone = 0;
+  function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+  function renderQuiz() {
+    qScore = 0; qDone = 0; $('#qScore').textContent = '0'; $('#qTotal').textContent = QUIZ.length;
+    const box = $('#quiz'); box.innerHTML = '';
+    QUIZ.forEach(([q, opts, exp], i) => {
+      const d = document.createElement('div'); d.className = 'qbox';
+      d.innerHTML = `<h3>${i + 1}. ${q}</h3><div class="opts"></div><p class="exp" hidden></p>`;
+      const ob = d.querySelector('.opts');
+      shuffle(opts.map((o, k) => [o, k === 0])).forEach(([o, right]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
+        b.addEventListener('click', () => {
+          d.querySelectorAll('.opt').forEach(x => { x.disabled = true; if (x.dataset.right) x.classList.add('right'); });
+          if (right) qScore++; else b.classList.add('wrong');
+          qDone++; $('#qScore').textContent = qScore;
+          const p = d.querySelector('.exp'); p.hidden = false; p.textContent = (right ? '정답이에요! ' : '아쉬워요. ') + exp;
+          if (qDone === QUIZ.length) setCaption(qScore >= 9 ? `${qScore}개 맞혔어요. 고려 박사네요!` : qScore >= 7 ? `${qScore}개 맞혔어요. 틀린 문제 설명만 다시 읽으면 완벽해요.` : `${qScore}개 맞혔어요. 정리 표를 한 번 더 보고 다시 풀어 봐요.`, false);
+        });
+        if (right) b.dataset.right = '1';
+        ob.appendChild(b);
+      });
+      box.appendChild(d);
+    });
+  }
+  renderQuiz();
+  $('#qReset').addEventListener('click', () => { renderQuiz(); slides[cur].scrollTop = 0; });
+
+  /* ---------- 체크리스트 ---------- */
+  const CHECK = ['고려를 세운 사람과 수도를 말할 수 있어요.', '유적과 유물의 차이를 설명할 수 있어요.', '상감 기법의 순서를 말할 수 있어요.', '팔만대장경을 만든 까닭을 말할 수 있어요.', '장경판전에서 경판이 잘 보존된 까닭을 두 가지 이상 말할 수 있어요.', '직지심체요절의 가치를 설명할 수 있어요.', '벽란도로 알 수 있는 고려의 모습을 말할 수 있어요.', '고려 여성의 생활 모습을 두 가지 말할 수 있어요.', '유물 하나를 골라 30초 동안 소개할 수 있어요.'];
+  const checked = store.get('check', {});
+  CHECK.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<label for="chk${i}"><input type="checkbox" id="chk${i}"><span>${t}</span></label>`;
+    const cb = li.querySelector('input'); cb.checked = !!checked[i];
+    cb.addEventListener('change', () => { checked[i] = cb.checked; store.set('check', checked); });
+    $('#checklist').appendChild(li);
+  });
+
+  updateUI();
+  countUp(slides[0]);
+})();
+</script>
+
+</body></html>

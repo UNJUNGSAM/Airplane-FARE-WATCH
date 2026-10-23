@@ -124,6 +124,8 @@ def check_shared_revision() -> None:
     pages += sorted((ROOT / "streamlit_app" / "pages").glob("*.py"))
     for page in pages:
         text = page.read_text(encoding="utf-8")
+        if not re.search(r"^import shared\b", text, re.M):
+            continue  # shared 를 쓰지 않는 페이지(학습자료 등)는 가드가 필요 없다
         pm = re.search(r'_NEEDS_SHARED\s*=\s*"([^"]+)"', text)
         if not pm:
             failures.append(f"{page.relative_to(ROOT)} 에 _NEEDS_SHARED 가드가 없습니다")

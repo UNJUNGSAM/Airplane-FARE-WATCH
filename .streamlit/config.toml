@@ -1,0 +1,4 @@
+# 학습자료의 음성 파일(streamlit_app/static/)을 웹에서 내려받을 수 있게 한다.
+# 주소: /app/static/<파일 경로>
+[server]
+enableStaticServing = true
