@@ -3,14 +3,17 @@
 항공권 감시 콘솔과는 별개다. shared(감시 콘솔)를 임포트하지 않으므로
 비밀번호 없이 누구나 열 수 있고, 감시 콘솔 코드가 바뀌어도 영향을 받지 않는다.
 
-자료 한 개 = static/study/<slug>/ 폴더 하나
+자료 한 개 = static/learning/<slug>/ 폴더 하나 (slug = 과목_주제, 영문 소문자)
     index.html      자료 본문 (그대로 넣은 HTML)
     audio/*.mp3     해설 음성 (있을 때만)
 
 새 자료를 추가하는 법
-    1. static/study/<slug>/ 에 index.html 과 audio/ 를 넣는다.
+    1. static/learning/<slug>/ 에 index.html 과 audio/ 를 넣는다.
     2. 아래 CATALOG 에 한 줄 추가한다.
-    3. pages/9N_study_<slug>.py 를 기존 파일과 똑같이 만든다 (주소: /study_<slug>).
+    3. pages/9N_learning_<slug>.py 를 기존 파일과 똑같이 만든다 (주소: /learning_<slug>).
+
+과목 이름: korean(국어) math(수학) social(사회) science(과학) english(영어)
+           music(음악) art(미술) pe(체육) ethics(도덕) practical(실과)
 """
 from __future__ import annotations
 
@@ -19,18 +22,18 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
-STUDY_DIR = Path(__file__).resolve().parent / "static" / "study"
+STUDY_DIR = Path(__file__).resolve().parent / "static" / "learning"
 
-# 목록 페이지(/study)에 보이는 순서대로 적는다.
+# 목록 페이지(/learning)에 보이는 순서대로 적는다.
 CATALOG: list[dict[str, str]] = [
     {
-        "slug": "heat",
+        "slug": "science_heat",
         "title": "열 탐구 노트",
         "subject": "초5 과학",
         "desc": "3. 열과 우리 생활 · 온도, 온도계, 열의 이동, 전도·대류·단열",
     },
     {
-        "slug": "goryeo",
+        "slug": "social_goryeo",
         "title": "고려 문화 탐험노트",
         "subject": "초등 사회",
         "desc": "고려청자, 팔만대장경, 직지, 불교문화, 벽란도, 생활 모습",
@@ -73,7 +76,7 @@ def audio_prefix(slug: str) -> str:
     페이지 주소 기준으로 풀린다. Streamlit 정적 파일 경로(app/static/...)로 바꿔 준다.
     앞에 '/'를 붙이지 않아야 Streamlit Cloud 처럼 하위 경로에서 돌 때도 맞게 풀린다.
     """
-    return f"app/static/study/{slug}/audio/"
+    return f"app/static/learning/{slug}/audio/"
 
 
 def load_html(slug: str) -> str:

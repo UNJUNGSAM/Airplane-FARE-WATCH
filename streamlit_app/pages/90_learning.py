@@ -1,4 +1,4 @@
-"""학습자료 목록 페이지 - 주소 /study."""
+"""학습자료 목록 페이지 - 주소 /learning."""
 import sys
 from pathlib import Path
 
@@ -20,7 +20,7 @@ st.markdown(
 st.title("📘 학습자료")
 st.caption("보고 싶은 자료를 눌러 주세요. 아이패드에서는 가로로 보면 더 넓게 볼 수 있어요.")
 
-pages = {p.stem.split("_study_", 1)[-1]: p for p in Path(__file__).parent.glob("*_study_*.py")}
+pages = {p.stem.split("_learning_", 1)[-1]: p for p in Path(__file__).parent.glob("*_learning_*.py")}
 for item in study_page.CATALOG:
     page = pages.get(item["slug"])
     if page is None:
