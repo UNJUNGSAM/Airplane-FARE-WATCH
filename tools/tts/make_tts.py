@@ -6,7 +6,7 @@ tools/tts/jobs/*.json 작업 파일을 읽어, 아직 없는 mp3만 새로 만�
 작업 파일 형식:
 {
   "out_dir": "streamlit_app/static/learning/science_xxx/audio",
-  "voice": "Sulafat",                 # 기본 목소리 (항목마다 "voice"로 바꿀 수 있음)
+  "voice": "Kore",                    # 기본 목소리 (사용자 선택) (항목마다 "voice"로 바꿀 수 있음)
   "style": "다정한 선생님처럼 읽어 주세요:",  # 읽는 말투 지시 (선택)
   "items": [{"key": "n_cover", "text": "안녕하세요!"}]
 }
@@ -135,7 +135,7 @@ def run_job(path: Path, key: str, models: list[str]) -> bool:
             skipped += 1
             continue
         text = f"{style}\n{item['text']}" if style else item["text"]
-        voice = item.get("voice", job.get("voice", "Sulafat"))
+        voice = item.get("voice", job.get("voice", "Kore"))
         try:
             pcm, model = synthesize(key, models, text, voice)
         except QuotaExceeded:
