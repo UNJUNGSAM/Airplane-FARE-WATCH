@@ -99,13 +99,24 @@ def synthesize(key: str, models: list[str], text: str, voice: str) -> tuple[byte
     raise RuntimeError("모든 모델에서 음성을 만들지 못했어요")
 
 
+def ffmpeg_exe() -> str | None:
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except ImportError:
+        return None
+
+
 def pcm_to_mp3(pcm: bytes, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(suffix=".pcm") as tmp:
         tmp.write(pcm)
         tmp.flush()
         subprocess.run(
-            ["ffmpeg", "-y", "-loglevel", "error", "-f", "s16le", "-ar", "24000", "-ac", "1",
+            [ffmpeg_exe(), "-y", "-loglevel", "error", "-f", "s16le", "-ar", "24000", "-ac", "1",
              "-i", tmp.name, "-af", "silenceremove=start_periods=1:start_threshold=-50dB,"
              "areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse,"
              "adelay=150", "-b:a", "96k", str(dest)],
@@ -143,8 +154,8 @@ def main() -> int:
     if not key:
         print("GEMINI_API_KEY가 없어요.")
         return 1
-    if not shutil.which("ffmpeg"):
-        print("ffmpeg가 필요해요.")
+    if not ffmpeg_exe():
+        print("ffmpeg가 필요해요. (pip install imageio-ffmpeg)")
         return 1
     jobs = [Path(p) for p in sys.argv[1:]] or sorted(JOBS_DIR.glob("*.json"))
     models = find_models(key)

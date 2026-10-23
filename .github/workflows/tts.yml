@@ -19,7 +19,7 @@ concurrency:
 jobs:
   tts:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -27,8 +27,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      # apt 설치는 가끔 멈춰서, pip로 받는 ffmpeg 실행 파일을 쓴다
       - name: ffmpeg 준비
-        run: command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+        run: pip install imageio-ffmpeg
 
       - name: 음성 만들기
         env:
