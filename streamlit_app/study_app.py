@@ -28,6 +28,9 @@ import study_page  # noqa: E402
 # 페이지 파일들과 같은 이유로 자료 목록이 바뀌면 바로 반영되도록 매번 다시 읽는다.
 importlib.reload(study_page)
 
+# 이 앱에서는 목록이 첫 화면(/)이므로 자료 화면의 '학습자료' 링크가 첫 화면으로 가게 한다.
+st.session_state[study_page.HOME_KEY] = "./"
+
 pages = [st.Page("pages/90_learning.py", title="학습자료", default=True)]
 for item in study_page.CATALOG:
     files = sorted((HERE / "pages").glob(f"*_learning_{item['slug']}.py"))
