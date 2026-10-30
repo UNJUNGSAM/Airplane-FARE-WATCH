@@ -2,3 +2,9 @@
 # 주소: /app/static/<파일 경로>
 [server]
 enableStaticServing = true
+
+# 라디오·토글·슬라이더 등 기본 위젯의 강조색을 콘솔의 남색 계열에 맞춘다
+# (지정하지 않으면 Streamlit 기본 빨간색이 섞여 '오류'처럼 보였다)
+[theme]
+base = "light"
+primaryColor = "#243050"

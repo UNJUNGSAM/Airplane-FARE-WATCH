@@ -30,6 +30,14 @@ if getattr(shared, "SHARED_REVISION", "") < _NEEDS_SHARED:
 
 shared.boot("settings", "설정")
 
+# 보안 경고는 페이지 맨 아래에 두면 보이지 않는다. 가장 먼저 보이도록 위로 올린다.
+if not shared.auth_enabled():
+    st.error(
+        "**접근 비밀번호가 설정되지 않았습니다.** 지금은 이 주소를 아는 누구나 감시 조건을 "
+        "추가·삭제하고 텔레그램 발송까지 시킬 수 있습니다. Secrets에 "
+        "`APP_PASSWORD` 를 추가하여 주십시오."
+    )
+
 # ---------------------------------------------------------------------------
 # 브라우저 UI에서 직접 키 입력 (이번 세션에만 적용되는 임시 오버라이드)
 # ---------------------------------------------------------------------------
@@ -38,7 +46,7 @@ cfg = shared.config
 _ready_all = cfg.gemini_ready() and cfg.telegram_ready()
 with st.expander("⚙️ 이 브라우저 세션에서만 키를 임시로 적용하기", expanded=not _ready_all):
     st.markdown(
-        '<div style="font-size:13px;color:#4a5568;margin-bottom:12px;">'
+        '<div style="font-size:13px;color:var(--ink-2);margin-bottom:12px;">'
         '아래 입력값은 <b>지금 이 브라우저 세션에서만</b> 사용됩니다. 창을 닫거나 앱이 재시작하면 사라지므로, '
         '상시 운영에는 Streamlit Cloud의 <b>Secrets</b> 또는 로컬 <code>.env</code>를 사용하여 주십시오. '
         '(보안상 이미 저장된 키는 이 칸에 다시 표시하지 않습니다.)</div>',
@@ -180,13 +188,6 @@ if not shared.github_sync.ready():
     st.info(
         "GitHub 동기화가 설정되지 않아 로컬 모드로 동작합니다. 클라우드 배포 시 조건 변경을 "
         "자동 감시에 반영하려면 저장소 토큰 설정이 필요합니다."
-    )
-
-if not shared.auth_enabled():
-    st.error(
-        "**접근 비밀번호가 설정되지 않았습니다.** 지금은 이 주소를 아는 누구나 감시 조건을 "
-        "추가·삭제하고 텔레그램 발송까지 시킬 수 있습니다. Secrets에 "
-        "`APP_PASSWORD` 를 추가하여 주십시오."
     )
 
 with st.expander("🔍 연동 상태 진단 도우미 (클릭하여 확인)"):
