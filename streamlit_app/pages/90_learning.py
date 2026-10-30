@@ -18,7 +18,7 @@ import study_page  # noqa: E402
 # (shared.py 와 같은 문제) 자료 목록이 바뀌어도 반영되도록 매번 다시 읽는다.
 importlib.reload(study_page)
 
-st.set_page_config(page_title="초등 학습자료실", page_icon=":material/menu_book:", layout="wide",
+st.set_page_config(page_title="로운 학습자료실", page_icon=":material/menu_book:", layout="wide",
                    initial_sidebar_state="collapsed")
 
 # 이모지 없이 글꼴·여백·카드만으로 차분하게 꾸민다.
@@ -214,7 +214,7 @@ else:
 st.markdown(
     '<div class="lr">'
     '<div class="lr-wrap"><div class="lr-top">'
-    '<div class="lr-brand"><span class="lr-mark">학</span>초등 학습자료실</div>'
+    '<div class="lr-brand"><span class="lr-mark">로</span>로운 학습자료실</div>'
     f'<span class="lr-count">자료 {len(items)}개 · 과목 {len(by_subject)}개</span></div>'
     '<div class="lr-hero"><div><p class="lr-eyebrow">초등 수행평가 대비</p>'
     "<h1>그림과 해설로<br>차근차근 익혀요</h1>"
@@ -228,6 +228,6 @@ st.markdown(
     '<li><span class="no">2</span><div><b>보고 듣기</b><span>그림을 보며 해설을 듣고, 다음 장으로 넘겨요.</span></div></li>'
     '<li><span class="no">3</span><div><b>확인하기</b><span>연습문제로 배운 내용을 스스로 점검해요.</span></div></li>'
     "</ol></div>"
-    '<p class="lr-foot">초등 학습자료실</p></div></div>',
+    '<p class="lr-foot">로운 학습자료실</p></div></div>',
     unsafe_allow_html=True,
 )
