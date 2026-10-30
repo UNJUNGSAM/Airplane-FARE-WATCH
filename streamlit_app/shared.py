@@ -125,13 +125,18 @@ CSS = """
   --surface-2: #eceff3;
   --ink: #131b30;
   --ink-2: #363e4d;
-  --ink-3: #6c7585;
+  --ink-3: #5f6878;
   --navy: #243050;
-  --blue: #1380b8;
+  --blue: #0f72a6;
   --teal: #44beaf;
   --ok: #1f9d6b;
   --warn: #c98a16;
   --danger: #d34646;
+  --ok-ink: #13704e;
+  --warn-ink: #85590a;
+  --teal-ink: #256d65;
+  --danger-ink: #b42f2f;
+  --focus: 0 0 0 2px var(--surface), 0 0 0 4px var(--blue);
   --line: #dde2e9;
   --shadow: 0 2px 8px rgba(19,27,48,.08);
   --r-ctl: 5px;
@@ -214,7 +219,7 @@ section[data-testid="stMain"] .block-container,
   gap: 0 !important; flex-wrap: nowrap;
 }
 .st-key-ap_tabs > [data-testid="stElementContainer"] {
-  width: auto !important; height: 42px !important;
+  width: auto !important; height: 42px !important; flex: 0 0 auto !important;
   display: flex; align-items: center;
 }
 .st-key-ap_tabs [data-testid="stMarkdown"],
@@ -253,7 +258,7 @@ section[data-testid="stMain"] .block-container,
 .ap-avatar {
   width: 22px; height: 22px; border-radius: var(--r-ctl); background: var(--surface-2);
   color: var(--ink-2); display: grid; place-items: center;
-  font-size: 10px; font-weight: 700; font-family: var(--font-mono);
+  font-size: 11px; font-weight: 700; font-family: var(--font-mono);
 }
 
 .ap-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
@@ -278,10 +283,14 @@ section[data-testid="stMain"] .block-container,
   font-weight: 700; color: #fff; background: var(--navy); padding: 2px 7px;
   border-radius: 3px; font-family: var(--font-mono);
 }
-.ap-title {
-  font-size: 15.5px; font-weight: 700; color: var(--ink);
-  letter-spacing: -.01em; margin: 0; display: inline-flex; align-items: center; gap: 6px;
+.stApp h1.ap-title {
+  font-size: 17px !important; font-weight: 700; color: var(--ink); line-height: 1.4;
+  letter-spacing: -.01em; margin: 0 !important; padding: 0 !important;
+  display: inline-flex; align-items: center; gap: 6px; scroll-margin-top: 0;
 }
+/* Streamlit 이 HTML 제목에 자동으로 붙이는 '링크 복사' 아이콘은 숨긴다 (빈 간격만 생겼다) */
+.ap-titlebar [data-testid="stHeaderActionElements"],
+.ap-slab [data-testid="stHeaderActionElements"] { display: none !important; }
 .ap-desc-inline { font-size: 12px; color: var(--ink-3); font-weight: 400; margin: 0; }
 .ap-titlebar-side { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
 .ap-metablock-inline { font-size: 11.5px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; }
@@ -293,14 +302,14 @@ section[data-testid="stMain"] .block-container,
   border-radius: var(--r-ctl); padding: 4px 10px;
   font-size: 11.5px; font-weight: 600; white-space: nowrap;
 }
-.ap-cta:hover { background: #10709f; color: #fff !important; }
+.ap-cta:hover { background: #0b5f8a; color: #fff !important; }
 
 /* 유틸리티 바 (Streamlit 위젯 수용) ------------------------------------- */
 .st-key-ap_util {
   background: var(--surface-2);
   border: 1px solid var(--line); border-top: none;
   border-radius: 0 0 var(--r-box) var(--r-box);
-  padding: 5px 14px !important;
+  padding: 5px 14px 9px !important;
   margin-bottom: 8px;
 }
 .st-key-ap_util [data-testid="stHorizontalBlock"] { align-items: flex-end; }
@@ -333,8 +342,9 @@ section[data-testid="stMain"] .block-container,
 }
 .ap-tile-left { line-height: 1.2; }
 .ap-tile .k { font-size: 11px; color: var(--ink-3); font-weight: 600; }
-.ap-tile .s { font-size: 10px; color: #8a94a6; margin-top: 1px; }
+.ap-tile .s { font-size: 11px; color: var(--ink-3); margin-top: 1px; }
 .ap-tile .v {
+  white-space: nowrap;
   font-family: var(--font-mono); font-size: 18px; font-weight: 700;
   color: var(--ink); letter-spacing: -.02em; text-align: right;
 }
@@ -374,8 +384,9 @@ section[data-testid="stMain"] .block-container,
 .ap-noti .p { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; font-weight: 600; }
 
 .ap-slab { background: var(--navy); border-radius: var(--r-box); padding: 17px 18px 15px; color: #dfe4ee; }
-.ap-slab h4 {
-  color: #fff; font-size: 12px; font-weight: 700; margin: 0 0 6px; letter-spacing: .02em;
+.stApp .ap-slab h2, .stApp .ap-slab h4 {
+  color: #fff !important; font-size: 12.5px !important; font-weight: 700; line-height: 1.4;
+  margin: 0 0 6px !important; padding: 0 !important; letter-spacing: .02em;
 }
 .ap-slab .kv {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -444,6 +455,7 @@ details.ap-details[open] > summary.ap-row {
 }
 .ap-sub { font-size: 12px; color: var(--ink-3); margin-top: 4px; line-height: 1.5; }
 .ap-sub b { color: var(--ink-2); font-weight: 600; }
+.ap-sub .nw { white-space: nowrap; }
 
 /* 조건 · 일정 셀 */
 .ap-planline { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
@@ -455,13 +467,15 @@ details.ap-details[open] > summary.ap-row {
   font-size: 12px; margin-top: 7px;
 }
 .ap-flight .lb { color: var(--ink-3); font-weight: 600; }
+.ap-flight .lb.ret { background: rgba(44,127,118,.12); color: var(--teal-ink); padding: 0 4px; border-radius: 3px; }
 .ap-flight .tm { font-size: 13.5px; font-weight: 600; color: var(--ink); }
 .ap-flight .tm .arw { color: var(--ink-3); margin: 0 5px; font-weight: 400; }
 .ap-flight .tm .pd {
-  color: var(--danger); font-size: 10px; font-weight: 700;
+  color: var(--danger-ink); font-size: 11px; font-weight: 700;
   margin-left: 3px; vertical-align: super;
 }
 .ap-flight .air { color: var(--ink-3); }
+.ap-times .pd, .ap-offer .pd { color: var(--danger-ink); font-size: 11px; font-weight: 700; margin-left: 2px; vertical-align: super; }
 .ap-cell-price { text-align: right; }
 .ap-price {
   font-family: var(--font-mono); font-size: 20px; font-weight: 600;
@@ -475,8 +489,8 @@ details.ap-details[open] > summary.ap-row {
 .ap-nodata { font-size: 11.5px; color: var(--ink-3); }
 
 .ap-trend { font-size: 12.5px; font-weight: 700; white-space: nowrap; margin-top: 4px; }
-.ap-trend.down { color: var(--ok); }
-.ap-trend.up { color: var(--danger); }
+.ap-trend.down { color: var(--ok-ink); }
+.ap-trend.up { color: var(--danger-ink); }
 .ap-trend.flat { color: var(--ink-3); font-weight: 600; }
 
 .ap-badge {
@@ -484,15 +498,16 @@ details.ap-details[open] > summary.ap-row {
   padding: 4px 9px; border-radius: var(--r-ctl);
   font-size: 11.5px; font-weight: 700; line-height: 1.45; white-space: nowrap;
 }
-.ap-badge.ok { background: rgba(31,157,107,.10); color: #17805a; }
-.ap-badge.teal { background: rgba(68,190,175,.18); color: #2c7f76; }
-.ap-badge.warn { background: rgba(201,138,22,.13); color: #9c6c11; }
-.ap-badge.danger { background: rgba(211,70,70,.10); color: #b73b3b; }
+.ap-badge.ok { background: rgba(31,157,107,.10); color: var(--ok-ink); }
+.ap-badge.teal { background: rgba(68,190,175,.18); color: var(--teal-ink); }
+.ap-badge.warn { background: rgba(201,138,22,.13); color: var(--warn-ink); }
+.ap-badge.danger { background: rgba(211,70,70,.10); color: var(--danger-ink); }
 .ap-badge.mute { background: var(--surface-2); color: var(--ink-3); }
 .ap-badge.navy { background: var(--navy); color: #fff; }
 .ap-badge.line { background: var(--surface); border: 1px solid var(--line); color: var(--ink-3); font-weight: 600; }
 
 .ap-link {
+  display: inline-block; padding: 4px 2px; margin: -4px 0;
   font-size: 12.5px; font-weight: 600; color: var(--navy) !important;
   text-decoration: none !important; border-bottom: 1px solid var(--line);
 }
@@ -549,8 +564,8 @@ details.ap-details[open] > summary.ap-row {
   font-size: 11px; font-weight: 700; padding: 2px 7px;
   border-radius: 4px; white-space: nowrap; flex: 0 0 auto;
 }
-.ap-leg-tag.dep { background: rgba(36,48,80,.09); color: #243050; }
-.ap-leg-tag.ret { background: rgba(44,127,118,.12); color: #2c7f76; }
+.ap-leg-tag.dep { background: rgba(36,48,80,.09); color: var(--navy); }
+.ap-leg-tag.ret { background: rgba(44,127,118,.12); color: var(--teal-ink); }
 .ap-air-mini { display: inline-flex; align-items: center; gap: 6px; min-width: 110px; flex: 0 0 auto; }
 .ap-air-mini .nm { font-size: 12.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
 .ap-offer-round .ap-times { font-size: 16px; font-weight: 700; }
@@ -617,9 +632,12 @@ details.ap-details[open] > summary.ap-row {
 .ap-simple tr:last-child td { border-bottom: none; }
 .ap-simple tbody tr:hover { background: var(--bg); }
 .ap-simple td.num { text-align: right; }
+/* 좁은 화면에서는 표를 찌그러뜨리지 않고 가로로 밀어 본다 */
+.ap-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ap-scroll .ap-simple { min-width: 680px; }
 
 /* Streamlit 위젯 -------------------------------------------------------- */
-.stButton > button, .stFormSubmitButton > button, .stLinkButton > a, .stDownloadButton > button {
+.stButton button, .stFormSubmitButton button, .stLinkButton > a, .stDownloadButton button {
   border-radius: var(--r-ctl) !important;
   border: 1px solid var(--line) !important;
   background: var(--surface) !important;
@@ -630,10 +648,10 @@ details.ap-details[open] > summary.ap-row {
   padding: 3px 12px !important;
   transition: border-color .12s ease, background .12s ease;
 }
-.stButton > button:hover, .stFormSubmitButton > button:hover, .stLinkButton > a:hover {
+.stButton button:hover, .stFormSubmitButton button:hover, .stLinkButton > a:hover {
   border-color: #c3cbd6 !important; background: var(--bg) !important; color: var(--ink) !important;
 }
-.stButton > button p, .stFormSubmitButton > button p, .stLinkButton > a p, .stDownloadButton > button p {
+.stButton button p, .stFormSubmitButton button p, .stLinkButton > a p, .stDownloadButton button p {
   font-size: 12px !important; font-weight: 600 !important;
 }
 button[kind="primary"], button[kind="primaryFormSubmit"],
@@ -650,50 +668,56 @@ button[kind="primary"]:hover, button[kind="primaryFormSubmit"]:hover,
   font-size: 12.5px !important;
 }
 .stTextInput input::placeholder, .stTextArea textarea::placeholder {
-  font-size: 12px !important; color: #a1abb8 !important;
+  font-size: 12px !important; color: var(--ink-3) !important;
 }
 .stNumberInput input, .stDateInput input { font-family: var(--font-mono) !important; font-size: 12.5px !important; }
 [data-baseweb="select"] > div { border-radius: var(--r-ctl) !important; min-height: 32px !important; font-size: 12.5px !important; }
 [data-baseweb="input"] { border-radius: var(--r-ctl) !important; min-height: 32px !important; font-size: 12.5px !important; }
-/* 가로형 라디오를 모던 세그먼트 탭(Pills)으로 변환 */
-div[data-testid="stRadio"] > div[role="radiogroup"] {
-  background: #edf2f7 !important;
+/* 가로형 라디오를 세그먼트 탭(Pills)으로 변환
+   Streamlit 1.4x 이후 옵션 label 이 div 로 한 번 더 감싸이고(data-testid=stRadioOption)
+   점(dot) 위치도 바뀌어, 예전 선택자(radiogroup > label)는 더 이상 맞지 않았다. */
+div[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] {
+  background: var(--surface-2) !important;
   padding: 4px !important;
   border-radius: 9px !important;
   gap: 3px !important;
-  display: flex !important;
+  display: inline-flex !important;
   flex-wrap: wrap !important;
-  border: 1px solid #d5dee8 !important;
+  border: 1px solid var(--line) !important;
 }
-div[data-testid="stRadio"] > div[role="radiogroup"] > label {
+div[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"] {
   background: transparent !important;
-  padding: 5px 14px !important;
+  padding: 6px 14px !important;
+  min-height: 32px;
   border-radius: 6px !important;
-  border: none !important;
   margin: 0 !important;
   cursor: pointer !important;
-  transition: all .15s ease !important;
+  transition: background-color .15s ease;
 }
-div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
+div[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"]:hover {
   background: rgba(255, 255, 255, 0.75) !important;
 }
-div[data-testid="stRadio"] > div[role="radiogroup"] > label > div:first-child {
+/* 동그라미 표시는 숨긴다 (선택 상태는 배경색으로 보여 준다) */
+div[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"] > div > div:not([data-testid]) {
   display: none !important;
 }
-div[data-testid="stRadio"] > div[role="radiogroup"] > label div[data-testid="stMarkdownContainer"] p {
+div[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"] [data-testid="stMarkdownContainer"] p {
   font-size: 12.5px !important;
   font-weight: 600 !important;
   color: var(--ink-2) !important;
   margin: 0 !important;
   white-space: nowrap !important;
 }
-div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
+div[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"]:has(input:checked) {
   background: var(--navy) !important;
   box-shadow: 0 1px 4px rgba(36, 48, 80, 0.22) !important;
 }
-div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) div[data-testid="stMarkdownContainer"] p {
+div[data-testid="stRadio"] [role="radiogroup"][aria-orientation="horizontal"] [data-testid="stRadioOption"]:has(input:checked) [data-testid="stMarkdownContainer"] p {
   color: #ffffff !important;
   font-weight: 700 !important;
+}
+div[data-testid="stRadio"] [data-testid="stRadioOption"]:has(input:focus-visible) {
+  box-shadow: var(--focus) !important;
 }
 
 /* 프리미엄 카드 & 빈 상태 */
@@ -743,6 +767,9 @@ div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) d
 [data-testid="stExpander"] summary { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
 [data-testid="stAlert"] { border-radius: var(--r-box) !important; border: 1px solid var(--line) !important; }
 [data-testid="stAlert"] p { font-size: 13.5px !important; }
+/* Streamlit 기본 경고문 글자색은 배경 대비가 4.3:1 로 기준(4.5:1)에 조금 못 미친다 */
+[data-testid="stAlertContentError"], [data-testid="stAlertContentError"] p { color: #a5313a !important; }
+[data-testid="InputInstructions"] { color: var(--ink-3) !important; }
 [data-testid="stDataFrame"] { border: 1px solid var(--line); border-radius: var(--r-box); overflow: hidden; }
 [data-testid="stMetric"] {
   background: var(--surface); border: 1px solid var(--line);
@@ -759,6 +786,42 @@ hr { border-color: var(--line) !important; }
   margin: 26px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
 }
 .ap-note { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; margin-top: 12px; }
+
+/* 키보드 포커스 표시 ---------------------------------------------------
+   버튼 스타일에서 box-shadow 를 지우면서 Streamlit 기본 포커스 링도 함께
+   사라졌다. 키보드로 이동하는 사람이 현재 위치를 볼 수 있도록 되살린다. */
+.stApp a:focus-visible,
+.stApp summary:focus-visible,
+.stButton button:focus-visible,
+.stFormSubmitButton button:focus-visible,
+.stLinkButton > a:focus-visible,
+.stDownloadButton button:focus-visible,
+[data-testid="stPageLink"] a:focus-visible {
+  outline: none !important;
+  box-shadow: var(--focus) !important;
+  border-radius: var(--r-ctl);
+}
+details.ap-details > summary.ap-row:focus-visible { box-shadow: inset 0 0 0 2px var(--blue) !important; border-radius: 0; }
+.st-key-ap_tabs [data-testid="stPageLink"] a:focus-visible { box-shadow: inset 0 -2px 0 var(--blue), inset 0 0 0 2px var(--blue) !important; }
+
+/* 위험한 동작(삭제) 버튼 */
+[class*="st-key-del_"] button, [class*="st-key-delok_"] button {
+  color: var(--danger-ink) !important; border-color: rgba(211,70,70,.35) !important;
+}
+[class*="st-key-del_"] button:hover { background: rgba(211,70,70,.06) !important; border-color: var(--danger) !important; }
+[class*="st-key-delok_"] button { background: var(--danger-ink) !important; border-color: var(--danger-ink) !important; color: #fff !important; }
+[class*="st-key-delok_"] button p { color: #fff !important; }
+
+/* 화면 낭독기 전용 텍스트 */
+.ap-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* 좁은 화면에서만 가격 아래에 판정 배지를 보인다 (판정 열이 숨겨지므로) */
+.ap-verdict-inline { display: none; margin-top: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stApp *, .stApp *::before, .stApp *::after { transition-duration: 0s !important; }
+}
 
 /* 반응형 --------------------------------------------------------------- */
 @media (max-width: 1180px) {
@@ -801,16 +864,19 @@ hr { border-color: var(--line) !important; }
   }
   .ap-thead, .ap-row { grid-template-columns: 110px minmax(0, 1fr) 100px 85px; gap: 8px; padding: 10px 12px; }
   .ap-c-spark, .ap-c-verdict { display: none !important; }
+  .ap-verdict-inline { display: flex; justify-content: flex-end; }
   .ap-offer { grid-template-columns: 36px 130px minmax(0, 1fr) 120px; gap: 8px; padding: 10px 12px; }
   .ap-offer .ap-c-stops { display: none !important; }
   .ap-offer-round { grid-template-columns: 36px minmax(0, 1fr) 120px; gap: 8px; padding: 10px 12px; }
   .ap-times { font-size: 15px; }
 }
 @media (max-width: 640px) {
-  .block-container { padding-top: 0.4rem !important; padding-left: 8px !important; padding-right: 8px !important; }
+  .block-container { padding-top: 0.4rem !important; padding-left: 12px !important; padding-right: 12px !important; }
   .ap-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .ap-thead, .ap-row { grid-template-columns: minmax(0, 1fr) 90px; gap: 6px; }
-  .ap-c-route, .ap-c-spark, .ap-c-verdict { display: none !important; }
+  .ap-thead, .ap-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+  .ap-c-route, .ap-c-spark, .ap-c-verdict, .ap-thead .ap-c-link { display: none !important; }
+  .ap-row .ap-c-link { grid-column: 1 / -1; }
+  .ap-row .ap-price { font-size: 17px; }
   .ap-offer { grid-template-columns: minmax(0, 1fr) 105px; }
   .ap-offer > *:first-child, .ap-offer .ap-c-stops { display: none !important; }
   .ap-offer-round { grid-template-columns: minmax(0, 1fr) 105px; }
@@ -1082,7 +1148,7 @@ def require_auth() -> None:
     st.markdown(
         '<div style="max-width:380px;margin:14vh auto 0;text-align:center;">'
         '<div style="font-size:20px;font-weight:800;color:#131b30;">Airplane Fare Watch</div>'
-        '<div style="font-size:13px;color:#6c7585;margin-top:6px;">'
+        '<div style="font-size:13px;color:var(--ink-3);margin-top:6px;">'
         '접근하려면 비밀번호를 입력하여 주십시오.</div></div>',
         unsafe_allow_html=True,
     )
@@ -1204,7 +1270,7 @@ def render_header(active: str) -> None:
             with st.container(key="ap_tabs"):
                 for key, label, path in NAV:
                     if key == active:
-                        st.markdown(f'<div class="ap-tab-active">{label}</div>',
+                        st.markdown(f'<div class="ap-tab-active" aria-current="page">{label}</div>',
                                     unsafe_allow_html=True)
                     else:
                         st.page_link(path, label=label)
@@ -1253,7 +1319,11 @@ def page_header(
     cta_href: str | None = None,
     attached: bool = True,
 ) -> None:
-    """페이지 타이틀 바 (초슬림 1줄 인라인)."""
+    """페이지 타이틀 바 (초슬림 1줄 인라인).
+
+    eyebrow 는 예전 호출과의 호환을 위해 받기만 한다. 영문 라벨(DASHBOARD 등)은
+    제목과 같은 말을 반복할 뿐이라 화면에서는 뺐다.
+    """
     esc = html.escape
     side_parts = []
     if meta_label:
@@ -1272,8 +1342,7 @@ def page_header(
     st.markdown(
         f'<div class="ap-titlebar{"" if attached else " solo"}">'
         f'<div class="ap-title-left">'
-        f'<span class="ap-eyebrow-badge">{esc(eyebrow)}</span>'
-        f'<span class="ap-title">{esc(title)}</span>'
+        f'<h1 class="ap-title">{esc(title)}</h1>'
         f'<span class="ap-desc-inline">· {esc(desc)}</span>'
         f'</div>{side_html}</div>',
         unsafe_allow_html=True,
@@ -1327,16 +1396,14 @@ def section(label: str) -> None:
 
 def tiles(items: list[dict[str, Any]]) -> None:
     """지표 타일 (초슬림 가로 분할 바)."""
-    default_icons = ["🛫", "🎯", "🔔", "⏱️"]
     cells = []
-    for idx, it in enumerate(items):
-        icon = it.get("icon") or (default_icons[idx % len(default_icons)])
+    for it in items:
         unit = f'<span class="u">{html.escape(it["unit"])}</span>' if it.get("unit") else ""
         sub = f'<span class="s">({it["sub"]})</span>' if it.get("sub") else ""
         cells.append(
             f'<div class="ap-tile">'
             f'<div class="ap-tile-left">'
-            f'<div class="k"><span style="margin-right:4px;">{icon}</span>{html.escape(it["label"])} {sub}</div>'
+            f'<div class="k">{html.escape(it["label"])} {sub}</div>'
             f'</div>'
             f'<div class="v">{it["value"]}{unit}</div>'
             f'</div>'
@@ -1481,8 +1548,9 @@ def logo_urls(codes: list[str]) -> list[str]:
 
 def logos_html(codes: list[str], size: int = 22) -> str:
     imgs = [
-        f'<img src="{url}" width="{size}" height="{size}" '
-        f'onerror="this.style.display=\'none\'" alt="">'
+        # onerror 속성은 Streamlit(React) 마크다운에서 문자열로 거부되어 콘솔 오류만
+        # 남기고 동작하지 않았다. 로고를 못 불러와도 alt="" 라서 빈 칸으로만 보인다.
+        f'<img src="{url}" width="{size}" height="{size}" loading="lazy" alt="">'
         for url in logo_urls(codes)[:3]
     ]
     return f'<span class="ap-logos">{"".join(imgs)}</span>' if imgs else ""
@@ -1504,9 +1572,11 @@ def trend_html(trend_pct: float | None) -> str:
     if trend_pct is None:
         return '<span class="ap-trend flat">비교 기준 없음</span>'
     if trend_pct < -0.05:
-        return f'<span class="ap-trend down mono">▼ {abs(trend_pct):.1f}%</span>'
+        return (f'<span class="ap-trend down mono"><span aria-hidden="true">▼</span>'
+                f'<span class="ap-sr">직전 대비 하락</span> {abs(trend_pct):.1f}%</span>')
     if trend_pct > 0.05:
-        return f'<span class="ap-trend up mono">▲ {trend_pct:.1f}%</span>'
+        return (f'<span class="ap-trend up mono"><span aria-hidden="true">▲</span>'
+                f'<span class="ap-sr">직전 대비 상승</span> {trend_pct:.1f}%</span>')
     return '<span class="ap-trend flat">변동 없음</span>'
 
 
@@ -1623,7 +1693,8 @@ def _fmt_leg_time(dep_str: str, arr_str: str) -> tuple[str, str, str]:
         try:
             days = (date.fromisoformat(arr_str[:10]) - date.fromisoformat(dep_str[:10])).days
             if days > 0:
-                plus_html = f'<span class="pd" style="color:#d93025;font-weight:700;margin-left:2px;font-size:10.5px;">+{days}</span>'
+                plus_html = (f'<span class="pd" title="도착일이 {days}일 뒤">+{days}'
+                             f'<span class="ap-sr">일 뒤 도착</span></span>')
         except ValueError:
             pass
     return dep_t, arr_t, plus_html
@@ -1655,7 +1726,7 @@ def flight_time_html(offers: list[dict[str, Any]], w: WatchCondition) -> str:
             f'<span class="tm mono">{esc(dep_t)}<span class="arw">→</span>{esc(arr_t)}{plus}</span>{air}'
             f'</div>'
             f'<div class="ap-fl-row">'
-            f'<span class="lb" style="background:rgba(44,127,118,.12);color:#2c7f76;">오는편</span>'
+            f'<span class="lb ret">오는편</span>'
             f'<span class="tm mono">{esc(ret_dep_t)}<span class="arw">→</span>{esc(ret_arr_t)}{ret_plus}</span>{ret_air}'
             f'</div>'
             f'</div>'
@@ -1719,10 +1790,10 @@ def watch_expandable_row_html(w: WatchCondition, d: dict[str, Any]) -> str:
         f"<b>목표가:</b> {num(w.target_price)} {w.currency}" if w.target_price else "<b>목표가:</b> 미설정",
     ]
     filters_html = (
-        f'<div style="display:flex;justify-content:space-between;align-items:center;background:#eceff3;padding:8px 14px;border-radius:6px;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
-        f'<div style="font-size:12.5px;color:#363e4d;line-height:1.7;">{" · ".join(filter_tags)}</div>'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);padding:8px 14px;border-radius:6px;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
+        f'<div style="font-size:12.5px;color:var(--ink-2);line-height:1.7;">{" · ".join(filter_tags)}</div>'
         # 수정 폼은 '조건 관리' 페이지 한 곳에만 둔다 (대시보드 사본은 제거)
-        f'<a href="/watches?edit={w.id}{auth_qs("&")}" target="_self" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#fff;background:#243050;padding:5px 11px;border-radius:4px;text-decoration:none;white-space:nowrap;">✏️ 조건 수정</a>'
+        f'<a href="/watches?edit={w.id}{auth_qs("&")}" target="_self" style="display:inline-flex;align-items:center;min-height:32px;font-size:12px;font-weight:600;color:#fff;background:var(--navy);padding:5px 12px;border-radius:var(--r-ctl);text-decoration:none;white-space:nowrap;">조건 수정</a>'
         f'</div>'
     )
 
@@ -1752,14 +1823,14 @@ def watch_expandable_row_html(w: WatchCondition, d: dict[str, Any]) -> str:
 <details class="ap-details">
   <summary class="ap-row" title="클릭하여 상세 항공편 및 가격 요약 펼치기">
     <div class="ap-c-route">
-      <div class="ap-route mono"><span style="font-size:15px;margin-right:3px;">{flag}</span>{esc(w.origin)}<span class="arw">→</span>{esc(w.destination)}</div>
+      <div class="ap-route mono"><span aria-hidden="true" style="font-size:15px;margin-right:3px;">{flag}</span>{esc(w.origin)}<span class="arw">→</span>{esc(w.destination)}</div>
       <div class="ap-id">{esc(watch_code(w))}</div>
     </div>
     <div class="ap-c-cond">
       <div class="ap-planline">
         <span class="ap-plan">{esc(route_title(w))}</span>{"".join(badges)}
       </div>
-      <div class="ap-sub">{" · ".join(detail)}</div>
+      <div class="ap-sub">{" · ".join(f'<span class="nw">{x}</span>' for x in detail)}</div>
       {flight_time_html(offers, w)}
     </div>
     <div class="ap-c-spark">{sparkline_svg(d['history'])}
@@ -1768,11 +1839,12 @@ def watch_expandable_row_html(w: WatchCondition, d: dict[str, Any]) -> str:
     <div class="ap-c-price ap-cell-price">
       <div class="ap-price">{num(stats.get('last'))}<span class="cur">{esc(w.currency)}</span></div>
       {trend_html(deal.get('trend_pct'))}
+      <div class="ap-verdict-inline">{deal_badge_html(deal)}</div>
     </div>
     <div class="ap-c-verdict ap-cell-verdict">{deal_badge_html(deal)}</div>
     <div class="ap-c-link" style="text-align:right;white-space:nowrap;">
       <a class="ap-link" href="{esc(search_url)}" target="_blank" rel="noopener">구글 ↗</a>
-      <span style="color:#dde2e9;margin:0 3px;">|</span>
+      <span aria-hidden="true" style="color:var(--line);margin:0 3px;">|</span>
       <a class="ap-link" href="{esc(sky_url)}" target="_blank" rel="noopener">스카이 ↗</a>
     </div>
   </summary>

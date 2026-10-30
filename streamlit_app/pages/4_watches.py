@@ -75,7 +75,7 @@ with shared.util_bar():
         st.session_state["confirm_inactive"] = True
         st.rerun()
     r4.markdown(
-        f'<div style="font-size:12.5px;color:#6c7585;padding-bottom:8px;">'
+        f'<div style="font-size:12.5px;color:var(--ink-3);padding-bottom:8px;">'
         f'가동 {active_n:,}건 · 중지 {len(inactive):,}건입니다.</div>',
         unsafe_allow_html=True,
     )
@@ -199,7 +199,7 @@ def render_edit_form(w) -> None:
                                  disabled=(trip == "편도"), key=k + "rt")
 
         target = st.number_input(
-            "목표가 (0 입력 시 하락률·백분위 규칙만 적용)", min_value=0.0, step=10000.0,
+            "목표가 (0 입력 시 하락률·백분위 규칙만 적용)", min_value=0.0, step=10000.0, format="%.0f",
             value=float(w.target_price or 0), key=k + "target",
         )
 
@@ -413,12 +413,31 @@ def render_status(w, d) -> None:
                 f"chore: 감시 {'활성' if new_active else '중지'} [{shared.watch_code(w)}]")
             st.rerun()
 
-        if st.button("조건 삭제", key=f"del_{w.id}", width="stretch"):
-            shared.edit_with_sync(lambda d_, _id=w.id: d_.delete_watch(_id),
-                                  f"chore: 감시 조건 삭제 [{shared.watch_code(w)}]")
-            st.session_state.pop("edit_watch_id", None)
-            st.toast(f"{shared.watch_code(w)} 조건을 삭제하였습니다.")
-            st.rerun()
+        # 삭제는 30일 가격 기록까지 지우고 저장소에 바로 커밋되므로 한 번 더 묻는다
+        # (전체 초기화·중지 조건 삭제와 같은 확인 패턴)
+        confirm_key = f"confirm_del_{w.id}"
+        if not st.session_state.get(confirm_key):
+            if st.button("조건 삭제", key=f"del_{w.id}", width="stretch"):
+                st.session_state[confirm_key] = True
+                st.rerun()
+        else:
+            st.markdown(
+                f'<div style="font-size:12.5px;color:var(--danger-ink);font-weight:600;'
+                f'line-height:1.5;margin:4px 0 6px;">{shared.watch_code(w)} 조건과 '
+                f'가격 기록이 모두 삭제됩니다. 되돌릴 수 없습니다.</div>',
+                unsafe_allow_html=True,
+            )
+            ycol, ncol = st.columns(2)
+            if ycol.button("삭제합니다", key=f"delok_{w.id}", width="stretch"):
+                shared.edit_with_sync(lambda d_, _id=w.id: d_.delete_watch(_id),
+                                      f"chore: 감시 조건 삭제 [{shared.watch_code(w)}]")
+                st.session_state.pop("edit_watch_id", None)
+                st.session_state.pop(confirm_key, None)
+                st.toast(f"{shared.watch_code(w)} 조건을 삭제하였습니다.")
+                st.rerun()
+            if ncol.button("취소", key=f"delno_{w.id}", width="stretch"):
+                st.session_state.pop(confirm_key, None)
+                st.rerun()
 
 
 shared.section("조건 목록")

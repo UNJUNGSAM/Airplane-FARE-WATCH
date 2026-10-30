@@ -106,7 +106,7 @@ if cur_mode == "💬 자연어 등록 (Gemini)":
     st.caption("목적지가 여러 곳이거나 시간대·직항 조건이 있어도 한 번에 등록할 수 있습니다.")
 
     # 추천 예시 칩 버튼 (빠른 입력 편의성)
-    st.markdown("<div style='font-size:11.5px;font-weight:600;color:#6c7585;margin-bottom:4px;'>💡 클릭하여 추천 예시 문장 바로 넣기:</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:12.5px;font-weight:600;color:var(--ink-3);margin-bottom:4px;'>예시 문장을 눌러 바로 넣기:</div>", unsafe_allow_html=True)
     ec1, ec2, ec3 = st.columns(3)
     if ec1.button("🌴 다낭/나트랑 밤비행기 35만원", key="ex_btn_1", use_container_width=True):
         st.session_state["nl_text_input"] = "9월 25일 이후 다낭이나 나트랑 직항 밤비행기 35만원 이하 왕복"
@@ -227,7 +227,7 @@ if cur_mode == "💬 자연어 등록 (Gemini)":
         with cbox1:
             st.markdown(
                 f"💡 **방금 등록한 조건({last_code})과 동일한 일정으로 다른 여행지도 감시하시겠습니까?**<br>"
-                "<span style='font-size:12px;color:#6c7585;'>여행 기간, 출발 시간대, 직항 여부를 그대로 복사해 나트랑, 방콕, 후쿠오카 등을 원클릭 등록할 수 있습니다.</span>",
+                "<span style='font-size:12px;color:var(--ink-3);'>여행 기간, 출발 시간대, 직항 여부를 그대로 복사해 나트랑, 방콕, 후쿠오카 등을 원클릭 등록할 수 있습니다.</span>",
                 unsafe_allow_html=True,
             )
         with cbox2:
@@ -300,7 +300,7 @@ elif cur_mode == "🔄 기존 조건 복제 등록 (다른 공항 추가)":
                     {base_w.origin} → {base_w.destination} ({base_dest_info['city']} {base_dest_info['flag']})
                   </span>
                 </div>
-                <div style="font-size:12.5px; font-weight:600; color:#475569; background:#fff; padding:3px 10px; border-radius:12px; border:1px solid #dbe6f3;">
+                <div style="font-size:12.5px; font-weight:600; color:var(--ink-2); background:#fff; padding:3px 10px; border-radius:12px; border:1px solid #dbe6f3;">
                   🏷️ {html.escape(base_w.label or '라벨 미지정')}
                 </div>
               </div>
@@ -397,6 +397,7 @@ elif cur_mode == "🔄 기존 조건 복제 등록 (다른 공항 추가)":
                     f"일괄 목표가 ({base_w.currency})",
                     min_value=0.0,
                     step=10000.0,
+                    format="%.0f",
                     value=float(base_w.target_price or 0.0),
                     key="clone_custom_target",
                 )
@@ -582,6 +583,7 @@ elif cur_mode == "📝 상세 직접 입력":
             "추가 도착 공항 (선택: 동일 일정으로 함께 등록할 다른 여행지가 있다면 선택)",
             options=extra_choices,
             key="f_extra_dests",
+            placeholder="없으면 비워 두십시오",
             help="선택한 공항들도 같은 일정과 조건으로 함께 일괄 등록됩니다.",
         )
 
@@ -629,6 +631,7 @@ elif cur_mode == "📝 상세 직접 입력":
             "목표가 (0 입력 시 하락률·백분위 규칙만 적용)",
             min_value=0.0,
             step=10000.0,
+            format="%.0f",
             key="f_target",
             help="이 가격 이하로 내려가면 즉시 알림을 발송합니다.",
         )
