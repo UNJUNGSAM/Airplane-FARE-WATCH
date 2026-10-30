@@ -11,6 +11,7 @@
     1. static/learning/<slug>/ 에 index.html 과 audio/ 를 넣는다.
     2. 아래 CATALOG 에 한 줄 추가한다.
     3. pages/9N_learning_<slug>.py 를 기존 파일과 똑같이 만든다 (주소: /learning_<slug>).
+    학습자료 전용 앱(study_app.py)에는 위 세 단계만으로 자동으로 나타난다.
 
 과목 이름: korean(국어) math(수학) social(사회) science(과학) english(영어)
            music(음악) art(미술) pe(체육) ethics(도덕) practical(실과)
