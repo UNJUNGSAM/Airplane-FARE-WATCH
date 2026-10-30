@@ -78,6 +78,15 @@ a.lr-tab .n{font-size:.85em;font-weight:500;color:var(--muted)}
 a.lr-tab.on{background:var(--ink);border-color:var(--ink);color:#fff!important}
 a.lr-tab.on .n{color:#c9ccd1}
 
+/* 학교급 버튼 (초등 / 중학) */
+.lr-lvs{flex:none;display:inline-flex;padding:.25em;border-radius:999px;background:var(--soft)}
+.lr-lv{display:inline-flex;align-items:center;min-height:2.25em;padding:0 1em;border-radius:999px;
+  font-size:.95em;font-weight:700;color:#3a3e45!important}
+a.lr-lv.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.lr-lv.off{color:#a3a6ab!important;cursor:default}
+.lr-sep{flex:none;width:1px;align-self:stretch;margin:.4em .25em;background:var(--line)}
+.lr-tabs{align-items:center}
+
 /* 과목별 묶음 */
 .lr-sec{padding-top:2.5em}
 .lr-sec-head{display:flex;align-items:baseline;gap:.6em;margin:0 0 1em}
@@ -120,7 +129,9 @@ a.lr-card:hover{border-color:#cfcbc2;box-shadow:0 .5em 1.5em rgba(0,0,0,.06);tra
 /* 아이폰 */
 @media (max-width:600px){
   .lr{padding:0 1em 3em}
-  .lr-nav{margin:0 -1em;padding:.6em 1em}
+  .lr-nav{position:static;margin:0 -1em;padding:.75em 1em}
+  .lr-tabs{flex-wrap:wrap;overflow:visible}
+  .lr-sep{flex-basis:100%;height:0;margin:0;background:none}
   .lr-cover{aspect-ratio:16/6.5}
   .lr-hero h1{font-size:1.75em}
   .lr-hero{padding:2em 0 1.5em}
@@ -143,12 +154,19 @@ a.lr-card:hover{border-color:#cfcbc2;box-shadow:0 .5em 1.5em rgba(0,0,0,.06);tra
 pages = {p.stem.split("_learning_", 1)[-1] for p in Path(__file__).parent.glob("*_learning_*.py")}
 items = [item for item in study_page.CATALOG if item["slug"] in pages]
 
-# 자료가 있는 과목만 메뉴에 보인다 (SUBJECTS 순서대로).
+# 학교급(초등/중학)을 먼저 고르고, 그 안에서 과목을 고른다. 주소: ?l=<학교급>&s=<과목>
+count_by_level = {key: sum(item["level"] == key for item in items) for key in study_page.LEVELS}
+level = st.query_params.get("l", "")
+if level not in study_page.LEVELS:
+    level = next((key for key, n in count_by_level.items() if n), "elem")
+level_items = [item for item in items if item["level"] == level]
+
+# 자료가 있는 과목만 메뉴에 보인다 (SUBJECTS 순서대로). 과목 안에서는 학년·학기 순.
 by_subject: dict[str, list[dict]] = {}
 for key in study_page.SUBJECTS:
-    found = [item for item in items if study_page.subject_of(item) == key]
+    found = [item for item in level_items if study_page.subject_of(item) == key]
     if found:
-        by_subject[key] = found
+        by_subject[key] = sorted(found, key=lambda item: (item["grade"], item["term"]))
 
 picked = st.query_params.get("s", "")
 if picked not in by_subject:
@@ -161,7 +179,7 @@ def card(item: dict) -> str:
     return (
         f'<a class="lr-card" href="learning_{escape(item["slug"])}" target="_self">'
         f'<div class="lr-cover" style="background:{subj["color"]}">'
-        f'<span class="tag">{escape(subj["name"])} · {escape(item["grade"])}</span>'
+        f'<span class="tag">{escape(subj["name"])} · {escape(study_page.grade_label(item))}</span>'
         f'<span class="unit">{escape(item["unit"])}</span></div>'
         f'<div class="lr-body"><div class="lr-title">{escape(item["title"])}</div>'
         f'<div class="lr-desc">{escape(item["desc"])}</div>'
@@ -179,48 +197,58 @@ def section(title: str, found: list[dict], color: str = "") -> str:
     )
 
 
-# 열 개 과목 전체를 보여 주는 안내판 (자료가 없는 과목은 '준비 중'으로 흐리게).
+# 지금 학교급의 과목 전체를 보여 주는 안내판 (자료가 없는 과목은 '준비 중'으로 흐리게).
 def index_row(key: str, subj: dict) -> str:
     dot = f'<span class="dot" style="background:{subj["color"]}"></span>'
     if key not in by_subject:
         return f'<li class="off">{dot}{escape(subj["name"])}<span class="c">준비 중</span></li>'
     return (
-        f'<li><a href="?s={key}" target="_self">{dot}{escape(subj["name"])}'
+        f'<li><a href="?l={level}&s={key}" target="_self">{dot}{escape(subj["name"])}'
         f'<span class="c">{len(by_subject[key])}개</span></a></li>'
     )
 
 
-index = "".join(index_row(key, subj) for key, subj in study_page.SUBJECTS.items())
+index = "".join(
+    index_row(key, subj) for key, subj in study_page.SUBJECTS.items() if level in subj["levels"]
+)
 
+# 학교급 버튼: 자료가 없는 학교급은 '준비 중'으로 흐리게 (누를 수 없음).
+levels = "".join(
+    f'<a class="lr-lv{" on" if key == level else ""}" href="?l={key}" target="_self">{escape(name)}</a>'
+    if count_by_level[key]
+    else f'<span class="lr-lv off" title="준비 중">{escape(name)}</span>'
+    for key, name in study_page.LEVELS.items()
+)
 
-tabs = [("", "전체", len(items))] + [
+tabs = [("", "전체", len(level_items))] + [
     (key, study_page.SUBJECTS[key]["name"], len(found)) for key, found in by_subject.items()
 ]
-nav = "".join(
-    f'<a class="lr-tab{" on" if key == picked else ""}" href="{"?s=" + key if key else "?"}" target="_self">'
+nav = f'<div class="lr-lvs" role="group" aria-label="학교급">{levels}</div><span class="lr-sep"></span>' + "".join(
+    f'<a class="lr-tab{" on" if key == picked else ""}" href="?l={level}{"&s=" + key if key else ""}" target="_self">'
     f'{escape(name)}<span class="n">{n}</span></a>'
     for key, name, n in tabs
 )
 
-if not items:
+level_name = study_page.LEVELS[level]
+if not level_items:
     body = '<p class="lr-empty">아직 올라온 자료가 없어요.</p>'
 elif picked:
     subj = study_page.SUBJECTS[picked]
     body = section(subj["name"], by_subject[picked], subj["color"])
 else:
     # 전체: 과목 순서대로 한 격자에 모아 빈칸 없이 보여 준다.
-    body = section("전체 자료", [item for found in by_subject.values() for item in found])
+    body = section(f"{level_name} 전체 자료", [item for found in by_subject.values() for item in found])
 
 st.markdown(
     '<div class="lr">'
     '<div class="lr-wrap"><div class="lr-top">'
     '<div class="lr-brand"><span class="lr-mark">로</span>로운 학습자료실</div>'
-    f'<span class="lr-count">자료 {len(items)}개 · 과목 {len(by_subject)}개</span></div>'
-    '<div class="lr-hero"><div><p class="lr-eyebrow">초등 수행평가 대비</p>'
+    f'<span class="lr-count">자료 {len(items)}개</span></div>'
+    '<div class="lr-hero"><div><p class="lr-eyebrow">수행평가 대비 학습자료</p>'
     "<h1>그림과 해설로<br>차근차근 익혀요</h1>"
     "<p>한 장씩 넘기며 그림을 보고, 선생님 목소리 해설을 듣고, 마지막에 연습문제로 확인해요. "
     "아이패드는 가로로 보면 더 넓게 볼 수 있어요.</p></div>"
-    f'<div class="lr-index"><div class="h">과목별 자료</div><ul>{index}</ul></div></div></div>'
+    f'<div class="lr-index"><div class="h">{level_name} 과목별 자료</div><ul>{index}</ul></div></div></div>'
     f'<nav class="lr-nav" aria-label="과목"><div class="lr-tabs">{nav}</div></nav>'
     f'<div class="lr-wrap">{body}'
     '<div class="lr-how"><div class="t">이렇게 공부해요</div><ol class="lr-steps">'
