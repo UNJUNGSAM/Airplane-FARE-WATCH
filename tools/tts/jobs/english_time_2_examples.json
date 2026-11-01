@@ -1,7 +1,7 @@
 {
  "out_dir": "streamlit_app/static/learning/english_time/audio",
  "voice": "Kore",
- "style": "Read this English sentence aloud clearly and naturally, like a friendly native English teacher speaking to young students, at a slightly slow pace:",
+ "style": "",
  "items": [
   {
    "key": "e_c1",
