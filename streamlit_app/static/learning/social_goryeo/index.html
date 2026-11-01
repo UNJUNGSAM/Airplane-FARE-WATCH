@@ -1080,6 +1080,17 @@ textarea{resize:vertical;min-height:96px}
     }
   })();
 
+  /* ---------- 전체 화면: 영상처럼 보기를 누르면 자료(iframe)를 화면 가득 ---------- */
+  function enterFull() {
+    let t = document.documentElement;
+    try { if (window.frameElement) t = window.frameElement; } catch (e) {}
+    const d = t.ownerDocument;
+    if (d.fullscreenElement || d.webkitFullscreenElement) return;
+    const f = t.requestFullscreen || t.webkitRequestFullscreen;
+    if (!f) return; // 아이폰 Safari 처럼 지원하지 않으면 그대로 둔다
+    try { const r = f.call(t); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+
   /* ---------- 슬라이드 넘기기 ---------- */
   const slides = $$('.slide');
   let cur = 0, auto = false, autoTimer = null;
@@ -1284,7 +1295,7 @@ textarea{resize:vertical;min-height:96px}
     $('#lbListen').textContent = (speaking && !auto) ? '그만 듣기' : '이 장 듣기';
     keepAwake(auto);
   }
-  function startAuto() { auto = true; refreshButtons(); narrate(); }
+  function startAuto() { enterFull(); auto = true; refreshButtons(); narrate(); }
   $('#btnAuto').addEventListener('click', () => { if (auto) { auto = false; stopSpeech(); setCaption(IDLE, false); } else startAuto(); });
   $('#btnListen').addEventListener('click', () => {
     if (speaking && !auto) { stopSpeech(); setCaption(IDLE, false); return; }
