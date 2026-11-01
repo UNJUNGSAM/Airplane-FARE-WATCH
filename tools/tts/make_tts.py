@@ -124,9 +124,44 @@ def pcm_to_mp3(pcm: bytes, dest: Path) -> None:
         )
 
 
+_SUPERTONIC = None
+
+
+def supertonic_pcm(text: str, voice: str, lang: str, speed: float) -> bytes:
+    """Supertonic 3 (공개 AI 성우, 사용량 한도 없음)으로 만든 PCM(16bit, 24kHz, 모노)."""
+    global _SUPERTONIC
+    import numpy as np
+    from supertonic import TTS
+
+    if _SUPERTONIC is None:
+        _SUPERTONIC = TTS(auto_download=True)
+    tts = _SUPERTONIC
+    wav, _ = tts.synthesize(text=text, voice_style=tts.get_voice_style(voice_name=voice),
+                            total_steps=10, speed=speed, lang=lang)
+    wav = np.asarray(wav, dtype=np.float32).reshape(-1)
+    sr = getattr(tts, "sample_rate", None) or 44100
+    if sr != 24000:  # pcm_to_mp3 는 24kHz 를 가정하므로 맞춰 준다
+        idx = np.linspace(0, len(wav) - 1, int(len(wav) * 24000 / sr))
+        wav = np.interp(idx, np.arange(len(wav)), wav)
+    return (np.clip(wav, -1, 1) * 32767).astype("<i2").tobytes()
+
+
 def run_job(path: Path, key: str, models: list[str]) -> bool:
     job = json.loads(path.read_text(encoding="utf-8"))
     out_dir = ROOT / job["out_dir"]
+    if job.get("engine") == "supertonic":
+        made = 0
+        for item in job["items"]:
+            dest = out_dir / f"{item['key']}.mp3"
+            if dest.exists():
+                continue
+            pcm = supertonic_pcm(item["text"], item.get("voice", job.get("voice", "F1")),
+                                 job.get("lang", "ko"), float(job.get("speed", 1.0)))
+            pcm_to_mp3(pcm, dest)
+            made += 1
+            print(f"  만듦: {dest.relative_to(ROOT)} (Supertonic {job.get('voice', 'F1')})")
+        print(f"[{path.name}] Supertonic 으로 새로 만든 것 {made}개")
+        return True
     style = job.get("style", "").strip()
     made = skipped = 0
     for item in job["items"]:
@@ -151,14 +186,11 @@ def run_job(path: Path, key: str, models: list[str]) -> bool:
 
 def main() -> int:
     key = os.environ.get("GEMINI_API_KEY", "").strip()
-    if not key:
-        print("GEMINI_API_KEY가 없어요.")
-        return 1
     if not ffmpeg_exe():
         print("ffmpeg가 필요해요. (pip install imageio-ffmpeg)")
         return 1
     jobs = [Path(p) for p in sys.argv[1:]] or sorted(JOBS_DIR.glob("*.json"))
-    models = find_models(key)
+    models = find_models(key) if key else []
     for job in jobs:
         if not run_job(job, key, models):
             break

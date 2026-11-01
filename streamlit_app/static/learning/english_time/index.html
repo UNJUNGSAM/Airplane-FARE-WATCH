@@ -230,6 +230,7 @@ th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
   <header class="top">
     <div class="brand"><b>시간 전치사 탐구 노트</b><small>at · on · in / When · What time</small></div>
     <span class="pager" id="pager">1 / 16</span>
+    <button class="btn small" type="button" id="btnFull" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="icFull"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span id="lbFull" class="hide-s">전체 화면</span></button>
     <button class="btn small" type="button" id="btnToc">목차</button>
   </header>
   <div class="progress"><i id="bar"></i></div>
@@ -569,7 +570,7 @@ th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
       <div class="card">
         <h3>스스로 확인해요</h3>
         <ul class="check" id="checklist"></ul>
-        <p class="note" style="margin-top:6px">음성: 한국어 해설과 영어 예문은 Google Gemini AI 음성으로 만들었고, 퀴즈 문장과 직접 쓴 글은 기기에 있는 영어 목소리로 읽어 줘요. 연습 문제는 교재 내용을 바탕으로 새로 만든 문제예요.</p>
+        <p class="note" style="margin-top:6px">음성: 한국어 해설과 영어 예문 일부는 Google Gemini AI 음성(Kore), 나머지 영어 예문은 공개 AI 성우 Supertonic 3(MIT 라이선스)으로 만들었고, 퀴즈 문장과 직접 쓴 글은 기기에 있는 영어 목소리로 읽어 줘요. 연습 문제는 교재 내용을 바탕으로 새로 만든 문제예요.</p>
       </div>
     </div>
   </section>
@@ -737,6 +738,34 @@ th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
     p.prepend(b);
   });
 
+  /* ================= 전체 화면 =================
+     자료는 Streamlit 페이지 안의 iframe 에서 돈다. 같은 출처라서 바깥 iframe 요소를 통째로
+     전체 화면으로 만들면 Safari 주소창·Streamlit 막대 없이 자료만 화면 가득 보인다.
+     (아이패드·PC 브라우저 지원. 아이폰 Safari 는 웹페이지 전체 화면을 지원하지 않아 버튼을 숨긴다.) */
+  function fsTarget() { try { if (window.frameElement) return window.frameElement; } catch (e) {} return document.documentElement; }
+  function fsDoc() { try { if (window.frameElement) return window.parent.document; } catch (e) {} return document; }
+  const fsEl = () => { const d = fsDoc(); return d.fullscreenElement || d.webkitFullscreenElement || null; };
+  const fsOk = (() => { const t = fsTarget(); return !!(t.requestFullscreen || t.webkitRequestFullscreen); })();
+  function enterFull() {
+    if (!fsOk || fsEl()) return;
+    const t = fsTarget();
+    try { const r = (t.requestFullscreen || t.webkitRequestFullscreen).call(t); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function exitFull() {
+    const d = fsDoc();
+    try { const r = (d.exitFullscreen || d.webkitExitFullscreen).call(d); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function fsUI() {
+    const on = !!fsEl();
+    $('#lbFull').textContent = on ? '전체 화면 끝' : '전체 화면';
+    $('#icFull').innerHTML = on ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  }
+  if (fsOk) {
+    $('#btnFull').hidden = false;
+    $('#btnFull').addEventListener('click', () => fsEl() ? exitFull() : enterFull());
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => { fsDoc().addEventListener(ev, fsUI); document.addEventListener(ev, fsUI); });
+  }
+
   /* ================= 슬라이드 ================= */
   const slides = $$('.slide');
   let cur = 0;
@@ -777,9 +806,9 @@ th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
   $('#btnNext').addEventListener('click', () => go(cur + 1));
   $('#btnAuto').addEventListener('click', () => {
     if (auto) { auto = false; stopAll(); setCaption(IDLE, false); return; }
-    auto = true; refreshButtons(); narrate();
+    enterFull(); auto = true; refreshButtons(); narrate();
   });
-  $('#startAuto').addEventListener('click', () => { auto = true; refreshButtons(); narrate(); });
+  $('#startAuto').addEventListener('click', () => { enterFull(); auto = true; refreshButtons(); narrate(); });
   $('#btnListen').addEventListener('click', () => {
     if (speaking && !activeSpk && !auto) { stopAll(); setCaption(IDLE, false); return; }
     auto = false; narrate();
