@@ -88,6 +88,17 @@ CATALOG: list[dict] = [
         "slides": 16,
         "minutes": 7,
     },
+    {
+        "slug": "english_place",
+        "title": "장소 전치사 탐구 노트",
+        "level": "elem",
+        "grade": 5,
+        "term": 2,
+        "unit": "Unit 12. Prepositions of Place",
+        "desc": "in·on·under·next to 등 위치를 말하는 전치사와 There is / There are를 익혀요.",
+        "slides": 16,
+        "minutes": 8,
+    },
 ]
 
 
