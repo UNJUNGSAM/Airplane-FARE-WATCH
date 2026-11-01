@@ -77,6 +77,17 @@ CATALOG: list[dict] = [
         "slides": 18,
         "minutes": 13,
     },
+    {
+        "slug": "english_time",
+        "title": "시간 전치사 탐구 노트",
+        "level": "elem",
+        "grade": 5,
+        "term": 2,
+        "unit": "Unit 11. Prepositions of Time",
+        "desc": "at·on·in을 시간의 크기로 구별하고, When과 What time으로 묻고 답해요.",
+        "slides": 16,
+        "minutes": 7,
+    },
 ]
 
 

@@ -1,0 +1,147 @@
+{
+ "out_dir": "streamlit_app/static/learning/english_time/audio",
+ "voice": "Kore",
+ "style": "Read this English sentence aloud clearly and naturally, like a friendly native English teacher speaking to young students, at a slightly slow pace:",
+ "items": [
+  {
+   "key": "e_c1",
+   "text": "What time does the movie start?"
+  },
+  {
+   "key": "e_c2",
+   "text": "It starts at 2:30."
+  },
+  {
+   "key": "e_at1",
+   "text": "I get up at 7:00."
+  },
+  {
+   "key": "e_at2",
+   "text": "The bus comes at 8:15."
+  },
+  {
+   "key": "e_at3",
+   "text": "We have lunch at noon."
+  },
+  {
+   "key": "e_at4",
+   "text": "The moon is bright at night."
+  },
+  {
+   "key": "e_at5",
+   "text": "The fireworks start at midnight."
+  },
+  {
+   "key": "e_on1",
+   "text": "I have art class on Monday."
+  },
+  {
+   "key": "e_on2",
+   "text": "The field trip is on April 18."
+  },
+  {
+   "key": "e_on3",
+   "text": "We get presents on Christmas Day."
+  },
+  {
+   "key": "e_on4",
+   "text": "I eat seaweed soup on my birthday."
+  },
+  {
+   "key": "e_on5",
+   "text": "I play soccer on Saturdays."
+  },
+  {
+   "key": "e_in1",
+   "text": "I read books in the evening."
+  },
+  {
+   "key": "e_in2",
+   "text": "School starts in March."
+  },
+  {
+   "key": "e_in3",
+   "text": "We go swimming in summer."
+  },
+  {
+   "key": "e_in4",
+   "text": "My sister was born in 2018."
+  },
+  {
+   "key": "e_in5",
+   "text": "Leaves turn red in fall."
+  },
+  {
+   "key": "e_t1",
+   "text": "I sleep at night."
+  },
+  {
+   "key": "e_t2",
+   "text": "I go to the beach in August."
+  },
+  {
+   "key": "e_t3",
+   "text": "I go to the beach on August 3."
+  },
+  {
+   "key": "e_t4",
+   "text": "I have a test tomorrow."
+  },
+  {
+   "key": "e_t5",
+   "text": "We play games every Friday."
+  },
+  {
+   "key": "e_a1",
+   "text": "When is your birthday?"
+  },
+  {
+   "key": "e_a2",
+   "text": "It's on July 7."
+  },
+  {
+   "key": "e_a3",
+   "text": "What time does the library close?"
+  },
+  {
+   "key": "e_a4",
+   "text": "It closes at 6 p.m."
+  },
+  {
+   "key": "e_a5",
+   "text": "When do you go camping?"
+  },
+  {
+   "key": "e_a6",
+   "text": "We go camping in fall."
+  },
+  {
+   "key": "e_f1",
+   "text": "When do you play the piano?"
+  },
+  {
+   "key": "e_f2",
+   "text": "I play the piano on Tuesdays."
+  },
+  {
+   "key": "e_f3",
+   "text": "What time does he have breakfast?"
+  },
+  {
+   "key": "e_f4",
+   "text": "He has breakfast at 7:30."
+  },
+  {
+   "key": "e_w1",
+   "text": "What time do you get up?"
+  },
+  {
+   "key": "e_w2",
+   "text": "When is your birthday?"
+  },
+  {
+   "key": "e_w3",
+   "text": "When do you go swimming?"
+  }
+ ]
+}
