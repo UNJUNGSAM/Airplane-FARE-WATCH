@@ -221,6 +221,7 @@ th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
   .hide-s{display:none}
   .brand small{display:none}
 }
+@media (max-width:420px){ .hide-xs{display:none} .controls{gap:6px} .controls .btn{padding:8px 12px} }
 @media (prefers-reduced-motion:reduce){ .slide{transition:none} .shake{animation:none} }
 </style>
 </head>
@@ -582,7 +583,7 @@ th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
     <div class="controls">
       <button class="btn" type="button" id="btnPrev" aria-label="이전 장"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span class="hide-s">이전</span></button>
       <button class="btn primary" type="button" id="btnAuto"><svg viewBox="0 0 24 24" fill="currentColor" id="icAuto"><path d="M7 4v16l13-8z"/></svg><span id="lbAuto">영상처럼 보기</span></button>
-      <button class="btn" type="button" id="btnListen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg><span id="lbListen">이 장 듣기</span></button>
+      <button class="btn" type="button" id="btnListen" aria-label="이 장 듣기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg><span id="lbListen" class="hide-xs">이 장 듣기</span></button>
       <button class="btn" type="button" id="btnNext" aria-label="다음 장"><span class="hide-s">다음</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
   </footer>
@@ -1038,7 +1039,7 @@ th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
         const right = b.dataset.r, wrote = b.dataset.w.toLowerCase();
         if (p !== right) { c.classList.add('no'); c.disabled = true; shake(c); $('#fixAsk').textContent = '다시 골라 보세요. 뒤에 오는 말이 시각, 하루, 긴 시간 중 무엇인지 보세요.'; return; }
         ch.hidden = true; b.classList.remove('sel');
-        if (wrote === right) { b.classList.add('okk'); $('#fixAsk').innerHTML = `${b.dataset.n}번은 맞게 쓴 거예요. 다른 곳을 찾아보세요.`; return; }
+        if (wrote === right) { b.classList.add('okk'); $('#fixAsk').innerHTML = `${b.dataset.n}번은 맞게 쓴 거예요.` + (fixFound === WRONG ? ' 틀린 곳 다섯 개는 이미 모두 찾았어요!' : ' 다른 곳을 찾아보세요.'); return; }
         const cap = b.dataset.w[0] === b.dataset.w[0].toUpperCase();
         const fixed = cap ? right[0].toUpperCase() + right.slice(1) : right;
         b.classList.add('fixed'); b.innerHTML = `<sup>${b.dataset.n}</sup><s>${b.dataset.w}</s>${fixed}`;
