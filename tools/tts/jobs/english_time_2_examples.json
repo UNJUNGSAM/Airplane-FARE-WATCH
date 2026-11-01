@@ -1,7 +1,6 @@
 {
  "out_dir": "streamlit_app/static/learning/english_time/audio",
- "voice": "Kore",
- "style": "",
+ "voice": "F1",
  "items": [
   {
    "key": "e_c1",
@@ -143,5 +142,8 @@
    "key": "e_w3",
    "text": "When do you go swimming?"
   }
- ]
+ ],
+ "engine": "supertonic",
+ "lang": "en",
+ "speed": 0.9
 }

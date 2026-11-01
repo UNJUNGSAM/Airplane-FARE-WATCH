@@ -29,7 +29,7 @@ jobs:
 
       # apt 설치는 가끔 멈춰서, pip로 받는 ffmpeg 실행 파일을 쓴다
       - name: ffmpeg 준비
-        run: pip install imageio-ffmpeg
+        run: pip install imageio-ffmpeg supertonic
 
       - name: 음성 만들기
         env:
