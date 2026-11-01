@@ -1,0 +1,1119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>시간 전치사 탐구 노트</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --ink:#1f2328; --muted:#5c6370; --line:#e3e0d8; --soft:#f0ece4;
+  --accent:#6a4c93; --accent-ink:#ffffff; --accent-soft:#efe9f6;
+  --at:#b5523b; --on:#2f6f8f; --in:#3f7a4a; --x:#6b6f76;
+  --at-soft:#f8e9e4; --on-soft:#e4eff5; --in-soft:#e6f1e7; --x-soft:#ececec;
+  --ok:#2f7a4a; --bad:#b0352a; --scrim:rgba(20,18,15,.5);
+  --f:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15161a; --surface:#1e2026; --ink:#e7e8ea; --muted:#a3a8b1; --line:#30333b; --soft:#262931;
+    --accent:#b59ae0; --accent-ink:#15161a; --accent-soft:#2b2538;
+    --at:#ec937c; --on:#7fbfe0; --in:#8fcb98; --x:#a3a8b1;
+    --at-soft:#3a2722; --on-soft:#1e313b; --in-soft:#20331f; --x-soft:#2a2c31;
+    --ok:#7fd29a; --bad:#ff8f80; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15161a; --surface:#1e2026; --ink:#e7e8ea; --muted:#a3a8b1; --line:#30333b; --soft:#262931;
+  --accent:#b59ae0; --accent-ink:#15161a; --accent-soft:#2b2538;
+  --at:#ec937c; --on:#7fbfe0; --in:#8fcb98; --x:#a3a8b1;
+  --at-soft:#3a2722; --on-soft:#1e313b; --in-soft:#20331f; --x-soft:#2a2c31;
+  --ok:#7fd29a; --bad:#ff8f80; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;line-height:1.65;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+h1,h2,h3{margin:0;line-height:1.3;text-wrap:balance}
+p{margin:0}
+[hidden]{display:none!important}
+[lang="en"]{font-feature-settings:"ss01"}
+
+#app{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;max-width:1180px;margin-inline:auto;padding-inline:16px}
+.top{display:flex;align-items:center;gap:12px;padding-block:10px}
+.brand{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px}
+.brand b{font-size:1.1rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.pager{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.progress{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s ease}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:.95rem;line-height:1.2;transition:transform .12s ease,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.small{min-height:38px;padding:6px 14px;font-size:.88rem}
+.btn svg{width:18px;height:18px;flex:none}
+.btn:disabled{opacity:.4;cursor:default}
+
+.stage{position:relative;overflow:hidden;min-height:0}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;opacity:0;visibility:hidden;transform:translateX(30px);transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s linear .5s;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.slide.back{transform:translateX(-30px)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s}
+.wrap{max-width:1000px;margin-inline:auto;padding-block:22px 30px;display:grid;gap:16px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+.eyebrow{font-size:.82rem;font-weight:800;letter-spacing:.06em;color:var(--accent)}
+h2{font-size:clamp(1.55rem,3.2vw,2.2rem);font-weight:800}
+h2 .en{font-weight:800}
+.lead{color:var(--muted);font-size:1.02rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.card h3{font-size:1rem;font-weight:800}
+.note{font-size:.88rem;color:var(--muted)}
+.tip{border-left:5px solid var(--accent);background:var(--accent-soft);border-radius:0 12px 12px 0;padding:10px 14px;font-size:.95rem}
+
+/* 전치사 색 */
+.p{font-weight:800;padding:0 3px;border-radius:5px}
+.p.at{color:var(--at);background:var(--at-soft)} .p.on{color:var(--on);background:var(--on-soft)} .p.in{color:var(--in);background:var(--in-soft)} .p.x{color:var(--x);background:var(--x-soft)}
+.tag{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:34px;padding:0 12px;border-radius:999px;font-weight:800;font-size:1.05rem;color:#fff}
+.tag.at{background:var(--at)} .tag.on{background:var(--on)} .tag.in{background:var(--in)} .tag.x{background:var(--x)}
+
+/* 예문 */
+.ex{display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.ex:last-child{border-bottom:0}
+.ex .en{font-size:1.12rem;font-weight:600}
+.ex small{grid-column:2;color:var(--muted);font-size:.86rem;margin-top:-4px}
+.spk{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0;color:var(--accent)}
+.spk svg{width:20px;height:20px}
+.spk.playing{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+
+/* 표지 */
+.cover{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:center;min-height:100%}
+.cover h1{font-size:clamp(2.1rem,5vw,3.4rem);font-weight:800;line-height:1.15}
+.cover h1 small{display:block;font-size:.42em;color:var(--muted);font-weight:700;letter-spacing:.02em;margin-bottom:6px}
+.route{display:flex;flex-wrap:wrap;gap:6px}
+.route span{font-size:.85rem;padding:3px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface)}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+
+/* 시간 크기 그림 */
+.scale{display:grid;gap:10px}
+.scale .lv{display:grid;grid-template-columns:70px minmax(0,1fr);gap:12px;align-items:center;border-radius:14px;padding:12px 14px;background:var(--surface);border:1px solid var(--line)}
+.scale .lv .bar{height:14px;border-radius:7px}
+.scale .lv p{grid-column:2;font-size:.92rem;color:var(--muted)}
+.scale .lv b{grid-column:2;font-size:1.02rem}
+
+/* 표 */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:.95rem}
+tr:last-child td{border-bottom:0}
+th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
+
+/* 퀴즈 */
+.q{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:0}
+.q .sent{font-size:1.12rem;font-weight:600}
+.q .sent .blank{display:inline-block;min-width:3.2em;border-bottom:2px solid var(--muted);text-align:center;font-weight:800}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choice{min-width:64px;min-height:44px;padding:6px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:800;font-size:1.02rem}
+.choice.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.choice.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.choice:disabled{cursor:default}
+.why{font-size:.92rem}
+.why.ok{color:var(--ok)} .why.no{color:var(--bad)}
+.score{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.score b{font-size:1.4rem;font-variant-numeric:tabular-nums}
+
+/* 분류 게임 */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;padding:12px;border:1.5px dashed var(--line);border-radius:14px;background:var(--surface)}
+.chip{min-height:44px;padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:1rem}
+.chip.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.chip.done{cursor:default;border-color:transparent}
+.bins{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.bin{border-radius:14px;border:2px solid var(--line);background:var(--surface);padding:10px;min-height:150px;display:flex;flex-direction:column;gap:8px;align-items:stretch;text-align:left}
+.bin .tag{align-self:flex-start}
+.bin .got{display:flex;flex-wrap:wrap;gap:6px}
+.bin .got span{font-size:.9rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--soft)}
+.bin.at{border-color:color-mix(in srgb,var(--at) 45%,var(--line))} .bin.on{border-color:color-mix(in srgb,var(--on) 45%,var(--line))}
+.bin.in{border-color:color-mix(in srgb,var(--in) 45%,var(--line))} .bin.x{border-color:color-mix(in srgb,var(--x) 45%,var(--line))}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.msg{min-height:1.6em;font-size:.95rem}
+.msg.ok{color:var(--ok);font-weight:700} .msg.no{color:var(--bad)}
+
+/* 짝 맞추기 */
+.match{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.match .col{display:grid;gap:8px;align-content:start}
+.mitem{text-align:left;min-height:52px;padding:10px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:1rem;line-height:1.4}
+.mitem.sel{border-color:var(--accent);background:var(--accent-soft)}
+.mitem.done{cursor:default;border-color:transparent;color:#fff}
+
+/* 계획표 */
+.plan th{text-align:center}
+.plan td{text-align:center;font-size:.88rem;min-width:96px}
+.plan td b{display:block;font-size:.8rem;color:var(--muted)}
+.plan td.hol{color:var(--at);font-weight:700}
+.dlg{display:grid;gap:6px;padding:12px 0;border-bottom:1px solid var(--line)}
+.dlg:last-child{border-bottom:0}
+.dlg .line{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:1.06rem;font-weight:600}
+.dlg .who{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--soft);font-size:.8rem;font-weight:800;color:var(--muted)}
+.sel-set{display:inline-flex;gap:4px;flex-wrap:wrap}
+.sel-set .choice{min-width:52px;min-height:40px;padding:4px 10px;font-size:.95rem}
+
+/* 문장 만들기 */
+.build{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.build:last-child{border-bottom:0}
+.build .hint{font-size:.9rem;color:var(--muted)}
+.build .out{min-height:48px;padding:8px 12px;border-radius:12px;background:var(--soft);font-size:1.1rem;font-weight:700;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.build .out.ok{background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok)}
+.build .out.no{background:color-mix(in srgb,var(--bad) 12%,var(--surface))}
+.build .chips{display:flex;flex-wrap:wrap;gap:8px}
+.build .chip:disabled{opacity:.3}
+
+/* 틀린 곳 찾기 */
+.story{font-size:1.15rem;line-height:2.15}
+.fx{display:inline-flex;align-items:center;gap:2px;min-height:36px;padding:0 8px;margin:0 1px;border-radius:8px;border:0;border-bottom:2.5px solid var(--muted);background:var(--soft);font-weight:800;font-size:1.05rem;vertical-align:baseline}
+.fx sup{font-size:.62rem;color:var(--muted);font-weight:700;margin-right:2px}
+.fx.sel{background:var(--accent-soft);border-bottom-color:var(--accent)}
+.fx.fixed{background:color-mix(in srgb,var(--ok) 16%,var(--surface));border-bottom-color:var(--ok);color:var(--ok)}
+.fx.fixed s{color:var(--bad);font-weight:600;margin-right:4px}
+.fx.okk{border-bottom-style:dotted;opacity:.75}
+.fixbox{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+
+/* 글쓰기 */
+.wline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:1.08rem;font-weight:600;padding:8px 0;border-bottom:1px dashed var(--line)}
+.wline:last-child{border-bottom:0}
+.wline select{min-height:40px;border:1.5px solid var(--line);border-radius:10px;padding:4px 8px;background:var(--surface);font-weight:700}
+.wline select.prep{min-width:68px}
+.wline select.ok{border-color:var(--ok);color:var(--ok)}
+.wline select.no{border-color:var(--bad);color:var(--bad)}
+.out-text{font-size:1.05rem;padding:12px 14px;border-radius:12px;background:var(--soft);min-height:3em}
+
+/* 마무리 */
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check input{width:22px;height:22px;margin-top:3px;accent-color:var(--accent);flex:none}
+
+/* 아래 막대 */
+.bottom{padding-block:8px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;border-top:1px solid var(--line)}
+.aprog{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.aprog i{display:block;height:100%;width:0;background:var(--accent)}
+.caption{min-height:2.9em;font-size:.98rem;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;padding-inline:8px;line-height:1.45}
+.caption.on{color:var(--ink);font-weight:600}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+.overlay{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:50}
+.sheet{background:var(--surface);border-radius:18px;max-width:520px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;display:grid;gap:12px}
+.sheet header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.toclist{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.toclist button{width:100%;text-align:left;display:grid;grid-template-columns:2em minmax(0,1fr);gap:8px;padding:9px 10px;border-radius:10px;border:0;background:transparent;font-size:.95rem}
+.toclist button[aria-current="true"]{background:var(--accent-soft);font-weight:700}
+.toclist button span:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+
+@media (max-width:820px){
+  .cols,.cover{grid-template-columns:minmax(0,1fr)}
+  .bins{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .match{grid-template-columns:minmax(0,1fr)}
+  .hide-s{display:none}
+  .brand small{display:none}
+}
+@media (max-width:420px){ .hide-xs{display:none} .controls{gap:6px} .controls .btn{padding:8px 12px} }
+@media (prefers-reduced-motion:reduce){ .slide{transition:none} .shake{animation:none} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><b>시간 전치사 탐구 노트</b><small>at · on · in / When · What time</small></div>
+    <span class="pager" id="pager">1 / 16</span>
+    <button class="btn small" type="button" id="btnToc">목차</button>
+  </header>
+  <div class="progress"><i id="bar"></i></div>
+
+  <main class="stage" id="stage">
+
+  <!-- 1 표지 -->
+  <section class="slide active" data-id="cover" data-title="표지 · 시작하기">
+    <div class="wrap cover">
+      <div style="display:grid;gap:16px">
+        <p class="eyebrow">ENGLISH · PREPOSITIONS OF TIME</p>
+        <h1><small>언제인지 말하는 작은 단어</small>시간 전치사<br><span class="p at">at</span> · <span class="p on">on</span> · <span class="p in">in</span></h1>
+        <p class="lead">일이 <b>언제</b> 일어나는지 말할 때 쓰는 at, on, in을 구별하고, <b>When</b>과 <b>What time</b>으로 시간을 묻고 답해 봐요.</p>
+        <div class="route"><span>at · on · in 구별</span><span>헷갈리는 표현</span><span>When / What time</span><span>연습 게임 6가지</span><span>수행평가 글쓰기</span></div>
+        <div class="cta">
+          <button class="btn primary" type="button" id="startAuto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>영상처럼 보기</button>
+          <button class="btn" type="button" data-go="7">바로 연습하기</button>
+        </div>
+        <p class="note">영어 문장 앞의 스피커 버튼을 누르면 영어 발음을 들을 수 있어요. 듣고 꼭 따라 말해 보세요.</p>
+      </div>
+      <div class="card">
+        <h3>오늘의 대화</h3>
+        <p class="ex" data-key="e_c1"><span class="en" lang="en">What time does the movie start?</span><small>영화는 몇 시에 시작하니?</small></p>
+        <p class="ex" data-key="e_c2"><span class="en" lang="en">It starts <span class="p at">at</span> 2:30.</span><small>2시 30분에 시작해.</small></p>
+        <p class="tip">시각 앞에는 <span class="p at">at</span>, 요일·날짜 앞에는 <span class="p on">on</span>, 달·계절·연도 앞에는 <span class="p in">in</span>을 써요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 시간의 크기 -->
+  <section class="slide" data-id="idea" data-title="시간의 크기로 구별하기">
+    <div class="wrap">
+      <p class="eyebrow">개념 ① 시간 전치사란?</p>
+      <h2>작은 시간은 at, 하루는 on, 큰 시간은 in</h2>
+      <p class="lead">시간 전치사는 시간을 나타내는 말 앞에 붙어서 <b>언제</b> 일이 일어나는지 알려 줘요. 시간의 크기를 떠올리면 쉽게 고를 수 있어요.</p>
+      <div class="scale">
+        <div class="lv"><span class="tag at">at</span><b>시계의 한 점 · 정확한 시각</b><div class="bar" style="background:var(--at);width:18%"></div><p>7:00, 4:30, noon(정오), midnight(자정), night(밤)</p></div>
+        <div class="lv"><span class="tag on">on</span><b>달력의 하루 칸 · 요일, 날짜, 기념일</b><div class="bar" style="background:var(--on);width:48%"></div><p>Monday, May 5, Christmas Day, my birthday</p></div>
+        <div class="lv"><span class="tag in">in</span><b>하루보다 긴 시간 · 하루 중의 때, 달, 계절, 연도</b><div class="bar" style="background:var(--in);width:100%"></div><p>the morning, March, summer, 2030</p></div>
+      </div>
+      <p class="tip">외우는 주문: <b>"시각은 at, 하루는 on, 길면 in!"</b></p>
+    </div>
+  </section>
+
+  <!-- 3 at -->
+  <section class="slide" data-id="at" data-title="at: 시각, 정오, 자정, 밤">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ② at</p>
+        <h2><span class="p at">at</span> + 정확한 시각</h2>
+        <p class="lead">시계를 보고 말하는 <b>정확한 시각</b> 앞에 at을 써요. noon(낮 12시), midnight(밤 12시), night(밤)에도 at을 써요.</p>
+        <div class="tbl"><table>
+          <tr><th>at + 무엇</th><th>예</th></tr>
+          <tr><td>시각</td><td>at 7:00, at 4:30, at seven o'clock</td></tr>
+          <tr><td>정오 · 자정</td><td>at noon, at midnight</td></tr>
+          <tr><td>밤</td><td>at night</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_at1"><span class="en" lang="en">I get up <span class="p at">at</span> 7:00.</span><small>나는 7시에 일어나요.</small></p>
+        <p class="ex" data-key="e_at2"><span class="en" lang="en">The bus comes <span class="p at">at</span> 8:15.</span><small>버스는 8시 15분에 와요.</small></p>
+        <p class="ex" data-key="e_at3"><span class="en" lang="en">We have lunch <span class="p at">at</span> noon.</span><small>우리는 정오에 점심을 먹어요.</small></p>
+        <p class="ex" data-key="e_at4"><span class="en" lang="en">The moon is bright <span class="p at">at</span> night.</span><small>밤에는 달이 밝아요.</small></p>
+        <p class="ex" data-key="e_at5"><span class="en" lang="en">The fireworks start <span class="p at">at</span> midnight.</span><small>불꽃놀이는 자정에 시작해요.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 on -->
+  <section class="slide" data-id="on" data-title="on: 요일, 날짜, 기념일">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ③ on</p>
+        <h2><span class="p on">on</span> + 하루</h2>
+        <p class="lead">달력에서 <b>하루 칸</b> 하나로 나타나는 날 앞에 on을 써요.</p>
+        <div class="tbl"><table>
+          <tr><th>on + 무엇</th><th>예</th></tr>
+          <tr><td>요일</td><td>on Monday, on Friday</td></tr>
+          <tr><td>날짜</td><td>on May 5, on April 18</td></tr>
+          <tr><td>기념일 · 특별한 날</td><td>on Christmas Day, on Children's Day, on my birthday</td></tr>
+        </table></div>
+        <p class="tip">요일 뒤에 <b>s</b>를 붙이면 '<b>~마다</b>'라는 뜻: on Saturdays = 토요일마다</p>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_on1"><span class="en" lang="en">I have art class <span class="p on">on</span> Monday.</span><small>나는 월요일에 미술 수업이 있어요.</small></p>
+        <p class="ex" data-key="e_on2"><span class="en" lang="en">The field trip is <span class="p on">on</span> April 18.</span><small>현장 체험 학습은 4월 18일이에요.</small></p>
+        <p class="ex" data-key="e_on3"><span class="en" lang="en">We get presents <span class="p on">on</span> Christmas Day.</span><small>우리는 크리스마스에 선물을 받아요.</small></p>
+        <p class="ex" data-key="e_on4"><span class="en" lang="en">I eat seaweed soup <span class="p on">on</span> my birthday.</span><small>나는 생일에 미역국을 먹어요.</small></p>
+        <p class="ex" data-key="e_on5"><span class="en" lang="en">I play soccer <span class="p on">on</span> Saturdays.</span><small>나는 토요일마다 축구를 해요.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 in -->
+  <section class="slide" data-id="in" data-title="in: 하루 중의 때, 달, 계절, 연도">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ④ in</p>
+        <h2><span class="p in">in</span> + 긴 시간</h2>
+        <p class="lead">하루보다 <b>긴 시간</b>이나 하루 중의 <b>때</b> 앞에 in을 써요.</p>
+        <div class="tbl"><table>
+          <tr><th>in + 무엇</th><th>예</th></tr>
+          <tr><td>하루 중의 때</td><td>in the morning, in the afternoon, in the evening</td></tr>
+          <tr><td>달</td><td>in March, in December</td></tr>
+          <tr><td>계절</td><td>in spring, in summer, in fall, in winter</td></tr>
+          <tr><td>연도</td><td>in 2018, in 2030</td></tr>
+        </table></div>
+        <p class="tip">하루 중의 때에는 <b>the</b>가 꼭 들어가요: in <b>the</b> morning</p>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_in1"><span class="en" lang="en">I read books <span class="p in">in</span> the evening.</span><small>나는 저녁에 책을 읽어요.</small></p>
+        <p class="ex" data-key="e_in2"><span class="en" lang="en">School starts <span class="p in">in</span> March.</span><small>학교는 3월에 시작해요.</small></p>
+        <p class="ex" data-key="e_in3"><span class="en" lang="en">We go swimming <span class="p in">in</span> summer.</span><small>우리는 여름에 수영하러 가요.</small></p>
+        <p class="ex" data-key="e_in4"><span class="en" lang="en">My sister was born <span class="p in">in</span> 2018.</span><small>내 여동생은 2018년에 태어났어요.</small></p>
+        <p class="ex" data-key="e_in5"><span class="en" lang="en">Leaves turn red <span class="p in">in</span> fall.</span><small>가을에는 나뭇잎이 빨갛게 변해요.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 헷갈리는 것 -->
+  <section class="slide" data-id="tricky" data-title="헷갈리는 표현 · 전치사를 쓰지 않는 말">
+    <div class="wrap">
+      <p class="eyebrow">개념 ⑤ 실수하기 쉬운 곳</p>
+      <h2>이것만 조심하면 실수가 줄어요</h2>
+      <div class="cols">
+        <div class="card">
+          <h3>1. 밤만 at</h3>
+          <p>in the morning, in the afternoon, in the evening 이지만 밤은 <span class="p at">at</span> night</p>
+          <p class="ex" data-key="e_t1"><span class="en" lang="en">I sleep <span class="p at">at</span> night.</span><small>나는 밤에 자요.</small></p>
+        </div>
+        <div class="card">
+          <h3>2. 달만 말하면 in, 날짜까지 말하면 on</h3>
+          <p class="ex" data-key="e_t2"><span class="en" lang="en">I go to the beach <span class="p in">in</span> August.</span><small>8월에 (달)</small></p>
+          <p class="ex" data-key="e_t3"><span class="en" lang="en">I go to the beach <span class="p on">on</span> August 3.</span><small>8월 3일에 (날짜)</small></p>
+        </div>
+        <div class="card">
+          <h3>3. 전치사를 쓰지 않는 말</h3>
+          <p><b>yesterday, today, tomorrow</b> 앞에는 전치사를 쓰지 않아요.</p>
+          <p class="ex" data-key="e_t4"><span class="en" lang="en">I have a test tomorrow.</span><small>나는 내일 시험이 있어요. (on tomorrow ✕)</small></p>
+        </div>
+        <div class="card">
+          <h3>4. this · next · last · every 가 붙으면 전치사 없이</h3>
+          <p>this Sunday, next week, last summer, every Friday</p>
+          <p class="ex" data-key="e_t5"><span class="en" lang="en">We play games every Friday.</span><small>우리는 금요일마다 게임을 해요. (on every Friday ✕)</small></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 퀴즈 -->
+  <section class="slide" data-id="quiz" data-title="연습 ① at · on · in 골라 보기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ① 알맞은 전치사 고르기</p>
+      <h2>빈칸에 알맞은 말을 골라 보세요</h2>
+      <p class="lead">전치사가 필요 없으면 <b>X</b>를 눌러요. 누르면 바로 정답과 이유가 나와요.</p>
+      <div class="card"><div id="quizList"></div></div>
+      <div class="score"><span>맞힌 문제</span><b id="quizScore">0 / 12</b><button class="btn small" type="button" id="quizReset">처음부터 다시</button></div>
+    </div>
+  </section>
+
+  <!-- 8 분류 게임 -->
+  <section class="slide" data-id="sort" data-title="연습 ② 시간 표현 분류 게임" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ② 분류 게임</p>
+      <h2>시간 표현을 알맞은 상자에 넣어 보세요</h2>
+      <p class="lead">위에서 낱말을 하나 누르고, 아래에서 상자를 누르세요.</p>
+      <div class="pool" id="sortPool"></div>
+      <div class="bins" id="sortBins">
+        <button class="bin at" type="button" data-bin="at"><span class="tag at">at</span><span class="got"></span></button>
+        <button class="bin on" type="button" data-bin="on"><span class="tag on">on</span><span class="got"></span></button>
+        <button class="bin in" type="button" data-bin="in"><span class="tag in">in</span><span class="got"></span></button>
+        <button class="bin x" type="button" data-bin="x"><span class="tag x">없음</span><span class="got"></span></button>
+      </div>
+      <p class="msg" id="sortMsg" aria-live="polite">낱말을 먼저 골라 보세요.</p>
+      <div><button class="btn small" type="button" id="sortReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 9 When / What time -->
+  <section class="slide" data-id="ask" data-title="When과 What time으로 묻기">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ⑥ 시간을 묻는 질문</p>
+        <h2><span lang="en">When</span>? <span lang="en">What time</span>?</h2>
+        <div class="tbl"><table>
+          <tr><th>묻는 말</th><th>뜻</th><th>대답에 오는 것</th></tr>
+          <tr><td><b lang="en">When</b></td><td>언제</td><td>요일, 날짜, 달, 계절, 하루 중의 때<br>→ <span class="p on">on</span> / <span class="p in">in</span> / <span class="p at">at</span> night</td></tr>
+          <tr><td><b lang="en">What time</b></td><td>몇 시에</td><td>정확한 시각<br>→ 거의 언제나 <span class="p at">at</span></td></tr>
+        </table></div>
+        <p class="tip">"몇 시?"를 물으면 <b>What time</b>, 그 밖의 "언제?"는 <b>When</b></p>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_a1"><span class="en" lang="en">When is your birthday?</span><small>네 생일은 언제니?</small></p>
+        <p class="ex" data-key="e_a2"><span class="en" lang="en">It's <span class="p on">on</span> July 7.</span><small>7월 7일이야.</small></p>
+        <p class="ex" data-key="e_a3"><span class="en" lang="en">What time does the library close?</span><small>도서관은 몇 시에 문을 닫니?</small></p>
+        <p class="ex" data-key="e_a4"><span class="en" lang="en">It closes <span class="p at">at</span> 6 p.m.</span><small>오후 6시에 닫아.</small></p>
+        <p class="ex" data-key="e_a5"><span class="en" lang="en">When do you go camping?</span><small>너는 언제 캠핑을 가니?</small></p>
+        <p class="ex" data-key="e_a6"><span class="en" lang="en">We go camping <span class="p in">in</span> fall.</span><small>우리는 가을에 캠핑을 가.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 질문 만드는 법 -->
+  <section class="slide" data-id="form" data-title="질문 만드는 순서 (do / does)">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ⑦ 질문을 만드는 순서</p>
+        <h2>의문사 + do/does + 누가 + 동사?</h2>
+        <div class="tbl"><table>
+          <tr><th>의문사</th><th>do / does</th><th>누가</th><th>동사</th></tr>
+          <tr><td lang="en">When</td><td lang="en"><b>do</b></td><td lang="en">you</td><td lang="en">exercise?</td></tr>
+          <tr><td lang="en">When</td><td lang="en"><b>does</b></td><td lang="en">she</td><td lang="en">exercise?</td></tr>
+          <tr><td lang="en">What time</td><td lang="en"><b>does</b></td><td lang="en">the shop</td><td lang="en">open?</td></tr>
+        </table></div>
+        <div class="card">
+          <p><b>do</b>: I, you, we, they, 여러 명</p>
+          <p><b>does</b>: he, she, it, 한 사람, 한 개</p>
+          <p class="note">does를 쓴 질문에서는 동사에 s를 붙이지 않아요. (When does she exercise<b>s</b>? ✕)<br>대답할 때는 다시 s를 붙여요. (She exercise<b>s</b> on Sunday.)</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_f1"><span class="en" lang="en">When do you play the piano?</span><small>너는 언제 피아노를 치니?</small></p>
+        <p class="ex" data-key="e_f2"><span class="en" lang="en">I play the piano <span class="p on">on</span> Tuesdays.</span><small>나는 화요일마다 피아노를 쳐.</small></p>
+        <p class="ex" data-key="e_f3"><span class="en" lang="en">What time does he have breakfast?</span><small>그는 몇 시에 아침을 먹니?</small></p>
+        <p class="ex" data-key="e_f4"><span class="en" lang="en">He has breakfast <span class="p at">at</span> 7:30.</span><small>그는 7시 30분에 아침을 먹어.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 짝 맞추기 -->
+  <section class="slide" data-id="match" data-title="연습 ③ 질문과 대답 짝 맞추기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ③ 짝 맞추기</p>
+      <h2>질문과 알맞은 대답을 이어 보세요</h2>
+      <p class="lead">왼쪽 질문을 누른 다음, 오른쪽 대답을 누르세요.</p>
+      <div class="match">
+        <div class="col" id="matchQ"></div>
+        <div class="col" id="matchA"></div>
+      </div>
+      <p class="msg" id="matchMsg" aria-live="polite"></p>
+      <div><button class="btn small" type="button" id="matchReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 12 계획표 -->
+  <section class="slide" data-id="planner" data-title="연습 ④ 미나의 계획표 보고 대화 완성" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ④ 계획표 보고 대화 완성하기</p>
+      <h2>미나의 일주일 계획표</h2>
+      <div class="tbl"><table class="plan">
+        <tr><th>Mon<br>May 4</th><th>Tue<br>May 5</th><th>Wed<br>May 6</th><th>Thu<br>May 7</th><th>Fri<br>May 8</th><th>Sat<br>May 9</th><th>Sun<br>May 10</th></tr>
+        <tr lang="en">
+          <td><b>4 p.m.</b>swimming class</td>
+          <td class="hol">Children's Day<br><span style="color:var(--ink);font-weight:400">go to the zoo</span></td>
+          <td>—</td>
+          <td><b>3:30 p.m.</b>piano lesson</td>
+          <td class="hol">Parents' Day<br><span style="color:var(--ink);font-weight:400">write a letter</span></td>
+          <td><b>morning</b>clean my room</td>
+          <td><b>7 p.m.</b>dinner with grandparents</td>
+        </tr>
+      </table></div>
+      <p class="note">표가 잘리면 옆으로 밀어서 보세요. 질문에는 When / What time, 대답에는 at / on / in을 골라요.</p>
+      <div class="card" id="planList"></div>
+      <div class="score"><span>맞힌 빈칸</span><b id="planScore">0 / 10</b><button class="btn small" type="button" id="planReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 13 문장 만들기 -->
+  <section class="slide" data-id="build" data-title="연습 ⑤ 낱말 카드로 질문 만들기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ⑤ 질문 만들기</p>
+      <h2>낱말 카드를 순서대로 눌러 질문을 만드세요</h2>
+      <p class="lead">카드에는 do와 does가 같이 있어요. 하나만 골라 쓰세요. 물음표는 자동으로 붙어요.</p>
+      <div class="card" id="buildList"></div>
+    </div>
+  </section>
+
+  <!-- 14 틀린 곳 찾기 -->
+  <section class="slide" data-id="fix" data-title="연습 ⑥ 틀린 전치사 5개 찾기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ⑥ 틀린 곳 찾기</p>
+      <h2>지우의 글에서 틀린 전치사 5개를 찾아 고치세요</h2>
+      <div class="card"><p class="story" lang="en" id="story"></p></div>
+      <div class="fixbox" id="fixBox">
+        <p id="fixAsk">밑줄 친 낱말을 눌러 보세요.</p>
+        <div class="choices" id="fixChoices" hidden></div>
+      </div>
+      <div class="score"><span>찾은 실수</span><b id="fixScore">0 / 5</b><button class="btn small" type="button" id="fixReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 15 수행평가 글쓰기 -->
+  <section class="slide" data-id="write" data-title="수행평가 · 나의 하루와 특별한 날 소개하기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">수행평가 대비 · 쓰기와 말하기</p>
+      <h2>나의 하루와 특별한 날 소개하기</h2>
+      <p class="lead">내 생활에 맞게 내용을 고르고, 전치사(<span class="p at">at</span>/<span class="p on">on</span>/<span class="p in">in</span>)는 알맞게 고르세요.</p>
+      <div class="card" id="writeBox"></div>
+      <div class="cta">
+        <button class="btn primary" type="button" id="wCheck">점검하기</button>
+        <button class="btn" type="button" id="wSay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg>내 글 듣기</button>
+        <button class="btn" type="button" id="wExample">예시 채우기</button>
+      </div>
+      <p class="msg" id="wMsg" aria-live="polite"></p>
+      <div class="out-text" id="wOut" lang="en"></div>
+      <div class="card">
+        <h3>말하기 평가 대비: 짝과 묻고 답하기</h3>
+        <p>위 글을 바탕으로 친구에게 물어보고, 친구의 질문에 대답해 보세요.</p>
+        <p class="ex" data-key="e_w1"><span class="en" lang="en">What time do you get up?</span><small>너는 몇 시에 일어나니?</small></p>
+        <p class="ex" data-key="e_w2"><span class="en" lang="en">When is your birthday?</span><small>네 생일은 언제니?</small></p>
+        <p class="ex" data-key="e_w3"><span class="en" lang="en">When do you go swimming?</span><small>너는 언제 수영하러 가니?</small></p>
+        <p class="note">채점 기준으로 자주 나오는 것: ① 전치사를 바르게 썼나요? ② When / What time을 알맞게 골랐나요? ③ do/does와 동사 모양이 맞나요? ④ 또박또박 말했나요?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 마무리 -->
+  <section class="slide" data-id="end" data-title="한눈에 정리 · 체크리스트">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">한눈에 정리</p>
+        <h2>오늘 배운 것</h2>
+        <div class="tbl"><table>
+          <tr><th>전치사</th><th>무엇 앞에?</th><th>예</th></tr>
+          <tr><td><span class="p at">at</span></td><td>시각, noon, midnight, night</td><td lang="en">at 7:30, at night</td></tr>
+          <tr><td><span class="p on">on</span></td><td>요일, 날짜, 기념일</td><td lang="en">on Friday, on May 5</td></tr>
+          <tr><td><span class="p in">in</span></td><td>하루 중의 때, 달, 계절, 연도</td><td lang="en">in the morning, in July, in winter, in 2026</td></tr>
+          <tr><td><span class="p x">없음</span></td><td>yesterday, today, tomorrow, this·next·last·every ~</td><td lang="en">tomorrow, every Sunday</td></tr>
+        </table></div>
+        <p class="tip"><b>What time</b> → 몇 시 (대답에 at) · <b>When</b> → 언제 (대답에 at/on/in)</p>
+      </div>
+      <div class="card">
+        <h3>스스로 확인해요</h3>
+        <ul class="check" id="checklist"></ul>
+        <p class="note" style="margin-top:6px">음성: 한국어 해설과 영어 예문은 Google Gemini AI 음성으로 만들었고, 퀴즈 문장과 직접 쓴 글은 기기에 있는 영어 목소리로 읽어 줘요. 연습 문제는 교재 내용을 바탕으로 새로 만든 문제예요.</p>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="bottom">
+    <div class="aprog" aria-hidden="true"><i id="aprogBar"></i></div>
+    <audio id="voice" preload="auto"></audio>
+    <div class="caption" id="caption" aria-live="polite">재생 버튼을 누르면 선생님이 설명해 줘요.</div>
+    <div class="controls">
+      <button class="btn" type="button" id="btnPrev" aria-label="이전 장"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span class="hide-s">이전</span></button>
+      <button class="btn primary" type="button" id="btnAuto"><svg viewBox="0 0 24 24" fill="currentColor" id="icAuto"><path d="M7 4v16l13-8z"/></svg><span id="lbAuto">영상처럼 보기</span></button>
+      <button class="btn" type="button" id="btnListen" aria-label="이 장 듣기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg><span id="lbListen" class="hide-xs">이 장 듣기</span></button>
+      <button class="btn" type="button" id="btnNext" aria-label="다음 장"><span class="hide-s">다음</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<div class="overlay" id="tocBox" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tocTitle">
+    <header><h2 id="tocTitle" style="font-size:1.3rem">목차</h2><button class="btn small" type="button" data-close>닫기</button></header>
+    <ol class="toclist" id="tocList"></ol>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label for="rateSel" style="font-weight:700;font-size:.9rem">읽는 빠르기</label>
+      <select id="rateSel" style="min-height:40px;border-radius:10px;border:1px solid var(--line);padding:4px 8px;background:var(--surface)"><option value="0.85">천천히</option><option value="1" selected>보통</option><option value="1.15">조금 빠르게</option></select>
+    </div>
+  </div>
+</div>
+
+<!-- 한국어 해설 대본 (음성 파일 n_<장 id>.mp3 와 짝) -->
+<script type="application/json" id="narr">{
+"cover": "안녕하세요! 오늘은 영어 시간 전치사 at, on, in을 공부해 볼 거예요. 일이 언제 일어나는지 말할 때 쓰는 아주 작은 단어들이에요. 그리고 When과 What time으로 시간을 묻고 답하는 방법도 배워요. 영어 문장 앞의 스피커 버튼을 누르면 영어 발음을 들을 수 있으니까, 꼭 따라 말해 보세요. 그럼 시작해 볼까요?",
+"idea": "시간 전치사는 시간을 나타내는 말 앞에 붙어서, 일이 언제 일어나는지 알려 줘요. at, on, in은 시간의 크기로 구별하면 쉬워요. 시계의 한 점처럼 짧고 정확한 시각에는 at, 달력의 하루 칸에는 on, 한 달이나 계절, 일 년처럼 긴 시간에는 in을 써요. 시각은 at, 하루는 on, 길면 in! 이 주문을 기억하세요.",
+"at": "먼저 at이에요. at은 일곱 시, 네 시 반처럼 정확한 시각 앞에 써요. 그리고 낮 열두 시인 noon, 밤 열두 시인 midnight, 그리고 밤을 뜻하는 night 앞에도 at을 써요. 정오와 자정은 시계의 한 순간이라서 at을 쓴다고 생각하면 쉬워요. 스피커 버튼을 눌러 예문을 듣고 따라 읽어 보세요.",
+"on": "다음은 on이에요. on은 달력의 하루 칸 하나로 나타나는 날 앞에 써요. Monday 같은 요일, April 18처럼 날짜, 그리고 Christmas Day나 Children's Day 같은 기념일 앞에 on을 써요. 내 생일인 my birthday도 하루니까 on을 써요. 요일 뒤에 s를 붙여 on Saturdays라고 하면, 토요일마다라는 뜻이 돼요.",
+"in": "이번에는 in이에요. in은 하루보다 긴 시간 앞에 써요. March 같은 달, summer 같은 계절, 2018 같은 연도 앞에 in을 써요. 그리고 아침, 오후, 저녁처럼 하루 중의 때를 말할 때도 in the morning, in the afternoon, in the evening이라고 해요. 이때는 the가 꼭 들어간다는 것도 기억하세요.",
+"tricky": "헷갈리기 쉬운 것들을 모아 볼게요. 아침, 오후, 저녁은 in the를 쓰지만, 밤은 at night이라고 해요. 이건 따로 외워 두세요. 그리고 달만 말하면 in August, 날짜까지 말하면 on August 3처럼 바뀌어요. 마지막으로 yesterday, today, tomorrow 앞에는 전치사를 쓰지 않아요. this, next, last, every가 붙은 말 앞에도 전치사를 쓰지 않아요.",
+"quiz": "이제 직접 골라 볼까요? 빈칸에 들어갈 알맞은 말을 at, on, in 중에서 골라 보세요. 전치사가 필요 없으면 X를 누르면 돼요. 누르면 바로 정답과 이유를 알려 줘요. 여기부터는 직접 해 보는 활동이니까, 자동 재생은 잠시 멈출게요.",
+"sort": "이번에는 분류 게임이에요. 위에 있는 시간 표현을 하나 누르고, 아래에서 알맞은 상자를 누르면 넣을 수 있어요. 전치사가 필요 없는 말은 맨 끝의 없음 상자에 넣어요. 모두 넣으면 몇 개 맞혔는지 알려 줘요.",
+"ask": "이제 시간을 묻는 질문을 배워요. When은 언제라는 뜻이에요. 요일, 날짜, 달, 계절처럼 언제인지 넓게 물을 때 써요. What time은 몇 시라는 뜻이에요. 정확한 시각을 물을 때 써요. 그래서 What time으로 물으면 대답에는 거의 언제나 at이 나와요. When으로 물으면 대답에 at, on, in 중 알맞은 것을 골라 써요.",
+"form": "질문을 만드는 순서를 알아볼게요. When이나 What time을 맨 앞에 쓰고, 그다음 do나 does, 그다음 누가, 그리고 동사를 써요. 주어가 I, you, we, they이면 do를 쓰고, he, she, it처럼 한 사람이나 한 개이면 does를 써요. 조심할 점이 있어요. does를 쓴 질문에서는 동사에 s를 붙이지 않아요. 하지만 대답할 때는 He has처럼 동사 모양이 다시 바뀌어요.",
+"match": "질문과 알맞은 대답을 짝지어 보세요. 왼쪽에서 질문을 누르고, 오른쪽에서 대답을 누르면 돼요. When으로 물었는지, What time으로 물었는지 먼저 확인하면 쉽게 찾을 수 있어요.",
+"planner": "미나의 일주일 계획표를 보고 대화를 완성해 보세요. 질문에는 When과 What time 중 알맞은 것을 고르고, 대답에는 at, on, in 중 알맞은 것을 골라요. 빈칸 뒤에 시각, 요일, 기념일, 하루 중의 때 중 무엇이 오는지 잘 살펴보세요.",
+"build": "낱말 카드를 순서대로 눌러 질문을 만들어 보세요. 카드 중에는 do와 does가 함께 있으니, 누가에 해당하는 주어를 보고 알맞은 것을 골라야 해요. 잘못 눌렀다면 지우기 버튼으로 다시 할 수 있어요.",
+"fix": "지우가 쓴 글에는 틀린 전치사가 다섯 개 숨어 있어요. 밑줄 친 낱말을 누르고, 알맞은 말로 고쳐 보세요. 맞게 쓴 것을 누르면 맞게 썼다고 알려 줘요. 다섯 개를 모두 찾으면 성공이에요.",
+"write": "드디어 수행평가 준비예요. 나의 하루와 특별한 날을 영어로 소개하는 글을 완성해 보세요. 내용은 내 생활에 맞게 고르고, 전치사는 알맞게 골라야 해요. 다 고르면 점검하기 버튼으로 확인하고, 내 글 듣기 버튼으로 들으며 발표 연습도 해 보세요.",
+"end": "오늘 공부 정말 잘했어요! 시각은 at, 하루는 on, 길면 in. 그리고 몇 시인지 물을 때는 What time, 언제인지 물을 때는 When. 이것만 기억하면 수행평가도 자신 있게 해낼 수 있을 거예요. 체크리스트로 스스로 확인해 보세요. 화이팅!"
+}</script>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('engtime:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('engtime:' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const NARR = JSON.parse($('#narr').textContent);
+  const IDLE = '재생 버튼을 누르면 선생님이 설명해 줘요.';
+  const SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg>';
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const shake = el => { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  /* ================= 소리 ================= */
+  const player = $('#voice');
+  const synth = window.speechSynthesis || null;
+  let rate = +store.get('rate', 1), token = 0, speaking = false, auto = false, autoTimer = null, activeSpk = null;
+  $('#rateSel').value = String(rate);
+  $('#rateSel').addEventListener('change', e => { rate = +e.target.value; store.set('rate', rate); player.playbackRate = rate; });
+
+  function pickVoice(lang) {
+    if (!synth) return null;
+    const all = synth.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith(lang));
+    const score = v => { const n = v.name.toLowerCase(); let s = 0;
+      if (lang === 'en') { if (/en-us/i.test(v.lang)) s += 4; if (/samantha|google us|aria|jenny|ava|allison|zira/.test(n)) s += 6; }
+      if (lang === 'ko') { if (/yuna|sora|heami|google 한국|sunhi|jimin/.test(n)) s += 6; }
+      if (/natural|neural|premium|enhanced|online/.test(n)) s += 3; return s; };
+    return all.sort((a, b) => score(b) - score(a))[0] || null;
+  }
+  if (synth) { synth.getVoices(); synth.onvoiceschanged = () => synth.getVoices(); }
+  let unlocked = false;
+  const unlock = () => { if (unlocked || !synth) return; unlocked = true; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {} };
+  document.addEventListener('click', unlock, true);
+  document.addEventListener('touchend', unlock, true);
+
+  function setCaption(t, on) { const c = $('#caption'); c.textContent = t; c.classList.toggle('on', !!on); }
+  function sentences(t) { return (t.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [t]).map(s => s.trim()).filter(Boolean); }
+  function setSpk(btn) { if (activeSpk) activeSpk.classList.remove('playing'); activeSpk = btn || null; if (activeSpk) activeSpk.classList.add('playing'); }
+  function stopAll() {
+    token++; speaking = false; clearTimeout(autoTimer);
+    if (synth) try { synth.cancel(); } catch (e) {}
+    try { player.pause(); } catch (e) {}
+    player.ontimeupdate = player.onended = player.onerror = null;
+    $('#aprogBar').style.width = '0';
+    setSpk(null); refreshButtons();
+  }
+  // 기기 목소리로 읽기 (음성 파일이 없을 때, 직접 쓴 글)
+  function speakDevice(text, lang, onDone, my) {
+    const list = sentences(text); let k = 0;
+    const next = () => {
+      if (my !== token) return;
+      if (k >= list.length) { finish(my, onDone); return; }
+      const line = list[k++]; setCaption(line, true);
+      if (!synth) { autoTimer = setTimeout(next, Math.max(1600, line.length * (lang === 'en' ? 70 : 120) / rate)); return; }
+      const u = new SpeechSynthesisUtterance(line);
+      u.lang = lang === 'en' ? 'en-US' : 'ko-KR';
+      const v = pickVoice(lang); if (v) u.voice = v;
+      u.rate = rate * (lang === 'en' ? 0.88 : 0.95);
+      let done = false;
+      const fin = () => { if (done) return; done = true; clearTimeout(guard); if (my === token) setTimeout(next, 150); };
+      const guard = setTimeout(fin, (line.length * 300 + 5000) / rate);
+      u.onend = fin; u.onerror = fin;
+      try { synth.speak(u); } catch (e) { fin(); }
+    };
+    setTimeout(next, 60);
+  }
+  function finish(my, onDone) {
+    if (my !== token) return;
+    speaking = false; setSpk(null); refreshButtons(); $('#aprogBar').style.width = '0';
+    setCaption(auto ? '' : IDLE, false); onDone && onDone();
+  }
+  // 녹음 파일 재생. 파일이 없으면 기기 목소리로 대신 읽는다.
+  function play(key, text, lang, onDone, btn) {
+    stopAll();
+    const my = ++token; speaking = true; setSpk(btn); refreshButtons();
+    const parts = sentences(text);
+    const total = parts.reduce((n, s) => n + s.length, 0);
+    let cues = null, ci = -1;
+    setCaption(parts[0], true);
+    if (!key) { speakDevice(text, lang, onDone, my); return; }
+    player.src = 'audio/' + key + '.mp3';
+    player.defaultPlaybackRate = rate; player.playbackRate = rate;
+    player.ontimeupdate = () => {
+      if (my !== token || !player.duration || !isFinite(player.duration)) return;
+      if (!cues) { let acc = 0; cues = parts.map(s => { const t = acc / total * player.duration; acc += s.length; return t; }); }
+      const t = player.currentTime; let i = cues.length - 1;
+      while (i > 0 && cues[i] > t) i--;
+      if (i !== ci) { ci = i; setCaption(parts[i], true); }
+      $('#aprogBar').style.width = Math.min(100, t / player.duration * 100) + '%';
+    };
+    player.onended = () => finish(my, onDone);
+    player.onerror = () => { if (my !== token) return; player.onerror = null; speakDevice(text, lang, onDone, my); };
+    const pr = player.play();
+    if (pr) pr.catch(err => {
+      if (my !== token || (err && err.name === 'AbortError')) return;
+      if (err && err.name === 'NotSupportedError') { speakDevice(text, lang, onDone, my); return; }
+      speaking = false; auto = false; setSpk(null); refreshButtons();
+      setCaption('소리를 켜려면 재생 버튼을 한 번 더 눌러 주세요.', false);
+    });
+  }
+  function sayEn(text, btn, key) {
+    if (btn && btn === activeSpk && speaking) { stopAll(); setCaption(IDLE, false); return; }
+    auto = false; play(key || null, text, 'en', null, btn);
+  }
+
+  // 예문에 스피커 버튼 달기
+  $$('.ex').forEach(p => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'spk'; b.innerHTML = SPK;
+    const en = p.querySelector('.en');
+    b.setAttribute('aria-label', '영어 듣기: ' + en.textContent);
+    b.addEventListener('click', () => sayEn(en.textContent, b, p.dataset.key));
+    p.prepend(b);
+  });
+
+  /* ================= 슬라이드 ================= */
+  const slides = $$('.slide');
+  let cur = 0;
+  function refreshButtons() {
+    const playingNarr = speaking && !activeSpk;
+    $('#lbAuto').textContent = auto ? '멈춤' : '영상처럼 보기';
+    $('#icAuto').innerHTML = auto ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+    $('#lbListen').textContent = playingNarr && !auto ? '멈춤' : '이 장 듣기';
+  }
+  function updateUI() {
+    $('#pager').textContent = `${cur + 1} / ${slides.length}`;
+    $('#bar').style.width = ((cur + 1) / slides.length * 100) + '%';
+    $('#btnPrev').disabled = cur === 0; $('#btnNext').disabled = cur === slides.length - 1;
+    $$('#tocList button').forEach((b, i) => b.setAttribute('aria-current', i === cur ? 'true' : 'false'));
+    store.set('slide', cur);
+  }
+  function go(i) {
+    if (i < 0 || i >= slides.length || i === cur) return;
+    const back = i < cur;
+    slides[cur].classList.remove('active');
+    slides.forEach(s => s.classList.toggle('back', back));
+    cur = i; slides[cur].scrollTop = 0; slides[cur].classList.add('active');
+    updateUI();
+    if (auto) narrate(); else { stopAll(); setCaption(IDLE, false); }
+    preload(cur + 1);
+  }
+  function narrate() {
+    const s = slides[cur], id = s.dataset.id;
+    play('n_' + id, NARR[id], 'ko', () => {
+      if (!auto) return;
+      if (s.dataset.stop || cur === slides.length - 1) { auto = false; refreshButtons(); setCaption('직접 풀어 보고, 다음 버튼으로 넘어가요.', false); return; }
+      autoTimer = setTimeout(() => go(cur + 1), 900);
+    });
+  }
+  function preload(i) { const s = slides[i]; if (!s) return; try { const a = new Audio(); a.preload = 'auto'; a.src = 'audio/n_' + s.dataset.id + '.mp3'; } catch (e) {} }
+
+  $('#btnPrev').addEventListener('click', () => go(cur - 1));
+  $('#btnNext').addEventListener('click', () => go(cur + 1));
+  $('#btnAuto').addEventListener('click', () => {
+    if (auto) { auto = false; stopAll(); setCaption(IDLE, false); return; }
+    auto = true; refreshButtons(); narrate();
+  });
+  $('#startAuto').addEventListener('click', () => { auto = true; refreshButtons(); narrate(); });
+  $('#btnListen').addEventListener('click', () => {
+    if (speaking && !activeSpk && !auto) { stopAll(); setCaption(IDLE, false); return; }
+    auto = false; narrate();
+  });
+  $$('[data-go]').forEach(b => b.addEventListener('click', () => { auto = false; go(+b.dataset.go - 1); }));
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, select, textarea')) return;
+    if (!$('#tocBox').hidden) { if (e.key === 'Escape') $('#tocBox').hidden = true; return; }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  });
+  let tx = 0, ty = 0, tOk = false;
+  const stage = $('#stage');
+  stage.addEventListener('touchstart', e => { tOk = !e.target.closest('button, select, input, .tbl, .pool, .bins'); tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (!tOk) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { auto = false; go(cur + (dx < 0 ? 1 : -1)); }
+  }, { passive: true });
+
+  slides.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button"><span>${i + 1}</span><span>${s.dataset.title}</span></button>`;
+    li.firstChild.addEventListener('click', () => { $('#tocBox').hidden = true; auto = false; go(i); });
+    $('#tocList').appendChild(li);
+  });
+  $('#btnToc').addEventListener('click', () => { $('#tocBox').hidden = false; });
+  $$('[data-close]').forEach(b => b.addEventListener('click', () => { $('#tocBox').hidden = true; }));
+  $('#tocBox').addEventListener('click', e => { if (e.target.id === 'tocBox') $('#tocBox').hidden = true; });
+
+  const PNAME = { at: 'at', on: 'on', in: 'in', x: 'X' };
+  const pSpan = p => p === 'x' ? '<span class="p x">(없음)</span>' : `<span class="p ${p}">${p}</span>`;
+
+  /* ================= 연습 ① 고르기 ================= */
+  const QUIZ = [
+    ['We have a school festival ___ October.', 'in', 'October는 달이라서 in을 써요.'],
+    ['The bakery opens ___ 9:00 a.m.', 'at', '9:00 a.m.은 정확한 시각이라서 at을 써요.'],
+    ['I play badminton with my dad ___ Saturday.', 'on', 'Saturday는 요일이라서 on을 써요.'],
+    ['Bears sleep for a long time ___ winter.', 'in', 'winter는 계절이라서 in을 써요.'],
+    ["Let's go to the park ___ tomorrow.", 'x', 'tomorrow 앞에는 전치사를 쓰지 않아요.'],
+    ['My cousin was born ___ 2015.', 'in', '2015는 연도라서 in을 써요.'],
+    ['We visit our grandparents ___ Chuseok.', 'on', 'Chuseok(추석)은 명절이라서 on을 써요.'],
+    ['The stars shine brightly ___ night.', 'at', '밤은 at night으로 기억해요.'],
+    ['My grandma takes a walk ___ the evening.', 'in', 'the evening은 하루 중의 때라서 in을 써요.'],
+    ['The concert is ___ August 15.', 'on', 'August 15는 날짜라서 on을 써요.'],
+    ['We have lunch ___ noon.', 'at', 'noon(정오)에는 at을 써요.'],
+    ['I watched a movie ___ yesterday.', 'x', 'yesterday 앞에는 전치사를 쓰지 않아요.']
+  ];
+  function buildQuiz() {
+    const box = $('#quizList'); box.innerHTML = ''; let score = 0, done = 0;
+    $('#quizScore').textContent = `0 / ${QUIZ.length}`;
+    QUIZ.forEach(([s, ans, why], n) => {
+      const q = document.createElement('div'); q.className = 'q';
+      const [a, b] = s.split('___');
+      q.innerHTML = `<p class="sent" lang="en">${n + 1}. ${esc(a)}<span class="blank">&nbsp;</span>${esc(b)}</p><div class="choices"></div><p class="why" hidden></p>`;
+      ['at', 'on', 'in', 'x'].forEach(p => {
+        const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.textContent = PNAME[p];
+        c.addEventListener('click', () => {
+          const w = q.querySelector('.why');
+          if (p === ans) {
+            q.querySelectorAll('.choice').forEach(x => x.disabled = true);
+            c.classList.add('ok');
+            q.querySelector('.blank').innerHTML = ans === 'x' ? '<span class="p x">✕</span>' : pSpan(ans);
+            if (!q.dataset.miss) score++;
+            done++;
+            w.hidden = false; w.className = 'why ok'; w.textContent = (q.dataset.miss ? '정답이에요. ' : '정답! ') + why;
+            $('#quizScore').textContent = `${score} / ${QUIZ.length}`;
+            sayEn((a + (ans === 'x' ? '' : ans) + b).replace(/\s+/g, ' ').trim(), null);
+            if (done === QUIZ.length) w.textContent += ` 모두 풀었어요! 처음에 맞힌 문제는 ${score}개예요.`;
+          } else {
+            q.dataset.miss = '1'; c.classList.add('no'); c.disabled = true; shake(c);
+            w.hidden = false; w.className = 'why no'; w.textContent = '다시 생각해 보세요. 빈칸 뒤의 말이 시각, 하루, 긴 시간 중 무엇인가요?';
+          }
+        });
+        q.querySelector('.choices').appendChild(c);
+      });
+      box.appendChild(q);
+    });
+  }
+  buildQuiz(); $('#quizReset').addEventListener('click', buildQuiz);
+
+  /* ================= 연습 ② 분류 ================= */
+  const SORT = [['8:40', 'at'], ['noon', 'at'], ['midnight', 'at'], ['Sunday', 'on'], ['October 9', 'on'], ["Children's Day", 'on'], ['my birthday', 'on'], ['the morning', 'in'], ['August', 'in'], ['summer', 'in'], ['2030', 'in'], ['tomorrow', 'x']];
+  let sortSel = null, sortRight = 0, sortTries = 0;
+  function buildSort() {
+    const pool = $('#sortPool'); pool.innerHTML = ''; sortSel = null; sortRight = 0; sortTries = 0;
+    $$('#sortBins .got').forEach(g => g.innerHTML = '');
+    shuffle(SORT).forEach(([w, b]) => {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.lang = 'en'; c.textContent = w; c.dataset.bin = b;
+      c.addEventListener('click', () => { if (sortSel) sortSel.classList.remove('sel'); sortSel = c; c.classList.add('sel'); $('#sortMsg').className = 'msg'; $('#sortMsg').textContent = `"${w}" 를 어느 상자에 넣을까요?`; });
+      pool.appendChild(c);
+    });
+    $('#sortMsg').className = 'msg'; $('#sortMsg').textContent = '낱말을 먼저 골라 보세요.';
+  }
+  $$('#sortBins .bin').forEach(bin => bin.addEventListener('click', () => {
+    const m = $('#sortMsg');
+    if (!sortSel) { m.className = 'msg no'; m.textContent = '위에서 낱말을 먼저 골라 주세요.'; shake(bin); return; }
+    const want = sortSel.dataset.bin, w = sortSel.textContent;
+    if (bin.dataset.bin === want) {
+      if (!sortSel.dataset.miss) sortRight++;
+      const t = document.createElement('span'); t.textContent = w; t.lang = 'en'; bin.querySelector('.got').appendChild(t);
+      sortSel.remove(); sortSel = null;
+      const left = $$('#sortPool .chip').length;
+      m.className = 'msg ok';
+      m.textContent = left ? `맞아요! ${want === 'x' ? w + ' 앞에는 전치사를 쓰지 않아요.' : want + ' ' + w}` : `모두 넣었어요! 한 번에 맞힌 것은 ${SORT.length}개 중 ${sortRight}개예요.`;
+    } else {
+      sortSel.dataset.miss = '1'; shake(bin);
+      m.className = 'msg no';
+      m.textContent = want === 'x' ? '이 말 앞에는 전치사가 필요 없어요.' : '다시 생각해 보세요. 시각인가요, 하루인가요, 긴 시간인가요?';
+    }
+  }));
+  buildSort(); $('#sortReset').addEventListener('click', buildSort);
+
+  /* ================= 연습 ③ 짝 맞추기 ================= */
+  const PAIRS = [
+    ['When does Tom ride his bike?', 'He rides his bike on Sundays.'],
+    ['What time does the train leave?', 'It leaves at 10:20.'],
+    ['When do frogs sleep for a long time?', 'They sleep in winter.'],
+    ['What time do you go to bed?', 'I go to bed at 9:30.'],
+    ['When is the school sports day?', "It's on October 2."]
+  ];
+  const MCOL = ['#6a4c93', '#2f6f8f', '#b5523b', '#3f7a4a', '#8a5a3c'];
+  let mSel = null, mDone = 0;
+  function buildMatch() {
+    const Q = $('#matchQ'), A = $('#matchA'); Q.innerHTML = A.innerHTML = ''; mSel = null; mDone = 0;
+    $('#matchMsg').textContent = '';
+    PAIRS.forEach(([q], i) => { const b = mk(q, i, 'q'); Q.appendChild(b); });
+    shuffle(PAIRS.map((p, i) => [p[1], i])).forEach(([a, i]) => A.appendChild(mk(a, i, 'a')));
+  }
+  function mk(text, i, side) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mitem'; b.lang = 'en'; b.textContent = text; b.dataset.i = i; b.dataset.side = side;
+    b.addEventListener('click', () => {
+      if (b.classList.contains('done')) return;
+      sayEn(text, null);
+      if (!mSel || mSel.dataset.side === side) { if (mSel) mSel.classList.remove('sel'); mSel = b; b.classList.add('sel'); return; }
+      const m = $('#matchMsg');
+      if (mSel.dataset.i === b.dataset.i) {
+        const col = MCOL[mDone % MCOL.length];
+        [mSel, b].forEach(x => { x.classList.remove('sel'); x.classList.add('done'); x.style.background = col; });
+        mDone++; mSel = null;
+        m.className = 'msg ok'; m.textContent = mDone === PAIRS.length ? '모두 맞혔어요! 같은 색끼리 짝이에요.' : '맞아요! 같은 색으로 표시했어요.';
+      } else {
+        shake(b); m.className = 'msg no';
+        const q = (side === 'a' ? mSel : b).textContent;
+        m.textContent = q.startsWith('What time') ? 'What time으로 물었으니 정확한 시각(at)이 있는 대답을 찾아보세요.' : '질문의 주어와 내용이 대답과 맞는지 살펴보세요.';
+      }
+    });
+    return b;
+  }
+  buildMatch(); $('#matchReset').addEventListener('click', buildMatch);
+
+  /* ================= 연습 ④ 계획표 대화 ================= */
+  // [질문 앞 빈칸 정답, 질문 뒷부분, 대답 앞부분, 대답 빈칸 정답, 대답 뒷부분, 힌트]
+  const PLAN = [
+    ['When', 'does Mina go to the zoo?', 'She goes to the zoo', 'on', "Children's Day.", "Children's Day는 기념일"],
+    ['What time', 'does her swimming class start?', 'It starts', 'at', '4 p.m.', '4 p.m.은 시각'],
+    ['When', 'does she write a letter?', 'She writes a letter', 'on', "Parents' Day.", "Parents' Day는 기념일"],
+    ['When', 'does she clean her room?', 'She cleans her room', 'in', 'the morning.', 'the morning은 하루 중의 때'],
+    ['What time', 'does she have dinner with her grandparents?', 'She has dinner with them', 'at', '7 p.m.', '7 p.m.은 시각']
+  ];
+  let planScore = 0;
+  function buildPlan() {
+    const box = $('#planList'); box.innerHTML = ''; planScore = 0;
+    $('#planScore').textContent = `0 / ${PLAN.length * 2}`;
+    PLAN.forEach(([qw, qrest, a1, ap, a2, hint], n) => {
+      const d = document.createElement('div'); d.className = 'dlg';
+      d.innerHTML = `<div class="line" lang="en"><span class="who">A</span><span>${n + 1}.</span><span class="sel-set" data-k="q"></span><span>${esc(qrest)}</span></div>
+        <div class="line" lang="en"><span class="who">B</span><span>${esc(a1)}</span><span class="sel-set" data-k="a"></span><span>${esc(a2)}</span></div>
+        <p class="why" hidden></p>`;
+      const mkSet = (k, opts, ans, okMsg) => {
+        const set = d.querySelector(`[data-k="${k}"]`); let missed = false;
+        opts.forEach(o => {
+          const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.textContent = o;
+          c.addEventListener('click', () => {
+            const w = d.querySelector('.why'); w.hidden = false;
+            if (o === ans) {
+              set.innerHTML = `<b style="color:var(--ok)">${o}</b>`; if (!missed) planScore++;
+              $('#planScore').textContent = `${planScore} / ${PLAN.length * 2}`;
+              w.className = 'why ok'; w.textContent = okMsg;
+              if (!d.querySelector('.choice')) sayEn(`${qw} ${qrest} ${a1} ${ap} ${a2}`, null);
+            } else { missed = true; c.classList.add('no'); c.disabled = true; shake(c); w.className = 'why no'; w.textContent = k === 'q' ? '몇 시인지 묻나요, 언제인지 묻나요? 계획표의 칸을 확인해 보세요.' : `힌트: ${hint}이에요.`; }
+          });
+          set.appendChild(c);
+        });
+      };
+      mkSet('q', ['When', 'What time'], qw, qw === 'What time' ? '맞아요! 정확한 시각을 물어요.' : '맞아요! 언제인지(날, 때)를 물어요.');
+      mkSet('a', ['at', 'on', 'in'], ap, `맞아요! ${hint}이라서 ${ap}을 써요.`);
+      box.appendChild(d);
+    });
+  }
+  buildPlan(); $('#planReset').addEventListener('click', buildPlan);
+
+  /* ================= 연습 ⑤ 낱말 카드로 질문 만들기 ================= */
+  const BUILD = [
+    ['when / bats / sleep', ['When', 'do', 'bats', 'sleep'], ['does'], 'bats(박쥐들)는 여럿이라 do'],
+    ['what time / the bank / open', ['What time', 'does', 'the bank', 'open'], ['do', 'opens'], 'the bank는 하나라 does, 동사는 open 그대로'],
+    ['when / your sister / take dance lessons', ['When', 'does', 'your sister', 'take', 'dance lessons'], ['do', 'takes'], 'your sister는 한 사람이라 does'],
+    ['what time / you / have breakfast', ['What time', 'do', 'you', 'have', 'breakfast'], ['does', 'has'], 'you에는 do']
+  ];
+  function buildBuild() {
+    const box = $('#buildList'); box.innerHTML = '';
+    BUILD.forEach(([hint, ans, extra, why], n) => {
+      const d = document.createElement('div'); d.className = 'build';
+      d.innerHTML = `<p class="hint">${n + 1}. <span lang="en">${esc(hint)}</span></p><div class="out" lang="en"></div><div class="chips"></div>
+        <div class="choices"><button class="btn small" type="button" data-a="undo">지우기</button><button class="btn small" type="button" data-a="show">정답 보기</button></div><p class="why" hidden></p>`;
+      const out = d.querySelector('.out'), chips = d.querySelector('.chips'), w = d.querySelector('.why');
+      let picked = [];
+      const render = () => {
+        out.className = 'out'; out.textContent = picked.map(c => c.textContent).join(' ') + (picked.length === ans.length ? '?' : '');
+        if (picked.length === ans.length) {
+          const ok = picked.every((c, i) => c.textContent === ans[i]);
+          out.classList.add(ok ? 'ok' : 'no'); w.hidden = false; w.className = 'why ' + (ok ? 'ok' : 'no');
+          w.textContent = ok ? `정답! ${why}.` : `순서나 do/does를 다시 확인해 보세요. (의문사 + do/does + 누가 + 동사)`;
+          if (ok) { chips.querySelectorAll('.chip').forEach(c => c.disabled = true); sayEn(ans.join(' ') + '?', null); }
+        } else w.hidden = true;
+      };
+      shuffle(ans.concat(extra)).forEach(word => {
+        const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.lang = 'en'; c.textContent = word;
+        c.addEventListener('click', () => { if (picked.length >= ans.length) return; picked.push(c); c.disabled = true; render(); });
+        chips.appendChild(c);
+      });
+      d.querySelector('[data-a="undo"]').addEventListener('click', () => { const c = picked.pop(); if (c) c.disabled = false; chips.querySelectorAll('.chip').forEach(x => { if (!picked.includes(x)) x.disabled = false; }); render(); });
+      d.querySelector('[data-a="show"]').addEventListener('click', () => { w.hidden = false; w.className = 'why'; w.innerHTML = `정답: <b lang="en">${esc(ans.join(' '))}?</b> (${esc(why)})`; });
+      box.appendChild(d);
+    });
+  }
+  buildBuild();
+
+  /* ================= 연습 ⑥ 틀린 곳 찾기 ================= */
+  // 글 조각: 문자열 또는 [쓴 말, 바른 말(at/on/in/x)]
+  const STORY = ["Hi, I'm Jiwoo. I usually get up ", ['at', 'at'], ' 7:00 ', ['in', 'in'], ' the morning. ', ['In', 'on'], ' Tuesdays, I have a swimming lesson ', ['at', 'at'],
+    ' 4:30. My favorite season is summer. My family goes to the beach ', ['on', 'in'], ' summer. My birthday is ', ['in', 'in'], ' August, so I have a party ', ['at', 'on'],
+    ' my birthday every year. This year, my party is ', ['in', 'on'], ' August 12. We will watch the stars ', ['in', 'at'], ' night. Then we will go back home ', ['on', 'on'], ' Sunday.'];
+  const WRONG = STORY.filter(p => Array.isArray(p) && p[0].toLowerCase() !== p[1]).length;
+  let fixSel = null, fixFound = 0;
+  function buildFix() {
+    const st = $('#story'); st.innerHTML = ''; fixSel = null; fixFound = 0; let num = 0;
+    $('#fixScore').textContent = `0 / ${WRONG}`; $('#fixChoices').hidden = true; $('#fixAsk').textContent = '밑줄 친 낱말을 눌러 보세요.';
+    STORY.forEach(p => {
+      if (typeof p === 'string') { st.appendChild(document.createTextNode(p)); return; }
+      num++;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'fx';
+      b.innerHTML = `<sup>${num}</sup>${p[0]}`; b.dataset.w = p[0]; b.dataset.r = p[1]; b.dataset.n = num;
+      b.addEventListener('click', () => pickFix(b));
+      st.appendChild(b);
+    });
+  }
+  function pickFix(b) {
+    if (b.classList.contains('fixed')) return;
+    if (fixSel) fixSel.classList.remove('sel');
+    fixSel = b; b.classList.add('sel');
+    $('#fixAsk').innerHTML = `${b.dataset.n}번 <b lang="en">${b.dataset.w}</b> 는 맞게 썼을까요? 바른 말을 골라 보세요.`;
+    const ch = $('#fixChoices'); ch.innerHTML = ''; ch.hidden = false;
+    ['at', 'on', 'in', 'x'].forEach(p => {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.textContent = p === 'x' ? '지우기(없음)' : p;
+      c.addEventListener('click', () => {
+        const right = b.dataset.r, wrote = b.dataset.w.toLowerCase();
+        if (p !== right) { c.classList.add('no'); c.disabled = true; shake(c); $('#fixAsk').textContent = '다시 골라 보세요. 뒤에 오는 말이 시각, 하루, 긴 시간 중 무엇인지 보세요.'; return; }
+        ch.hidden = true; b.classList.remove('sel');
+        if (wrote === right) { b.classList.add('okk'); $('#fixAsk').innerHTML = `${b.dataset.n}번은 맞게 쓴 거예요.` + (fixFound === WRONG ? ' 틀린 곳 다섯 개는 이미 모두 찾았어요!' : ' 다른 곳을 찾아보세요.'); return; }
+        const cap = b.dataset.w[0] === b.dataset.w[0].toUpperCase();
+        const fixed = cap ? right[0].toUpperCase() + right.slice(1) : right;
+        b.classList.add('fixed'); b.innerHTML = `<sup>${b.dataset.n}</sup><s>${b.dataset.w}</s>${fixed}`;
+        fixFound++; $('#fixScore').textContent = `${fixFound} / ${WRONG}`;
+        $('#fixAsk').innerHTML = fixFound === WRONG ? '다섯 개를 모두 찾아 고쳤어요! 대단해요.' : `잘 찾았어요! <b lang="en">${b.dataset.w}</b> → <b lang="en">${fixed}</b>`;
+      });
+      ch.appendChild(c);
+    });
+  }
+  buildFix(); $('#fixReset').addEventListener('click', buildFix);
+
+  /* ================= 수행평가 글쓰기 ================= */
+  // 각 줄: 문자열(그대로), {o:[보기]}(내용 고르기), {p:'정답'}(전치사 고르기)
+  const TIMES = ['6:30', '7:00', '7:30', '8:00'];
+  const WRITE = [
+    ['I get up', { p: 'at' }, { o: TIMES, ex: '7:30' }, { p: 'in' }, 'the morning.'],
+    ['I have', { o: ['art', 'music', 'P.E.', 'science', 'English'], ex: 'music' }, 'class', { p: 'on' }, { o: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], ex: 'Wednesday' }, '.'],
+    ['I go', { o: ['swimming', 'camping', 'skiing', 'hiking'], ex: 'swimming' }, { p: 'in' }, { o: ['spring', 'summer', 'fall', 'winter'], ex: 'summer' }, '.'],
+    ['My birthday is', { p: 'in' }, { o: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'], ex: 'May' }, '.'],
+    ['I eat', { o: ['cake', 'seaweed soup', 'pizza', 'chicken'], ex: 'seaweed soup' }, { p: 'on' }, 'my birthday.'],
+    ['I go to bed', { p: 'at' }, { o: ['9:00', '9:30', '10:00', '10:30'], ex: '9:30' }, { p: 'at' }, 'night.']
+  ];
+  const wSel = [];
+  (function buildWrite() {
+    const box = $('#writeBox');
+    WRITE.forEach(parts => {
+      const line = document.createElement('div'); line.className = 'wline'; line.lang = 'en';
+      parts.forEach(part => {
+        if (typeof part === 'string') { const s = document.createElement('span'); s.textContent = part; line.appendChild(s); return; }
+        const sel = document.createElement('select');
+        const opts = part.p ? ['at', 'on', 'in'] : part.o;
+        sel.innerHTML = `<option value="">${part.p ? '?' : '고르기'}</option>` + opts.map(o => `<option>${esc(o)}</option>`).join('');
+        if (part.p) { sel.className = 'prep'; sel.dataset.ans = part.p; sel.setAttribute('aria-label', '전치사 고르기'); }
+        else { sel.dataset.ex = part.ex; sel.setAttribute('aria-label', '내용 고르기'); }
+        sel.addEventListener('change', () => { sel.classList.remove('ok', 'no'); render(); });
+        wSel.push(sel); line.appendChild(sel);
+      });
+      box.appendChild(line);
+    });
+  })();
+  function writeText() {
+    return $$('#writeBox .wline').map(line => [...line.children].map(el => el.tagName === 'SELECT' ? (el.value || '___') : el.textContent).join(' ').replace(/\s+\./g, '.')).join(' ');
+  }
+  function render() { $('#wOut').textContent = writeText(); }
+  render();
+  $('#wCheck').addEventListener('click', () => {
+    let empty = 0, wrong = 0;
+    wSel.forEach(s => {
+      if (!s.value) { empty++; return; }
+      if (s.dataset.ans) { const ok = s.value === s.dataset.ans; s.classList.toggle('ok', ok); s.classList.toggle('no', !ok); if (!ok) wrong++; }
+    });
+    const m = $('#wMsg');
+    if (empty) { m.className = 'msg no'; m.textContent = `아직 고르지 않은 칸이 ${empty}개 있어요.`; return; }
+    if (wrong) { m.className = 'msg no'; m.textContent = `빨간 칸의 전치사 ${wrong}개를 다시 골라 보세요. 시각은 at, 하루는 on, 길면 in!`; return; }
+    m.className = 'msg ok'; m.textContent = '완벽해요! 내 글 듣기를 누르고 따라 읽으며 발표 연습을 해 보세요.';
+  });
+  $('#wExample').addEventListener('click', () => {
+    wSel.forEach(s => { s.value = s.dataset.ans || s.dataset.ex; s.classList.remove('ok', 'no'); });
+    render(); $('#wMsg').className = 'msg'; $('#wMsg').textContent = '예시를 채웠어요. 내 생활에 맞게 내용 칸을 바꿔 보세요.';
+  });
+  $('#wSay').addEventListener('click', () => { auto = false; play(null, writeText().replace(/___/g, ''), 'en', null, null); });
+
+  /* ================= 체크리스트 ================= */
+  const CHECKS = ['시각, noon, midnight, night 앞에 at을 쓸 수 있어요.', '요일, 날짜, 기념일 앞에 on을 쓸 수 있어요.', '하루 중의 때, 달, 계절, 연도 앞에 in을 쓸 수 있어요.', 'yesterday, today, tomorrow 앞에는 전치사를 쓰지 않아요.', 'When과 What time을 구별해서 물을 수 있어요.', 'do와 does를 골라 질문을 만들 수 있어요.', '나의 하루를 영어로 소개할 수 있어요.'];
+  const saved = store.get('checks', []);
+  CHECKS.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox"${saved.includes(i) ? ' checked' : ''}><span>${t}</span></label>`;
+    li.querySelector('input').addEventListener('change', () => store.set('checks', $$('#checklist input').map((c, k) => c.checked ? k : -1).filter(k => k >= 0)));
+    $('#checklist').appendChild(li);
+  });
+
+  updateUI(); refreshButtons(); preload(0);
+})();
+</script>
+</body>
+</html>
