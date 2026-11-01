@@ -191,9 +191,15 @@ def main() -> int:
         return 1
     jobs = [Path(p) for p in sys.argv[1:]] or sorted(JOBS_DIR.glob("*.json"))
     models = find_models(key) if key else []
+    gemini_ok = True
     for job in jobs:
+        is_gemini = json.loads(job.read_text(encoding="utf-8")).get("engine") != "supertonic"
+        if is_gemini and not gemini_ok:
+            print(f"[{job.name}] Gemini 한도가 다 차서 건너뛰어요. (Supertonic 작업은 계속)")
+            continue
         if not run_job(job, key, models):
-            break
+            # 한도에 걸려도 뒤에 있는 Supertonic 대체 작업은 계속 돌려서 빈 음성을 채운다
+            gemini_ok = False
     return 0
 
 

@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>장소 전치사 탐구 노트</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --ink:#1f2328; --muted:#5c6370; --line:#e3e0d8; --soft:#f0ece4;
+  --accent:#6a4c93; --accent-ink:#ffffff; --accent-soft:#efe9f6;
+  --at:#b5523b; --on:#2f6f8f; --in:#3f7a4a; --x:#6b6f76;
+  --at-soft:#f8e9e4; --on-soft:#e4eff5; --in-soft:#e6f1e7; --x-soft:#ececec;
+  --ok:#2f7a4a; --bad:#b0352a; --scrim:rgba(20,18,15,.5);
+  --f:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15161a; --surface:#1e2026; --ink:#e7e8ea; --muted:#a3a8b1; --line:#30333b; --soft:#262931;
+    --accent:#b59ae0; --accent-ink:#15161a; --accent-soft:#2b2538;
+    --at:#ec937c; --on:#7fbfe0; --in:#8fcb98; --x:#a3a8b1;
+    --at-soft:#3a2722; --on-soft:#1e313b; --in-soft:#20331f; --x-soft:#2a2c31;
+    --ok:#7fd29a; --bad:#ff8f80; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15161a; --surface:#1e2026; --ink:#e7e8ea; --muted:#a3a8b1; --line:#30333b; --soft:#262931;
+  --accent:#b59ae0; --accent-ink:#15161a; --accent-soft:#2b2538;
+  --at:#ec937c; --on:#7fbfe0; --in:#8fcb98; --x:#a3a8b1;
+  --at-soft:#3a2722; --on-soft:#1e313b; --in-soft:#20331f; --x-soft:#2a2c31;
+  --ok:#7fd29a; --bad:#ff8f80; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;line-height:1.65;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+h1,h2,h3{margin:0;line-height:1.3;text-wrap:balance}
+p{margin:0}
+[hidden]{display:none!important}
+[lang="en"]{font-feature-settings:"ss01"}
+
+#app{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;max-width:1180px;margin-inline:auto;padding-inline:16px}
+.top{display:flex;align-items:center;gap:12px;padding-block:10px}
+.brand{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px}
+.brand b{font-size:1.1rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.pager{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.progress{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s ease}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:.95rem;line-height:1.2;transition:transform .12s ease,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.small{min-height:38px;padding:6px 14px;font-size:.88rem}
+.btn svg{width:18px;height:18px;flex:none}
+.btn:disabled{opacity:.4;cursor:default}
+
+.stage{position:relative;overflow:hidden;min-height:0}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;opacity:0;visibility:hidden;transform:translateX(30px);transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s linear .5s;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.slide.back{transform:translateX(-30px)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s}
+.wrap{max-width:1000px;margin-inline:auto;padding-block:22px 30px;display:grid;gap:16px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+.eyebrow{font-size:.82rem;font-weight:800;letter-spacing:.06em;color:var(--accent)}
+h2{font-size:clamp(1.55rem,3.2vw,2.2rem);font-weight:800}
+h2 .en{font-weight:800}
+.lead{color:var(--muted);font-size:1.02rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.card h3{font-size:1rem;font-weight:800}
+.note{font-size:.88rem;color:var(--muted)}
+.tip{border-left:5px solid var(--accent);background:var(--accent-soft);border-radius:0 12px 12px 0;padding:10px 14px;font-size:.95rem}
+
+/* 전치사 색 */
+.p{font-weight:800;padding:0 3px;border-radius:5px}
+.p.at{color:var(--at);background:var(--at-soft)} .p.on{color:var(--on);background:var(--on-soft)} .p.in{color:var(--in);background:var(--in-soft)} .p.x{color:var(--x);background:var(--x-soft)}
+.tag{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:34px;padding:0 12px;border-radius:999px;font-weight:800;font-size:1.05rem;color:#fff}
+.tag.at{background:var(--at)} .tag.on{background:var(--on)} .tag.in{background:var(--in)} .tag.x{background:var(--x)}
+
+/* 예문 */
+.ex{display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.ex:last-child{border-bottom:0}
+.ex .en{font-size:1.12rem;font-weight:600}
+.ex small{grid-column:2;color:var(--muted);font-size:.86rem;margin-top:-4px}
+.spk{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0;color:var(--accent)}
+.spk svg{width:20px;height:20px}
+.spk.playing{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+
+/* 표지 */
+.cover{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:center;min-height:100%}
+.cover h1{font-size:clamp(2.1rem,5vw,3.4rem);font-weight:800;line-height:1.15}
+.cover h1 small{display:block;font-size:.42em;color:var(--muted);font-weight:700;letter-spacing:.02em;margin-bottom:6px}
+.route{display:flex;flex-wrap:wrap;gap:6px}
+.route span{font-size:.85rem;padding:3px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface)}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+
+/* 시간 크기 그림 */
+.scale{display:grid;gap:10px}
+.scale .lv{display:grid;grid-template-columns:70px minmax(0,1fr);gap:12px;align-items:center;border-radius:14px;padding:12px 14px;background:var(--surface);border:1px solid var(--line)}
+.scale .lv .bar{height:14px;border-radius:7px}
+.scale .lv p{grid-column:2;font-size:.92rem;color:var(--muted)}
+.scale .lv b{grid-column:2;font-size:1.02rem}
+
+/* 표 */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:.95rem}
+tr:last-child td{border-bottom:0}
+th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
+
+/* 퀴즈 */
+.q{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:0}
+.q .sent{font-size:1.12rem;font-weight:600}
+.q .sent .blank{display:inline-block;min-width:3.2em;border-bottom:2px solid var(--muted);text-align:center;font-weight:800}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choice{min-width:64px;min-height:44px;padding:6px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:800;font-size:1.02rem}
+.choice.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.choice.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.choice:disabled{cursor:default}
+.why{font-size:.92rem}
+.why.ok{color:var(--ok)} .why.no{color:var(--bad)}
+.score{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.score b{font-size:1.4rem;font-variant-numeric:tabular-nums}
+
+/* 분류 게임 */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;padding:12px;border:1.5px dashed var(--line);border-radius:14px;background:var(--surface)}
+.chip{min-height:44px;padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:1rem}
+.chip.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.chip.done{cursor:default;border-color:transparent}
+.bins{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.bin{border-radius:14px;border:2px solid var(--line);background:var(--surface);padding:10px;min-height:150px;display:flex;flex-direction:column;gap:8px;align-items:stretch;text-align:left}
+.bin .tag{align-self:flex-start}
+.bin .got{display:flex;flex-wrap:wrap;gap:6px}
+.bin .got span{font-size:.9rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--soft)}
+.bin.at{border-color:color-mix(in srgb,var(--at) 45%,var(--line))} .bin.on{border-color:color-mix(in srgb,var(--on) 45%,var(--line))}
+.bin.in{border-color:color-mix(in srgb,var(--in) 45%,var(--line))} .bin.x{border-color:color-mix(in srgb,var(--x) 45%,var(--line))}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.msg{min-height:1.6em;font-size:.95rem}
+.msg.ok{color:var(--ok);font-weight:700} .msg.no{color:var(--bad)}
+
+/* 짝 맞추기 */
+.match{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.match .col{display:grid;gap:8px;align-content:start}
+.mitem{text-align:left;min-height:52px;padding:10px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:1rem;line-height:1.4}
+.mitem.sel{border-color:var(--accent);background:var(--accent-soft)}
+.mitem.done{cursor:default;border-color:transparent;color:#fff}
+
+/* 계획표 */
+.plan th{text-align:center}
+.plan td{text-align:center;font-size:.88rem;min-width:96px}
+.plan td b{display:block;font-size:.8rem;color:var(--muted)}
+.plan td.hol{color:var(--at);font-weight:700}
+.dlg{display:grid;gap:6px;padding:12px 0;border-bottom:1px solid var(--line)}
+.dlg:last-child{border-bottom:0}
+.dlg .line{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:1.06rem;font-weight:600}
+.dlg .who{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--soft);font-size:.8rem;font-weight:800;color:var(--muted)}
+.sel-set{display:inline-flex;gap:4px;flex-wrap:wrap}
+.sel-set .choice{min-width:52px;min-height:40px;padding:4px 10px;font-size:.95rem}
+
+/* 문장 만들기 */
+.build{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.build:last-child{border-bottom:0}
+.build .hint{font-size:.9rem;color:var(--muted)}
+.build .out{min-height:48px;padding:8px 12px;border-radius:12px;background:var(--soft);font-size:1.1rem;font-weight:700;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.build .out.ok{background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok)}
+.build .out.no{background:color-mix(in srgb,var(--bad) 12%,var(--surface))}
+.build .chips{display:flex;flex-wrap:wrap;gap:8px}
+.build .chip:disabled{opacity:.3}
+
+/* 틀린 곳 찾기 */
+.story{font-size:1.15rem;line-height:2.15}
+.fx{display:inline-flex;align-items:center;gap:2px;min-height:36px;padding:0 8px;margin:0 1px;border-radius:8px;border:0;border-bottom:2.5px solid var(--muted);background:var(--soft);font-weight:800;font-size:1.05rem;vertical-align:baseline}
+.fx sup{font-size:.62rem;color:var(--muted);font-weight:700;margin-right:2px}
+.fx.sel{background:var(--accent-soft);border-bottom-color:var(--accent)}
+.fx.fixed{background:color-mix(in srgb,var(--ok) 16%,var(--surface));border-bottom-color:var(--ok);color:var(--ok)}
+.fx.fixed s{color:var(--bad);font-weight:600;margin-right:4px}
+.fx.okk{border-bottom-style:dotted;opacity:.75}
+.fixbox{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+
+/* 글쓰기 */
+.wline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:1.08rem;font-weight:600;padding:8px 0;border-bottom:1px dashed var(--line)}
+.wline:last-child{border-bottom:0}
+.wline select{min-height:40px;border:1.5px solid var(--line);border-radius:10px;padding:4px 8px;background:var(--surface);font-weight:700}
+.wline select.prep{min-width:68px}
+.wline select.ok{border-color:var(--ok);color:var(--ok)}
+.wline select.no{border-color:var(--bad);color:var(--bad)}
+.out-text{font-size:1.05rem;padding:12px 14px;border-radius:12px;background:var(--soft);min-height:3em}
+
+/* 마무리 */
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check input{width:22px;height:22px;margin-top:3px;accent-color:var(--accent);flex:none}
+
+/* 아래 막대 */
+.bottom{padding-block:8px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;border-top:1px solid var(--line)}
+.aprog{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.aprog i{display:block;height:100%;width:0;background:var(--accent)}
+.caption{min-height:2.9em;font-size:.98rem;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;padding-inline:8px;line-height:1.45}
+.caption.on{color:var(--ink);font-weight:600}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+.overlay{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:50}
+.sheet{background:var(--surface);border-radius:18px;max-width:520px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;display:grid;gap:12px}
+.sheet header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.toclist{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.toclist button{width:100%;text-align:left;display:grid;grid-template-columns:2em minmax(0,1fr);gap:8px;padding:9px 10px;border-radius:10px;border:0;background:transparent;font-size:.95rem}
+.toclist button[aria-current="true"]{background:var(--accent-soft);font-weight:700}
+.toclist button span:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+
+@media (max-width:820px){
+  .cols,.cover{grid-template-columns:minmax(0,1fr)}
+  .bins{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .match{grid-template-columns:minmax(0,1fr)}
+  .hide-s{display:none}
+  .brand small{display:none}
+}
+@media (max-width:420px){ .hide-xs{display:none} .controls{gap:6px} .controls .btn{padding:8px 12px} }
+@media (prefers-reduced-motion:reduce){ .slide{transition:none} .shake{animation:none} }
+/* ===== 장소 전치사 자료 추가 스타일 ===== */
+:root{
+  --pp:var(--at); --pp-soft:var(--at-soft); --is:var(--on); --is-soft:var(--on-soft); --are:var(--in); --are-soft:var(--in-soft);
+  --c-wall:#efe8dc; --c-floor:#dcc7a5; --c-wood:#b98a5a; --c-wood-d:#93683f; --c-box:#e2bf8e; --c-box-top:#efd3a9; --c-box-side:#c9a06a;
+  --c-line:#5b4a3a; --c-cloth:#8fb3c9; --c-cloth-d:#6f97b0; --c-ball:#6a4c93; --c-apple:#c8463a; --c-leaf:#4f8a4f; --c-glass:#cfe6f2; --c-fur:#d99a52; --c-bear:#a87850;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --c-wall:#2a2723; --c-floor:#3a3128; --c-wood:#8a6644; --c-wood-d:#6b4e33; --c-box:#9a7a50; --c-box-top:#b08e60; --c-box-side:#7f6340;
+    --c-line:#d9cbb8; --c-cloth:#4f6f84; --c-cloth-d:#3f5c70; --c-ball:#b59ae0; --c-apple:#e0705f; --c-leaf:#6fae6f; --c-glass:#2f4652; --c-fur:#c08a4a; --c-bear:#9a7050;
+  }
+}
+:root[data-theme="dark"]{
+  --c-wall:#2a2723; --c-floor:#3a3128; --c-wood:#8a6644; --c-wood-d:#6b4e33; --c-box:#9a7a50; --c-box-top:#b08e60; --c-box-side:#7f6340;
+  --c-line:#d9cbb8; --c-cloth:#4f6f84; --c-cloth-d:#3f5c70; --c-ball:#b59ae0; --c-apple:#e0705f; --c-leaf:#6fae6f; --c-glass:#2f4652; --c-fur:#c08a4a; --c-bear:#9a7050;
+}
+.p.pp{color:var(--pp);background:var(--pp-soft)} .p.is{color:var(--is);background:var(--is-soft)} .p.are{color:var(--are);background:var(--are-soft)}
+.tag.pp{background:var(--pp)} .tag.is{background:var(--is)} .tag.are{background:var(--are)}
+svg.scene{display:block;width:100%;height:auto}
+.pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.pcard{display:grid;gap:2px;justify-items:center;text-align:center;padding:8px 6px 10px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
+.pcard svg{max-width:150px}
+.pcard b{font-size:1.08rem;color:var(--pp)}
+.pcard small{color:var(--muted);font-size:.84rem}
+.qpic{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center}
+.qpic svg{background:var(--soft);border-radius:12px}
+.room{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--c-wall)}
+.room svg{display:block;width:100%;height:auto}
+.rgrid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+.rgrid>.room{position:sticky;top:0}
+.mini{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.bins.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.bin.is{border-color:color-mix(in srgb,var(--is) 45%,var(--line))} .bin.are{border-color:color-mix(in srgb,var(--are) 45%,var(--line))}
+.ans-set{display:flex;flex-wrap:wrap;gap:6px}
+.ans-set .choice{min-width:0;font-size:.95rem}
+.fx.wide{min-width:2.4em;justify-content:center}
+@media (max-width:820px){ .rgrid{grid-template-columns:minmax(0,1fr)} .rgrid>.room{position:static;max-width:560px;width:100%;justify-self:center} .pgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:420px){ .qpic{grid-template-columns:96px minmax(0,1fr)} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><b>장소 전치사 탐구 노트</b><small>in · on · under · next to … / There is · There are</small></div>
+    <span class="pager" id="pager">1 / 16</span>
+    <button class="btn small" type="button" id="btnFull" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="icFull"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span id="lbFull" class="hide-s">전체 화면</span></button>
+    <button class="btn small" type="button" id="btnToc">목차</button>
+  </header>
+  <div class="progress"><i id="bar"></i></div>
+
+  <main class="stage" id="stage">
+
+  <!-- 1 표지 -->
+  <section class="slide active" data-id="cover" data-title="표지 · 시작하기">
+    <div class="wrap cover">
+      <div style="display:grid;gap:16px">
+        <p class="eyebrow">ENGLISH · PREPOSITIONS OF PLACE</p>
+        <h1><small>어디에 있는지 말하는 작은 단어</small>장소 전치사와<br><span lang="en">There is / are</span></h1>
+        <p class="lead">물건이 <b>어디에</b> 있는지 말하는 in, on, under, next to 같은 전치사를 익히고, <b>There is</b>와 <b>There are</b>로 무엇이 있는지 말해 봐요.</p>
+        <div class="route"><span>전치사 8가지</span><span>헷갈리는 표현</span><span>There is / are</span><span>Is there ~? 묻고 답하기</span><span>연습 게임 7가지</span><span>수행평가 내 방 소개</span></div>
+        <div class="cta">
+          <button class="btn primary" type="button" id="startAuto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>영상처럼 보기</button>
+          <button class="btn" type="button" data-go="6">바로 연습하기</button>
+        </div>
+        <p class="note">영어 문장 앞의 스피커 버튼을 누르면 영어 발음을 들을 수 있어요. 듣고 꼭 따라 말해 보세요.</p>
+      </div>
+      <div class="card">
+        <h3>오늘의 대화</h3>
+        <p class="ex" data-key="e_c1"><span class="en" lang="en">Where is my pencil case?</span><small>내 필통 어디 있어?</small></p>
+        <p class="ex" data-key="e_c2"><span class="en" lang="en">It's <span class="p pp">under</span> your chair. <span class="p is">There is</span> a ruler <span class="p pp">next to</span> it, too.</span><small>네 의자 밑에 있어. 그 옆에 자도 있어.</small></p>
+        <p class="tip">장소 전치사는 <b>사람·물건 이름 앞</b>에 써서 위치를 알려 줘요: under <b>your chair</b>, next to <b>it</b></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 전치사 8가지 그림 -->
+  <section class="slide" data-id="idea" data-title="그림으로 보는 장소 전치사 8가지">
+    <div class="wrap">
+      <p class="eyebrow">개념 ① 장소 전치사란?</p>
+      <h2>공과 상자로 보는 전치사 8가지</h2>
+      <p class="lead">장소 전치사는 사람이나 물건이 <b>어디에</b> 있는지 알려 줘요. 그림을 누르면 영어로 읽어 줘요.</p>
+      <div class="pgrid" id="pgrid"></div>
+      <p class="tip">문장 모양: <b lang="en">The ball is</b> + <span class="p pp">전치사</span> + <b lang="en">the box.</b> &nbsp;여러 개면 <b lang="en">The balls are …</b></p>
+    </div>
+  </section>
+
+  <!-- 3 in on under above -->
+  <section class="slide" data-id="prep1" data-title="in · on · under · above">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ② 안 · 위 · 아래</p>
+        <h2><span class="p pp">in</span> <span class="p pp">on</span> <span class="p pp">under</span> <span class="p pp">above</span></h2>
+        <div class="tbl"><table>
+          <tr><th>전치사</th><th>뜻</th><th>이렇게 기억해요</th></tr>
+          <tr><td lang="en"><b>in</b></td><td>~ 안에</td><td>상자, 가방, 방, 병 <b>속</b>에 들어 있어요</td></tr>
+          <tr><td lang="en"><b>on</b></td><td>~ 위에</td><td>표면에 <b>닿아</b> 있어요 (책상 위, 벽에 붙은 것도 on)</td></tr>
+          <tr><td lang="en"><b>under</b></td><td>~ 아래에</td><td>바로 <b>밑</b>에 있어요</td></tr>
+          <tr><td lang="en"><b>above</b></td><td>~ 위쪽에</td><td>닿지 않고 <b>떨어져서</b> 위에 있어요</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_p1"><span class="en" lang="en">The cookies are <span class="p pp">in</span> the jar.</span><small>쿠키는 병 안에 있어요.</small></p>
+        <p class="ex" data-key="e_p2"><span class="en" lang="en">My cat is sleeping <span class="p pp">on</span> the sofa.</span><small>내 고양이가 소파 위에서 자고 있어요.</small></p>
+        <p class="ex" data-key="e_p3"><span class="en" lang="en">My shoes are <span class="p pp">under</span> the bed.</span><small>내 신발은 침대 밑에 있어요.</small></p>
+        <p class="ex" data-key="e_p4"><span class="en" lang="en">A kite is flying <span class="p pp">above</span> the house.</span><small>연이 집 위로 날고 있어요.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 in front of behind next to between -->
+  <section class="slide" data-id="prep2" data-title="in front of · behind · next to · between">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ③ 앞 · 뒤 · 옆 · 사이</p>
+        <h2><span class="p pp">in front of</span> <span class="p pp">behind</span> <span class="p pp">next to</span> <span class="p pp">between</span></h2>
+        <div class="tbl"><table>
+          <tr><th>전치사</th><th>뜻</th><th>이렇게 기억해요</th></tr>
+          <tr><td lang="en"><b>in front of</b></td><td>~ 앞에</td><td>세 낱말이 한 덩어리예요</td></tr>
+          <tr><td lang="en"><b>behind</b></td><td>~ 뒤에</td><td>in front of의 반대예요</td></tr>
+          <tr><td lang="en"><b>next to</b></td><td>~ 바로 옆에</td><td>두 낱말이 한 덩어리예요</td></tr>
+          <tr><td lang="en"><b>between A and B</b></td><td>A와 B 사이에</td><td>두 개 사이, 꼭 <b>and</b>와 함께 써요</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_p5"><span class="en" lang="en">A boy is standing <span class="p pp">in front of</span> the door.</span><small>남자아이가 문 앞에 서 있어요.</small></p>
+        <p class="ex" data-key="e_p6"><span class="en" lang="en">The sun is <span class="p pp">behind</span> the clouds.</span><small>해가 구름 뒤에 있어요.</small></p>
+        <p class="ex" data-key="e_p7"><span class="en" lang="en">The bank is <span class="p pp">next to</span> the bakery.</span><small>은행은 빵집 옆에 있어요.</small></p>
+        <p class="ex" data-key="e_p8"><span class="en" lang="en">Our school is <span class="p pp">between</span> the park and the library.</span><small>우리 학교는 공원과 도서관 사이에 있어요.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 헷갈리는 것 -->
+  <section class="slide" data-id="tricky" data-title="헷갈리는 표현 (on과 above, between)">
+    <div class="wrap">
+      <p class="eyebrow">개념 ④ 실수하기 쉬운 곳</p>
+      <h2>이것만 조심하면 실수가 줄어요</h2>
+      <div class="cols">
+        <div class="card">
+          <h3>1. 닿아 있으면 on, 떨어져 있으면 above</h3>
+          <div class="mini"><div id="trkOn"></div><div id="trkAbove"></div></div>
+          <p class="ex" data-key="e_t1"><span class="en" lang="en">The lamp is <span class="p pp">on</span> the table.</span><small>등이 탁자 위에 놓여 있어요. (닿음)</small></p>
+          <p class="ex" data-key="e_t2"><span class="en" lang="en">The lamp is <span class="p pp">above</span> the table.</span><small>등이 탁자 위쪽에 매달려 있어요. (떨어짐)</small></p>
+        </div>
+        <div class="card">
+          <h3>2. between은 A <b>and</b> B</h3>
+          <p>between 뒤에는 두 가지를 <b>and</b>로 이어서 써요.</p>
+          <p class="ex" data-key="e_t3"><span class="en" lang="en">I sit <span class="p pp">between</span> Mina <b>and</b> Jun.</span><small>나는 미나와 준 사이에 앉아요.</small></p>
+          <p class="note">between Mina, Jun ✕ &nbsp;/&nbsp; between Mina <b>and</b> Jun ○</p>
+        </div>
+        <div class="card">
+          <h3>3. 여러 낱말이 한 덩어리</h3>
+          <p><b lang="en">in front of</b>는 세 낱말, <b lang="en">next to</b>는 두 낱말이 모여 하나의 전치사예요. 하나라도 빠지면 틀려요.</p>
+          <p class="note">in front the door ✕ &nbsp;/&nbsp; next the bank ✕</p>
+        </div>
+        <div class="card">
+          <h3>4. 하나면 is, 여러 개면 are</h3>
+          <p>위치를 말할 때도 주어가 하나면 <span class="p is">is</span>, 여러 개면 <span class="p are">are</span>를 써요.</p>
+          <p class="ex" data-key="e_t4"><span class="en" lang="en">My socks <span class="p are">are</span> <span class="p pp">under</span> the desk.</span><small>내 양말(여러 개)은 책상 밑에 있어요.</small></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 퀴즈 -->
+  <section class="slide" data-id="quiz" data-title="연습 ① 그림 보고 전치사 고르기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ① 그림 보고 고르기</p>
+      <h2>그림을 보고 알맞은 전치사를 골라 보세요</h2>
+      <p class="lead">누르면 바로 정답과 이유가 나와요.</p>
+      <div class="card"><div id="quizList"></div></div>
+      <div class="score"><span>맞힌 문제</span><b id="quizScore">0 / 8</b><button class="btn small" type="button" id="quizReset">처음부터 다시</button></div>
+    </div>
+  </section>
+
+  <!-- 7 방 그림 -->
+  <section class="slide" data-id="room" data-title="연습 ② 하준이의 방 그림 보고 문장 완성" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ② 그림 보고 문장 완성하기</p>
+      <h2>하준이의 방을 살펴보세요</h2>
+      <div class="rgrid"><div class="room" data-room></div>
+      <div class="card" id="roomList"></div></div>
+      <div class="score"><span>맞힌 문제</span><b id="roomScore">0 / 7</b><button class="btn small" type="button" id="roomReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 8 There is / are -->
+  <section class="slide" data-id="there" data-title="There is / There are (있다, 없다)">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ⑤ 무엇이 있는지 말하기</p>
+        <h2><span class="p is">There is</span> · <span class="p are">There are</span></h2>
+        <p class="lead">어떤 곳에 무엇이 <b>있다</b>고 말할 때 써요. 뒤에 오는 말이 <b>하나</b>면 is, <b>여러 개</b>면 are.</p>
+        <div class="tbl"><table>
+          <tr><th></th><th>있어요</th><th>없어요</th></tr>
+          <tr><td>하나</td><td lang="en"><b>There is</b> a cat.</td><td lang="en"><b>There isn't</b> a cat.</td></tr>
+          <tr><td>여러 개</td><td lang="en"><b>There are</b> two cats.</td><td lang="en"><b>There aren't</b> many cats.</td></tr>
+        </table></div>
+        <p class="tip">a, an, one + 낱말 → <span class="p is">is</span> &nbsp;·&nbsp; two, three, many, some, 낱말-s → <span class="p are">are</span><br>isn't = is not, aren't = are not</p>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_h1"><span class="en" lang="en"><span class="p is">There is</span> a cat <span class="p pp">on</span> the sofa.</span><small>소파 위에 고양이 한 마리가 있어요.</small></p>
+        <p class="ex" data-key="e_h2"><span class="en" lang="en"><span class="p are">There are</span> two cats <span class="p pp">on</span> the sofa.</span><small>소파 위에 고양이 두 마리가 있어요.</small></p>
+        <p class="ex" data-key="e_h3"><span class="en" lang="en"><span class="p is">There isn't</span> a cloud <span class="p pp">in</span> the sky.</span><small>하늘에 구름이 하나도 없어요.</small></p>
+        <p class="ex" data-key="e_h4"><span class="en" lang="en"><span class="p are">There aren't</span> many people <span class="p pp">in</span> the park.</span><small>공원에 사람이 많지 않아요.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 묻고 답하기 -->
+  <section class="slide" data-id="ask" data-title="Is there ~? Are there ~? 묻고 답하기">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">개념 ⑥ 있는지 묻고 답하기</p>
+        <h2><span lang="en">Is there ~?</span> <span lang="en">Are there ~?</span></h2>
+        <p class="lead">is, are를 <b>there 앞으로</b> 옮기면 "있니?" 하고 묻는 말이 돼요. 대답도 is, are를 그대로 써요.</p>
+        <div class="tbl"><table>
+          <tr><th>묻는 말</th><th>그렇다</th><th>아니다</th></tr>
+          <tr><td lang="en"><b>Is there</b> a pen?</td><td lang="en">Yes, there <b>is</b>.</td><td lang="en">No, there <b>isn't</b>.</td></tr>
+          <tr><td lang="en"><b>Are there</b> pens?</td><td lang="en">Yes, there <b>are</b>.</td><td lang="en">No, there <b>aren't</b>.</td></tr>
+        </table></div>
+        <p class="tip">어디 있는지 물을 때는 <b lang="en">Where is ~?</b> → <b lang="en">It's</b> + 전치사 + 장소.</p>
+      </div>
+      <div class="card">
+        <h3>듣고 따라 말하기</h3>
+        <p class="ex" data-key="e_q1"><span class="en" lang="en"><span class="p is">Is there</span> a library in your town?</span><small>너희 동네에 도서관이 있니?</small></p>
+        <p class="ex" data-key="e_q2"><span class="en" lang="en">Yes, there is. It's <span class="p pp">next to</span> the post office.</span><small>응, 있어. 우체국 옆에 있어.</small></p>
+        <p class="ex" data-key="e_q3"><span class="en" lang="en"><span class="p are">Are there</span> swings in the park?</span><small>공원에 그네가 있니?</small></p>
+        <p class="ex" data-key="e_q4"><span class="en" lang="en">No, there aren't. But there is a slide.</span><small>아니, 없어. 하지만 미끄럼틀은 있어.</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 분류 -->
+  <section class="slide" data-id="sort" data-title="연습 ③ There is / There are 분류 게임" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ③ 분류 게임</p>
+      <h2>낱말을 There is, There are 상자에 나눠 넣으세요</h2>
+      <p class="lead">위에서 낱말을 하나 누르고, 아래에서 상자를 누르세요.</p>
+      <div class="pool" id="sortPool"></div>
+      <div class="bins two" id="sortBins">
+        <button class="bin is" type="button" data-bin="is"><span class="tag is">There is</span><span class="got"></span></button>
+        <button class="bin are" type="button" data-bin="are"><span class="tag are">There are</span><span class="got"></span></button>
+      </div>
+      <p class="msg" id="sortMsg" aria-live="polite">낱말을 먼저 골라 보세요.</p>
+      <div><button class="btn small" type="button" id="sortReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 11 짝 맞추기 -->
+  <section class="slide" data-id="match" data-title="연습 ④ 질문과 대답 짝 맞추기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ④ 짝 맞추기</p>
+      <h2>질문과 알맞은 대답을 이어 보세요</h2>
+      <p class="lead">왼쪽 질문을 누른 다음, 오른쪽 대답을 누르세요.</p>
+      <div class="match">
+        <div class="col" id="matchQ"></div>
+        <div class="col" id="matchA"></div>
+      </div>
+      <p class="msg" id="matchMsg" aria-live="polite"></p>
+      <div><button class="btn small" type="button" id="matchReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 12 방 그림 묻고 답하기 -->
+  <section class="slide" data-id="yesno" data-title="연습 ⑤ 방 그림 보고 묻고 답하기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ⑤ 그림 보고 묻고 답하기</p>
+      <h2>하준이의 방에 무엇이 있나요?</h2>
+      <div class="rgrid"><div class="room" data-room></div>
+      <div style="display:grid;gap:10px"><p class="note">질문에는 Is / Are를, 대답은 그림을 보고 알맞은 것을 골라요.</p>
+      <div class="card" id="ynList"></div></div></div>
+      <div class="score"><span>맞힌 빈칸</span><b id="ynScore">0 / 10</b><button class="btn small" type="button" id="ynReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 13 문장 만들기 -->
+  <section class="slide" data-id="build" data-title="연습 ⑥ 낱말 카드로 문장 만들기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ⑥ 문장 만들기</p>
+      <h2>낱말 카드를 순서대로 눌러 문장을 만드세요</h2>
+      <p class="lead">카드 하나는 필요 없는 카드예요. 마침표와 물음표는 자동으로 붙어요.</p>
+      <div class="card" id="buildList"></div>
+    </div>
+  </section>
+
+  <!-- 14 틀린 곳 찾기 -->
+  <section class="slide" data-id="fix" data-title="연습 ⑦ 틀린 곳 5개 찾기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ⑦ 틀린 곳 찾기</p>
+      <h2>하준이의 글에서 틀린 곳 5개를 찾아 고치세요</h2>
+      <div class="rgrid"><div class="room" data-room></div>
+      <div style="display:grid;gap:12px"><div class="card"><p class="story" lang="en" id="story"></p></div>
+      <div class="fixbox" id="fixBox">
+        <p id="fixAsk">밑줄 친 낱말을 눌러 보세요. 그림과 비교해 보면 찾을 수 있어요.</p>
+        <div class="choices" id="fixChoices" hidden></div>
+      </div></div></div>
+      <div class="score"><span>찾은 실수</span><b id="fixScore">0 / 5</b><button class="btn small" type="button" id="fixReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 15 수행평가 -->
+  <section class="slide" data-id="write" data-title="수행평가 · 내 방 소개하기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">수행평가 대비 · 쓰기와 말하기</p>
+      <h2>내 방 소개하기</h2>
+      <p class="lead">내 방에 맞게 물건과 위치를 고르고, <span class="p is">is</span> / <span class="p are">are</span>는 뒤에 오는 말에 맞게 고르세요.</p>
+      <div class="card" id="writeBox"></div>
+      <div class="cta">
+        <button class="btn primary" type="button" id="wCheck">점검하기</button>
+        <button class="btn" type="button" id="wSay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg>내 글 듣기</button>
+        <button class="btn" type="button" id="wExample">예시 채우기</button>
+      </div>
+      <p class="msg" id="wMsg" aria-live="polite"></p>
+      <div class="out-text" id="wOut" lang="en"></div>
+      <div class="card">
+        <h3>말하기 평가 대비: 짝과 묻고 답하기</h3>
+        <p>친구의 방에 대해 묻고, 친구의 질문에 내 방을 떠올리며 대답해 보세요.</p>
+        <p class="ex" data-key="e_w1"><span class="en" lang="en">Is there a desk in your room?</span><small>네 방에 책상이 있니?</small></p>
+        <p class="ex" data-key="e_w2"><span class="en" lang="en">Where is your bed?</span><small>네 침대는 어디에 있니?</small></p>
+        <p class="ex" data-key="e_w3"><span class="en" lang="en">Are there many books in your room?</span><small>네 방에 책이 많이 있니?</small></p>
+        <p class="note">채점 기준으로 자주 나오는 것: ① 위치에 맞는 전치사를 썼나요? ② 하나·여러 개에 맞게 is / are를 골랐나요? ③ between 뒤에 A and B를 썼나요? ④ 또박또박 말했나요?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 마무리 -->
+  <section class="slide" data-id="end" data-title="한눈에 정리 · 체크리스트">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">한눈에 정리</p>
+        <h2>오늘 배운 것</h2>
+        <div class="tbl"><table>
+          <tr><th>전치사</th><th>뜻</th><th>전치사</th><th>뜻</th></tr>
+          <tr><td lang="en"><b>in</b></td><td>안에</td><td lang="en"><b>in front of</b></td><td>앞에</td></tr>
+          <tr><td lang="en"><b>on</b></td><td>위에 (닿음)</td><td lang="en"><b>behind</b></td><td>뒤에</td></tr>
+          <tr><td lang="en"><b>under</b></td><td>아래에</td><td lang="en"><b>next to</b></td><td>바로 옆에</td></tr>
+          <tr><td lang="en"><b>above</b></td><td>위쪽에 (떨어짐)</td><td lang="en"><b>between A and B</b></td><td>A와 B 사이에</td></tr>
+        </table></div>
+        <p class="tip"><b>하나</b> → There <span class="p is">is</span> / isn't / Is there? &nbsp;·&nbsp; <b>여러 개</b> → There <span class="p are">are</span> / aren't / Are there?</p>
+      </div>
+      <div class="card">
+        <h3>스스로 확인해요</h3>
+        <ul class="check" id="checklist"></ul>
+        <p class="note" style="margin-top:6px" id="voiceNote">음성: 한국어 해설은 Google Gemini AI 음성(Kore)과 공개 AI 성우 Supertonic 3(MIT 라이선스)으로, 영어 예문은 Supertonic 3으로 만들었고, 퀴즈 문장과 직접 쓴 글은 기기에 있는 영어 목소리로 읽어 줘요. 그림과 연습 문제는 교재 내용을 바탕으로 새로 만든 것이에요.</p>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="bottom">
+    <div class="aprog" aria-hidden="true"><i id="aprogBar"></i></div>
+    <audio id="voice" preload="auto"></audio>
+    <div class="caption" id="caption" aria-live="polite">재생 버튼을 누르면 선생님이 설명해 줘요.</div>
+    <div class="controls">
+      <button class="btn" type="button" id="btnPrev" aria-label="이전 장"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span class="hide-s">이전</span></button>
+      <button class="btn primary" type="button" id="btnAuto"><svg viewBox="0 0 24 24" fill="currentColor" id="icAuto"><path d="M7 4v16l13-8z"/></svg><span id="lbAuto">영상처럼 보기</span></button>
+      <button class="btn" type="button" id="btnListen" aria-label="이 장 듣기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg><span id="lbListen" class="hide-xs">이 장 듣기</span></button>
+      <button class="btn" type="button" id="btnNext" aria-label="다음 장"><span class="hide-s">다음</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<div class="overlay" id="tocBox" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tocTitle">
+    <header><h2 id="tocTitle" style="font-size:1.3rem">목차</h2><button class="btn small" type="button" data-close>닫기</button></header>
+    <ol class="toclist" id="tocList"></ol>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label for="rateSel" style="font-weight:700;font-size:.9rem">읽는 빠르기</label>
+      <select id="rateSel" style="min-height:40px;border-radius:10px;border:1px solid var(--line);padding:4px 8px;background:var(--surface)"><option value="0.85">천천히</option><option value="1" selected>보통</option><option value="1.15">조금 빠르게</option></select>
+    </div>
+  </div>
+</div>
+
+<!-- 한국어 해설 대본 (음성 파일 n_<장 id>.mp3 와 짝) -->
+<script type="application/json" id="narr">{
+"cover": "안녕하세요! 오늘은 물건이 어디에 있는지 말하는 영어 장소 전치사를 공부해 볼 거예요. in, on, under, next to 같은 작은 단어들이에요. 그리고 There is와 There are로 어떤 곳에 무엇이 있는지 말하는 방법도 배워요. 영어 문장 앞의 스피커 버튼을 누르면 영어 발음을 들을 수 있으니까, 꼭 따라 말해 보세요. 그럼 시작해 볼까요?",
+"idea": "장소 전치사는 사람이나 물건이 어디에 있는지 알려 주는 말이에요. 공과 상자 그림을 보세요. 상자 안에 있으면 in, 위에 놓여 있으면 on, 아래에 있으면 under, 닿지 않고 위쪽에 떠 있으면 above예요. 앞에 있으면 in front of, 뒤에 있으면 behind, 바로 옆에 있으면 next to, 두 상자 사이에 있으면 between이에요. 그림을 누르면 영어로 읽어 줘요.",
+"prep1": "먼저 안, 위, 아래를 나타내는 말이에요. in은 상자나 가방, 방처럼 무언가의 속에 들어 있을 때 써요. on은 책상 위처럼 표면에 닿아 있을 때 써요. under는 바로 밑에 있을 때, above는 닿지 않고 떨어져서 위쪽에 있을 때 써요. 스피커 버튼을 눌러 예문을 듣고 따라 읽어 보세요.",
+"prep2": "이번에는 앞, 뒤, 옆, 사이를 나타내는 말이에요. in front of는 앞에, behind는 뒤에라는 뜻이에요. 둘은 서로 반대예요. next to는 바로 옆에라는 뜻이고, between은 두 개 사이에라는 뜻이에요. in front of는 세 낱말, next to는 두 낱말이 모여서 하나의 전치사가 된다는 것도 기억하세요.",
+"tricky": "헷갈리기 쉬운 것들을 모아 볼게요. 첫째, 탁자 위에 닿아 있으면 on, 닿지 않고 위에 매달려 있으면 above예요. 둘째, between 뒤에는 꼭 A and B처럼 두 가지를 and로 이어 써요. 셋째, in front of와 next to는 낱말 하나라도 빠지면 틀려요. 넷째, 주어가 하나면 is, 여러 개면 are를 써요.",
+"quiz": "이제 직접 골라 볼까요? 그림에서 공이나 사과가 어디에 있는지 보고, 알맞은 전치사를 골라 보세요. 누르면 바로 정답과 이유를 알려 줘요. 여기부터는 직접 해 보는 활동이니까, 자동 재생은 잠시 멈출게요.",
+"room": "하준이의 방 그림이에요. 침대, 책상, 의자, 고양이, 곰 인형이 어디에 있는지 잘 살펴보세요. 그리고 문장의 빈칸에 들어갈 알맞은 전치사를 골라 보세요. 기준이 되는 물건이 무엇인지 빈칸 뒤를 먼저 확인하면 쉬워요.",
+"there": "이번에는 There is와 There are를 배워요. 어떤 곳에 무엇이 있다고 말할 때 써요. 뒤에 오는 말이 하나이면 There is, 여러 개이면 There are를 써요. 없다고 말할 때는 There isn't, There aren't라고 해요. a나 an, one이 붙으면 is, two, three, many, some이 붙거나 끝에 s가 붙으면 are를 떠올리세요.",
+"ask": "있는지 물어볼 때는 is와 are를 there 앞으로 옮겨요. 하나이면 Is there, 여러 개이면 Are there로 시작해요. 대답할 때도 묻는 말에 맞춰서 Yes, there is. No, there isn't. 또는 Yes, there are. No, there aren't.라고 해요. 그리고 어디에 있는지 물을 때는 Where is, 대답은 It's 다음에 전치사와 장소를 말해요.",
+"sort": "분류 게임이에요. 위에 있는 낱말을 하나 누르고, There is 상자와 There are 상자 중에서 알맞은 곳을 누르세요. 하나인지 여러 개인지만 잘 보면 돼요. 모두 넣으면 몇 개 맞혔는지 알려 줘요.",
+"match": "질문과 알맞은 대답을 짝지어 보세요. 왼쪽에서 질문을 누르고, 오른쪽에서 대답을 누르면 돼요. Is there로 물었는지, Are there로 물었는지, 아니면 Where로 물었는지 먼저 확인하면 쉽게 찾을 수 있어요.",
+"yesno": "다시 하준이의 방이에요. 이번에는 방에 무엇이 있는지 묻고 답해 볼 거예요. 질문의 빈칸에는 Is와 Are 중에서 고르고, 대답은 그림을 보고 있다, 없다를 골라요. 하나인지 여러 개인지에 따라 대답의 모양도 바뀌어요.",
+"build": "낱말 카드를 순서대로 눌러 문장을 만들어 보세요. 카드 중 하나는 필요 없는 카드예요. is와 are, 또는 비슷한 말이 섞여 있으니 잘 골라야 해요. 잘못 눌렀다면 지우기 버튼으로 다시 할 수 있어요.",
+"fix": "하준이가 자기 방을 소개하는 글을 썼어요. 그런데 틀린 곳이 다섯 개 숨어 있어요. 그림과 글을 비교하면서 밑줄 친 낱말을 누르고, 알맞은 말로 고쳐 보세요. 맞게 쓴 것을 누르면 맞게 썼다고 알려 줘요.",
+"write": "드디어 수행평가 준비예요. 내 방을 영어로 소개하는 글을 완성해 보세요. 물건과 위치는 내 방에 맞게 고르고, is와 are는 뒤에 오는 말이 하나인지 여러 개인지에 맞게 골라야 해요. 다 고르면 점검하기 버튼으로 확인하고, 내 글 듣기 버튼으로 들으며 발표 연습도 해 보세요.",
+"end": "오늘 공부 정말 잘했어요! in, on, under, above, in front of, behind, next to, between. 여덟 가지 장소 전치사로 위치를 말할 수 있고, 하나면 There is, 여러 개면 There are로 무엇이 있는지 말할 수 있어요. 체크리스트로 스스로 확인해 보세요. 화이팅!"
+}</script>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('engplace:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('engplace:' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const NARR = JSON.parse($('#narr').textContent);
+  const IDLE = '재생 버튼을 누르면 선생님이 설명해 줘요.';
+  const SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg>';
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const shake = el => { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  /* ================= 소리 ================= */
+  const player = $('#voice');
+  const synth = window.speechSynthesis || null;
+  let rate = +store.get('rate', 1), token = 0, speaking = false, auto = false, autoTimer = null, activeSpk = null;
+  $('#rateSel').value = String(rate);
+  $('#rateSel').addEventListener('change', e => { rate = +e.target.value; store.set('rate', rate); player.playbackRate = rate; });
+
+  function pickVoice(lang) {
+    if (!synth) return null;
+    const all = synth.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith(lang));
+    const score = v => { const n = v.name.toLowerCase(); let s = 0;
+      if (lang === 'en') { if (/en-us/i.test(v.lang)) s += 4; if (/samantha|google us|aria|jenny|ava|allison|zira/.test(n)) s += 6; }
+      if (lang === 'ko') { if (/yuna|sora|heami|google 한국|sunhi|jimin/.test(n)) s += 6; }
+      if (/natural|neural|premium|enhanced|online/.test(n)) s += 3; return s; };
+    return all.sort((a, b) => score(b) - score(a))[0] || null;
+  }
+  if (synth) { synth.getVoices(); synth.onvoiceschanged = () => synth.getVoices(); }
+  let unlocked = false;
+  const unlock = () => { if (unlocked || !synth) return; unlocked = true; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {} };
+  document.addEventListener('click', unlock, true);
+  document.addEventListener('touchend', unlock, true);
+
+  function setCaption(t, on) { const c = $('#caption'); c.textContent = t; c.classList.toggle('on', !!on); }
+  function sentences(t) { return (t.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [t]).map(s => s.trim()).filter(Boolean); }
+  function setSpk(btn) { if (activeSpk) activeSpk.classList.remove('playing'); activeSpk = btn || null; if (activeSpk) activeSpk.classList.add('playing'); }
+  function stopAll() {
+    token++; speaking = false; clearTimeout(autoTimer);
+    if (synth) try { synth.cancel(); } catch (e) {}
+    try { player.pause(); } catch (e) {}
+    player.ontimeupdate = player.onended = player.onerror = null;
+    $('#aprogBar').style.width = '0';
+    setSpk(null); refreshButtons();
+  }
+  // 기기 목소리로 읽기 (음성 파일이 없을 때, 직접 쓴 글)
+  function speakDevice(text, lang, onDone, my) {
+    const list = sentences(text); let k = 0;
+    const next = () => {
+      if (my !== token) return;
+      if (k >= list.length) { finish(my, onDone); return; }
+      const line = list[k++]; setCaption(line, true);
+      if (!synth) { autoTimer = setTimeout(next, Math.max(1600, line.length * (lang === 'en' ? 70 : 120) / rate)); return; }
+      const u = new SpeechSynthesisUtterance(line);
+      u.lang = lang === 'en' ? 'en-US' : 'ko-KR';
+      const v = pickVoice(lang); if (v) u.voice = v;
+      u.rate = rate * (lang === 'en' ? 0.88 : 0.95);
+      let done = false;
+      const fin = () => { if (done) return; done = true; clearTimeout(guard); if (my === token) setTimeout(next, 150); };
+      const guard = setTimeout(fin, (line.length * 300 + 5000) / rate);
+      u.onend = fin; u.onerror = fin;
+      try { synth.speak(u); } catch (e) { fin(); }
+    };
+    setTimeout(next, 60);
+  }
+  function finish(my, onDone) {
+    if (my !== token) return;
+    speaking = false; setSpk(null); refreshButtons(); $('#aprogBar').style.width = '0';
+    setCaption(auto ? '' : IDLE, false); onDone && onDone();
+  }
+  // 녹음 파일 재생. 파일이 없으면 기기 목소리로 대신 읽는다.
+  function play(key, text, lang, onDone, btn) {
+    stopAll();
+    const my = ++token; speaking = true; setSpk(btn); refreshButtons();
+    const parts = sentences(text);
+    const total = parts.reduce((n, s) => n + s.length, 0);
+    let cues = null, ci = -1;
+    setCaption(parts[0], true);
+    if (!key) { speakDevice(text, lang, onDone, my); return; }
+    player.src = 'audio/' + key + '.mp3';
+    player.defaultPlaybackRate = rate; player.playbackRate = rate;
+    player.ontimeupdate = () => {
+      if (my !== token || !player.duration || !isFinite(player.duration)) return;
+      if (!cues) { let acc = 0; cues = parts.map(s => { const t = acc / total * player.duration; acc += s.length; return t; }); }
+      const t = player.currentTime; let i = cues.length - 1;
+      while (i > 0 && cues[i] > t) i--;
+      if (i !== ci) { ci = i; setCaption(parts[i], true); }
+      $('#aprogBar').style.width = Math.min(100, t / player.duration * 100) + '%';
+    };
+    player.onended = () => finish(my, onDone);
+    player.onerror = () => { if (my !== token) return; player.onerror = null; speakDevice(text, lang, onDone, my); };
+    const pr = player.play();
+    if (pr) pr.catch(err => {
+      if (my !== token || (err && err.name === 'AbortError')) return;
+      if (err && err.name === 'NotSupportedError') { speakDevice(text, lang, onDone, my); return; }
+      speaking = false; auto = false; setSpk(null); refreshButtons();
+      setCaption('소리를 켜려면 재생 버튼을 한 번 더 눌러 주세요.', false);
+    });
+  }
+  function sayEn(text, btn, key) {
+    if (btn && btn === activeSpk && speaking) { stopAll(); setCaption(IDLE, false); return; }
+    auto = false; play(key || null, text, 'en', null, btn);
+  }
+
+  // 예문에 스피커 버튼 달기
+  $$('.ex').forEach(p => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'spk'; b.innerHTML = SPK;
+    const en = p.querySelector('.en');
+    b.setAttribute('aria-label', '영어 듣기: ' + en.textContent);
+    b.addEventListener('click', () => sayEn(en.textContent, b, p.dataset.key));
+    p.prepend(b);
+  });
+
+  /* ================= 전체 화면 =================
+     자료는 Streamlit 페이지 안의 iframe 에서 돈다. 같은 출처라서 바깥 iframe 요소를 통째로
+     전체 화면으로 만들면 Safari 주소창·Streamlit 막대 없이 자료만 화면 가득 보인다.
+     (아이패드·PC 브라우저 지원. 아이폰 Safari 는 웹페이지 전체 화면을 지원하지 않아 버튼을 숨긴다.) */
+  function fsTarget() { try { if (window.frameElement) return window.frameElement; } catch (e) {} return document.documentElement; }
+  function fsDoc() { try { if (window.frameElement) return window.parent.document; } catch (e) {} return document; }
+  const fsEl = () => { const d = fsDoc(); return d.fullscreenElement || d.webkitFullscreenElement || null; };
+  const fsOk = (() => { const t = fsTarget(); return !!(t.requestFullscreen || t.webkitRequestFullscreen); })();
+  function enterFull() {
+    if (!fsOk || fsEl()) return;
+    const t = fsTarget();
+    try { const r = (t.requestFullscreen || t.webkitRequestFullscreen).call(t); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function exitFull() {
+    const d = fsDoc();
+    try { const r = (d.exitFullscreen || d.webkitExitFullscreen).call(d); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function fsUI() {
+    const on = !!fsEl();
+    $('#lbFull').textContent = on ? '전체 화면 끝' : '전체 화면';
+    $('#icFull').innerHTML = on ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  }
+  if (fsOk) {
+    $('#btnFull').hidden = false;
+    $('#btnFull').addEventListener('click', () => fsEl() ? exitFull() : enterFull());
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => { fsDoc().addEventListener(ev, fsUI); document.addEventListener(ev, fsUI); });
+  }
+
+  /* ================= 슬라이드 ================= */
+  const slides = $$('.slide');
+  let cur = 0;
+  function refreshButtons() {
+    const playingNarr = speaking && !activeSpk;
+    $('#lbAuto').textContent = auto ? '멈춤' : '영상처럼 보기';
+    $('#icAuto').innerHTML = auto ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+    $('#lbListen').textContent = playingNarr && !auto ? '멈춤' : '이 장 듣기';
+  }
+  function updateUI() {
+    $('#pager').textContent = `${cur + 1} / ${slides.length}`;
+    $('#bar').style.width = ((cur + 1) / slides.length * 100) + '%';
+    $('#btnPrev').disabled = cur === 0; $('#btnNext').disabled = cur === slides.length - 1;
+    $$('#tocList button').forEach((b, i) => b.setAttribute('aria-current', i === cur ? 'true' : 'false'));
+    store.set('slide', cur);
+  }
+  function go(i) {
+    if (i < 0 || i >= slides.length || i === cur) return;
+    const back = i < cur;
+    slides[cur].classList.remove('active');
+    slides.forEach(s => s.classList.toggle('back', back));
+    cur = i; slides[cur].scrollTop = 0; slides[cur].classList.add('active');
+    updateUI();
+    if (auto) narrate(); else { stopAll(); setCaption(IDLE, false); }
+    preload(cur + 1);
+  }
+  function narrate() {
+    const s = slides[cur], id = s.dataset.id;
+    play('n_' + id, NARR[id], 'ko', () => {
+      if (!auto) return;
+      if (s.dataset.stop || cur === slides.length - 1) { auto = false; refreshButtons(); setCaption('직접 풀어 보고, 다음 버튼으로 넘어가요.', false); return; }
+      autoTimer = setTimeout(() => go(cur + 1), 900);
+    });
+  }
+  function preload(i) { const s = slides[i]; if (!s) return; try { const a = new Audio(); a.preload = 'auto'; a.src = 'audio/n_' + s.dataset.id + '.mp3'; } catch (e) {} }
+
+  $('#btnPrev').addEventListener('click', () => go(cur - 1));
+  $('#btnNext').addEventListener('click', () => go(cur + 1));
+  $('#btnAuto').addEventListener('click', () => {
+    if (auto) { auto = false; stopAll(); setCaption(IDLE, false); return; }
+    enterFull(); auto = true; refreshButtons(); narrate();
+  });
+  $('#startAuto').addEventListener('click', () => { enterFull(); auto = true; refreshButtons(); narrate(); });
+  $('#btnListen').addEventListener('click', () => {
+    if (speaking && !activeSpk && !auto) { stopAll(); setCaption(IDLE, false); return; }
+    auto = false; narrate();
+  });
+  $$('[data-go]').forEach(b => b.addEventListener('click', () => { auto = false; go(+b.dataset.go - 1); }));
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, select, textarea')) return;
+    if (!$('#tocBox').hidden) { if (e.key === 'Escape') $('#tocBox').hidden = true; return; }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  });
+  let tx = 0, ty = 0, tOk = false;
+  const stage = $('#stage');
+  stage.addEventListener('touchstart', e => { tOk = !e.target.closest('button, select, input, .tbl, .pool, .bins'); tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (!tOk) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { auto = false; go(cur + (dx < 0 ? 1 : -1)); }
+  }, { passive: true });
+
+  slides.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button"><span>${i + 1}</span><span>${s.dataset.title}</span></button>`;
+    li.firstChild.addEventListener('click', () => { $('#tocBox').hidden = true; auto = false; go(i); });
+    $('#tocList').appendChild(li);
+  });
+  $('#btnToc').addEventListener('click', () => { $('#tocBox').hidden = false; });
+  $$('[data-close]').forEach(b => b.addEventListener('click', () => { $('#tocBox').hidden = true; }));
+  $('#tocBox').addEventListener('click', e => { if (e.target.id === 'tocBox') $('#tocBox').hidden = true; });
+
+  /* ================= 그림 (SVG) ================= */
+  const F = c => `style="fill:var(--${c})"`;
+  const LN = 'style="stroke:var(--c-line);stroke-width:2;stroke-linejoin:round;stroke-linecap:round"';
+  const G = 100; // 바닥 높이
+  function boxFront(x, w, h) { return `<rect x="${x}" y="${G - h}" width="${w}" height="${h}" ${F('c-box')}/><polygon points="${x + w},${G - h} ${x + w + 10},${G - h - 9} ${x + w + 10},${G - 9} ${x + w},${G}" ${F('c-box-side')}/>`; }
+  function boxTop(x, w, h, open) { return `<polygon points="${x},${G - h} ${x + w},${G - h} ${x + w + 10},${G - h - 9} ${x + 10},${G - h - 9}" ${F(open ? 'c-wood-d' : 'c-box-top')}/>`; }
+  const box = (x, w, h) => boxTop(x, w, h) + boxFront(x, w, h);
+  const table = (x, w) => `<rect x="${x}" y="58" width="${w}" height="7" rx="2" ${F('c-wood')}/><rect x="${x + 6}" y="65" width="6" height="35" ${F('c-wood-d')}/><rect x="${x + w - 12}" y="65" width="6" height="35" ${F('c-wood-d')}/>`;
+  function thing(kind, cx, cy, r = 11) {
+    if (kind === 'apple') return `<circle cx="${cx}" cy="${cy}" r="${r}" ${F('c-apple')}/><path d="M${cx} ${cy - r + 1}l1 -6" fill="none"/><ellipse cx="${cx + 5}" cy="${cy - r - 3}" rx="5" ry="2.6" ${F('c-leaf')}/>`;
+    if (kind === 'balloon') return `<path d="M${cx} ${cy + r * 1.15}q-4 10 2 22" fill="none"/><ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r * 1.15}" ${F('c-apple')}/>`;
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" ${F('c-ball')}/><path d="M${cx - r} ${cy}q${r} ${-r * 0.7} ${r * 2} 0" fill="none" style="stroke:var(--surface);stroke-width:2"/>`;
+  }
+  // pos: 전치사, kind: ball/apple/balloon, base: box/table
+  function scene(pos, kind = 'ball', base) {
+    let s = '';
+    base = base || ({ under: 'table', above: 'table' }[pos] || 'box');
+    if (pos === 'in') s = boxTop(50, 50, 42, true) + thing(kind, 80, 56) + boxFront(50, 50, 42);
+    else if (pos === 'on') s = base === 'table' ? table(35, 90) + thing(kind, 80, 47) : box(50, 50, 42) + thing(kind, 80, 42);
+    else if (pos === 'under') s = table(35, 90) + thing(kind, 80, 89);
+    else if (pos === 'above') s = table(35, 90) + thing(kind, 80, 22);
+    else if (pos === 'in front of') s = box(50, 50, 42) + thing(kind, 72, 86, 13);
+    else if (pos === 'behind') s = thing(kind, 88, 46) + box(50, 50, 42);
+    else if (pos === 'next to') s = box(28, 50, 42) + thing(kind, 120, 89);
+    else if (pos === 'between') s = box(6, 40, 36) + box(104, 40, 36) + thing(kind, 80, 89);
+    return `<svg class="scene" viewBox="0 0 160 110" aria-hidden="true"><line x1="2" y1="${G}" x2="158" y2="${G}" style="stroke:var(--line);stroke-width:2"/><g ${LN}>${s}</g></svg>`;
+  }
+  function lampScene(mode) {
+    const lamp = mode === 'on'
+      ? `<rect x="68" y="52" width="24" height="6" ${F('c-wood-d')}/><rect x="78" y="34" width="4" height="18" ${F('c-wood-d')}/><polygon points="66,34 94,34 88,16 72,16" ${F('c-box-top')}/>`
+      : `<path d="M80 0v14" fill="none"/><polygon points="66,30 94,30 88,14 72,14" ${F('c-box-top')}/><circle cx="80" cy="33" r="4" ${F('c-box')}/>`;
+    return `<svg class="scene" viewBox="0 0 160 110" aria-hidden="true" style="background:var(--soft);border-radius:12px"><line x1="2" y1="${G}" x2="158" y2="${G}" style="stroke:var(--line);stroke-width:2"/><g ${LN}>${table(35, 90)}${lamp}</g><text x="80" y="${mode === 'on' ? 84 : 50}" text-anchor="middle" style="fill:var(--pp);font:800 14px var(--f)">${mode}</text></svg>`;
+  }
+  function roomSVG() {
+    return `<svg viewBox="0 0 600 340" role="img" aria-label="하준이의 방 그림: 침대 위쪽 벽에 시계, 침대 위에 곰 인형, 침대 밑에 고양이, 침대와 책상 사이에 가방, 책상 앞에 의자 하나, 책상 위 컵 안에 연필 세 자루, 책상 옆에 화분이 있어요. 창문은 하나예요.">
+      <rect x="0" y="0" width="600" height="262" ${F('c-wall')}/><rect x="0" y="262" width="600" height="78" ${F('c-floor')}/>
+      <g ${LN}>
+        <rect x="255" y="36" width="100" height="86" ${F('c-glass')}/><path d="M305 36v86M255 79h100" fill="none"/>
+        <circle cx="130" cy="72" r="22" ${F('surface')}/><path d="M130 72v-13M130 72l10 5" fill="none"/>
+        <rect x="26" y="150" width="22" height="150" rx="4" ${F('c-wood-d')}/>
+        <rect x="56" y="238" width="9" height="62" ${F('c-wood-d')}/><rect x="216" y="238" width="9" height="62" ${F('c-wood-d')}/>
+        <rect x="40" y="200" width="196" height="40" rx="6" ${F('c-cloth')}/><rect x="118" y="198" width="118" height="44" rx="6" ${F('c-cloth-d')}/>
+        <ellipse cx="80" cy="192" rx="26" ry="9" ${F('surface')}/>
+        <circle cx="166" cy="158" r="4.5" ${F('c-bear')}/><circle cx="184" cy="158" r="4.5" ${F('c-bear')}/>
+        <ellipse cx="175" cy="186" rx="13" ry="14" ${F('c-bear')}/><circle cx="175" cy="166" r="11" ${F('c-bear')}/>
+        <path d="M98 286q-20 -4 -14 -22" fill="none"/>
+        <ellipse cx="124" cy="287" rx="28" ry="13" ${F('c-fur')}/>
+        <polygon points="150,274 153,262 160,271" ${F('c-fur')}/><polygon points="160,271 166,262 168,275" ${F('c-fur')}/>
+        <circle cx="159" cy="281" r="11" ${F('c-fur')}/>
+        <rect x="268" y="254" width="50" height="46" rx="8" ${F('c-ball')}/><path d="M279 254q14 -24 28 0" fill="none"/><rect x="278" y="272" width="30" height="16" rx="4" fill="none"/>
+        <rect x="380" y="180" width="44" height="12" rx="2" ${F('c-apple')}/><rect x="384" y="170" width="38" height="10" rx="2" ${F('c-leaf')}/>
+        <path d="M505 166l-4 -18" style="stroke:var(--c-apple);stroke-width:4" fill="none"/><path d="M511 166l1 -21" style="stroke:var(--c-leaf);stroke-width:4" fill="none"/><path d="M517 166l4 -17" style="stroke:var(--c-ball);stroke-width:4" fill="none"/>
+        <rect x="500" y="164" width="24" height="28" rx="3" ${F('surface')}/>
+        <rect x="360" y="192" width="180" height="12" rx="2" ${F('c-wood')}/>
+        <rect x="368" y="204" width="10" height="96" ${F('c-wood-d')}/><rect x="522" y="204" width="10" height="96" ${F('c-wood-d')}/>
+        <rect x="418" y="206" width="64" height="50" rx="6" ${F('c-wood')}/>
+        <rect x="410" y="255" width="80" height="9" rx="2" ${F('c-wood')}/>
+        <rect x="414" y="264" width="8" height="52" ${F('c-wood-d')}/><rect x="478" y="264" width="8" height="52" ${F('c-wood-d')}/>
+        <ellipse cx="573" cy="246" rx="8" ry="24" ${F('c-leaf')}/><ellipse cx="560" cy="254" rx="7" ry="18" transform="rotate(-30 560 254)" ${F('c-leaf')}/><ellipse cx="586" cy="254" rx="7" ry="18" transform="rotate(30 586 254)" ${F('c-leaf')}/>
+        <polygon points="553,270 593,270 588,306 558,306" ${F('c-wood')}/>
+      </g>
+      <g style="font:700 13px var(--f);fill:var(--muted)" lang="en"><text x="130" y="330" text-anchor="middle">bed</text><text x="450" y="334" text-anchor="middle">desk</text></g>
+    </svg>`;
+  }
+  $$('[data-room]').forEach(el => { el.innerHTML = roomSVG(); });
+  $('#trkOn').innerHTML = lampScene('on');
+  $('#trkAbove').innerHTML = lampScene('above');
+
+  /* ================= 개념 ① 그림 카드 ================= */
+  const PREPS = ['in', 'on', 'under', 'above', 'in front of', 'behind', 'next to', 'between'];
+  const GRID = [
+    ['in', '안에', 'The ball is in the box.', 'e_g1'],
+    ['on', '위에 (닿음)', 'The ball is on the box.', 'e_g2'],
+    ['under', '아래에', 'The ball is under the table.', 'e_g3'],
+    ['above', '위쪽에 (떨어짐)', 'The ball is above the table.', 'e_g4'],
+    ['in front of', '앞에', 'The ball is in front of the box.', 'e_g5'],
+    ['behind', '뒤에', 'The ball is behind the box.', 'e_g6'],
+    ['next to', '바로 옆에', 'The ball is next to the box.', 'e_g7'],
+    ['between', '사이에', 'The ball is between the boxes.', 'e_g8']
+  ];
+  GRID.forEach(([p, ko, sent, key]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pcard';
+    b.setAttribute('aria-label', `${p}: ${ko}. 영어 듣기`);
+    b.innerHTML = scene(p) + `<b lang="en">${p}</b><small>${ko}</small>`;
+    b.addEventListener('click', () => sayEn(sent, null, key));
+    $('#pgrid').appendChild(b);
+  });
+
+  /* ================= 연습 ① 그림 보고 고르기 ================= */
+  // [전치사, 물건, 문장, 보기, 이유, 받침(선택)]
+  const QUIZ = [
+    ['under', 'ball', 'The ball is ___ the table.', ['on', 'under', 'above', 'in'], '공이 탁자 바로 밑에 있어서 under예요.'],
+    ['in', 'apple', 'The apple is ___ the box.', ['in', 'on', 'behind', 'next to'], '사과가 상자 속에 들어 있어서 in이에요.'],
+    ['behind', 'ball', 'The ball is ___ the box.', ['in front of', 'behind', 'on', 'between'], '공이 상자 뒤에 숨어 위쪽만 보여서 behind예요.'],
+    ['above', 'balloon', 'The balloon is ___ the table.', ['on', 'under', 'above', 'next to'], '풍선이 탁자에 닿지 않고 떠 있어서 above예요.'],
+    ['between', 'ball', 'The ball is ___ the boxes.', ['next to', 'between', 'in front of', 'under'], '공이 두 상자 사이에 있어서 between이에요.'],
+    ['next to', 'apple', 'The apple is ___ the box.', ['next to', 'behind', 'in', 'above'], '사과가 상자 바로 옆에 있어서 next to예요.'],
+    ['on', 'ball', 'The ball is ___ the box.', ['above', 'on', 'in', 'under'], '공이 상자 윗면에 닿아 있어서 on이에요.'],
+    ['in front of', 'apple', 'The apple is ___ the box.', ['behind', 'next to', 'in front of', 'on'], '사과가 상자 앞에 있어서 상자의 아래쪽을 가리고 있어요. in front of예요.']
+  ];
+  // 보기를 누르는 문제 하나 (연습 ①, ② 공통)
+  function choiceQ(box, sentence, opts, ans, why, onScore, wrongMsg) {
+    const q = document.createElement('div'); q.className = 'q';
+    const [a, b] = sentence.split('___');
+    q.innerHTML = `<p class="sent" lang="en">${esc(a)}<span class="blank">&nbsp;</span>${esc(b)}</p><div class="choices"></div><p class="why" hidden></p>`;
+    opts.forEach(p => {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.lang = 'en'; c.textContent = p;
+      c.addEventListener('click', () => {
+        const w = q.querySelector('.why');
+        if (p === ans) {
+          q.querySelectorAll('.choice').forEach(x => x.disabled = true);
+          c.classList.add('ok');
+          q.querySelector('.blank').innerHTML = `<span class="p pp">${esc(ans)}</span>`;
+          onScore(!q.dataset.miss);
+          w.hidden = false; w.className = 'why ok'; w.textContent = (q.dataset.miss ? '정답이에요. ' : '정답! ') + why;
+          sayEn((a + ans + b).replace(/\s+/g, ' ').trim(), null);
+        } else {
+          q.dataset.miss = '1'; c.classList.add('no'); c.disabled = true; shake(c);
+          w.hidden = false; w.className = 'why no'; w.textContent = wrongMsg;
+        }
+      });
+      q.querySelector('.choices').appendChild(c);
+    });
+    box.appendChild(q);
+    return q;
+  }
+  function buildQuiz() {
+    const box = $('#quizList'); box.innerHTML = ''; let score = 0, done = 0;
+    $('#quizScore').textContent = `0 / ${QUIZ.length}`;
+    QUIZ.forEach(([pos, kind, sent, opts, why], n) => {
+      const row = document.createElement('div'); row.className = 'qpic';
+      row.innerHTML = scene(pos, kind) + '<div></div>';
+      box.appendChild(row);
+      const q = choiceQ(row.lastChild, `${n + 1}. ${sent}`, opts, pos, why, first => {
+        if (first) score++; done++;
+        $('#quizScore').textContent = `${score} / ${QUIZ.length}`;
+        if (done === QUIZ.length) $('#quizScore').textContent += ' · 모두 풀었어요!';
+      }, '다시 그림을 보세요. 안, 위, 아래, 앞, 뒤, 옆, 사이 중 어디인가요?');
+      q.style.borderBottom = '0';
+      row.style.borderBottom = '1px solid var(--line)'; row.style.paddingBlock = '6px';
+    });
+  }
+  buildQuiz(); $('#quizReset').addEventListener('click', buildQuiz);
+
+  /* ================= 연습 ② 방 그림 문장 완성 ================= */
+  const ROOM = [
+    ['The clock is ___ the bed.', ['above', 'on', 'under', 'behind'], 'above', '시계는 침대에 닿지 않고 위쪽 벽에 있어요.'],
+    ['The teddy bear is ___ the bed.', ['in', 'on', 'under', 'next to'], 'on', '곰 인형이 침대 위에 놓여 있어요.'],
+    ['The cat is ___ the bed.', ['above', 'on', 'under', 'in front of'], 'under', '고양이가 침대 밑에서 자고 있어요.'],
+    ['The bag is ___ the bed and the desk.', ['next to', 'between', 'behind', 'in'], 'between', '가방이 침대와 책상 사이에 있어요. and가 힌트!'],
+    ['The chair is ___ the desk.', ['behind', 'on', 'in front of', 'between'], 'in front of', '의자가 책상 앞에 있어서 책상 다리를 가리고 있어요.'],
+    ['The plant is ___ the desk.', ['on', 'next to', 'under', 'between'], 'next to', '화분이 책상 바로 옆에 있어요.'],
+    ['The pencils are ___ the cup.', ['under', 'behind', 'in', 'above'], 'in', '연필이 컵 안에 꽂혀 있어요.']
+  ];
+  function buildRoom() {
+    const box = $('#roomList'); box.innerHTML = ''; let score = 0;
+    $('#roomScore').textContent = `0 / ${ROOM.length}`;
+    ROOM.forEach(([sent, opts, ans, why], n) => choiceQ(box, `${n + 1}. ${sent}`, opts, ans, why, first => {
+      if (first) score++; $('#roomScore').textContent = `${score} / ${ROOM.length}`;
+    }, '그림을 다시 보세요. 빈칸 뒤의 물건을 기준으로 어디에 있나요?'));
+  }
+  buildRoom(); $('#roomReset').addEventListener('click', buildRoom);
+
+  /* ================= 연습 ③ 분류 ================= */
+  const SORT = [['a ruler', 'is'], ['an umbrella', 'is'], ['a big tree', 'is'], ['an old piano', 'is'], ['a bus stop', 'is'], ['one orange', 'is'],
+    ['two erasers', 'are'], ['many books', 'are'], ['some flowers', 'are'], ['three dogs', 'are'], ['five pencils', 'are'], ['some cookies', 'are']];
+  let sortSel = null, sortRight = 0;
+  function buildSort() {
+    const pool = $('#sortPool'); pool.innerHTML = ''; sortSel = null; sortRight = 0;
+    $$('#sortBins .got').forEach(g => g.innerHTML = '');
+    shuffle(SORT).forEach(([w, b]) => {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.lang = 'en'; c.textContent = w; c.dataset.bin = b;
+      c.addEventListener('click', () => { if (sortSel) sortSel.classList.remove('sel'); sortSel = c; c.classList.add('sel'); $('#sortMsg').className = 'msg'; $('#sortMsg').textContent = `"${w}" 는 하나일까요, 여러 개일까요?`; });
+      pool.appendChild(c);
+    });
+    $('#sortMsg').className = 'msg'; $('#sortMsg').textContent = '낱말을 먼저 골라 보세요.';
+  }
+  $$('#sortBins .bin').forEach(bin => bin.addEventListener('click', () => {
+    const m = $('#sortMsg');
+    if (!sortSel) { m.className = 'msg no'; m.textContent = '위에서 낱말을 먼저 골라 주세요.'; shake(bin); return; }
+    const want = sortSel.dataset.bin, w = sortSel.textContent;
+    if (bin.dataset.bin === want) {
+      if (!sortSel.dataset.miss) sortRight++;
+      const t = document.createElement('span'); t.textContent = w; t.lang = 'en'; bin.querySelector('.got').appendChild(t);
+      sortSel.remove(); sortSel = null;
+      const left = $$('#sortPool .chip').length;
+      m.className = 'msg ok';
+      m.textContent = left ? `맞아요! There ${want} ${w}.` : `모두 넣었어요! 한 번에 맞힌 것은 ${SORT.length}개 중 ${sortRight}개예요.`;
+      sayEn(`There ${want} ${w}.`, null);
+    } else {
+      sortSel.dataset.miss = '1'; shake(bin);
+      m.className = 'msg no';
+      m.textContent = want === 'is' ? 'a, an, one이 붙으면 하나예요. 다시 골라 보세요.' : 'two, many, some이 붙거나 끝에 s가 있으면 여러 개예요.';
+    }
+  }));
+  buildSort(); $('#sortReset').addEventListener('click', buildSort);
+
+  /* ================= 연습 ④ 짝 맞추기 ================= */
+  const PAIRS = [
+    ['Is there a bus stop near your house?', "Yes, there is. It's next to the bank."],
+    ['Are there ducks in the pond?', "Yes, there are. They're behind the bridge."],
+    ['Is there a piano in your classroom?', "No, there isn't. But there is a guitar."],
+    ['Are there cookies in the jar?', "No, there aren't. The jar is empty."],
+    ['Where is my cap?', "It's on the chair."]
+  ];
+  const MCOL = ['#6a4c93', '#2f6f8f', '#b5523b', '#3f7a4a', '#8a5a3c'];
+  let mSel = null, mDone = 0;
+  function buildMatch() {
+    const Q = $('#matchQ'), A = $('#matchA'); Q.innerHTML = A.innerHTML = ''; mSel = null; mDone = 0;
+    $('#matchMsg').textContent = '';
+    PAIRS.forEach(([q], i) => Q.appendChild(mk(q, i, 'q')));
+    shuffle(PAIRS.map((p, i) => [p[1], i])).forEach(([a, i]) => A.appendChild(mk(a, i, 'a')));
+  }
+  function mk(text, i, side) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mitem'; b.lang = 'en'; b.textContent = text; b.dataset.i = i; b.dataset.side = side;
+    b.addEventListener('click', () => {
+      if (b.classList.contains('done')) return;
+      sayEn(text, null);
+      if (!mSel || mSel.dataset.side === side) { if (mSel) mSel.classList.remove('sel'); mSel = b; b.classList.add('sel'); return; }
+      const m = $('#matchMsg');
+      if (mSel.dataset.i === b.dataset.i) {
+        const col = MCOL[mDone % MCOL.length];
+        [mSel, b].forEach(x => { x.classList.remove('sel'); x.classList.add('done'); x.style.background = col; });
+        mDone++; mSel = null;
+        m.className = 'msg ok'; m.textContent = mDone === PAIRS.length ? '모두 맞혔어요! 같은 색끼리 짝이에요.' : '맞아요! 같은 색으로 표시했어요.';
+      } else {
+        shake(b); m.className = 'msg no';
+        const q = (side === 'a' ? mSel : b).textContent;
+        m.textContent = q.startsWith('Is there') ? 'Is there로 물었으니 there is / there isn\'t로 답한 것을 찾아보세요.'
+          : q.startsWith('Are there') ? 'Are there로 물었으니 there are / there aren\'t로 답한 것을 찾아보세요.'
+          : 'Where로 어디 있는지 물었으니 It\'s + 위치로 답한 것을 찾아보세요.';
+      }
+    });
+    return b;
+  }
+  buildMatch(); $('#matchReset').addEventListener('click', buildMatch);
+
+  /* ================= 연습 ⑤ 방 그림 묻고 답하기 ================= */
+  const ANS = ['Yes, there is.', 'Yes, there are.', "No, there isn't.", "No, there aren't."];
+  const YN = [
+    ['Is', 'there a cat under the bed?', 'Yes, there is.', '고양이 한 마리가 침대 밑에 있어요.'],
+    ['Are', 'there two chairs in the room?', "No, there aren't.", '의자는 하나뿐이에요.'],
+    ['Is', 'there a clock above the desk?', "No, there isn't.", '시계는 책상이 아니라 침대 위쪽에 있어요.'],
+    ['Are', 'there pencils in the cup?', 'Yes, there are.', '컵 안에 연필 세 자루가 있어요.'],
+    ['Is', 'there a dog in the room?', "No, there isn't.", '방에는 개가 없고 고양이가 있어요.']
+  ];
+  let ynScore = 0;
+  function buildYN() {
+    const box = $('#ynList'); box.innerHTML = ''; ynScore = 0;
+    $('#ynScore').textContent = `0 / ${YN.length * 2}`;
+    YN.forEach(([qw, rest, ans, why], n) => {
+      const d = document.createElement('div'); d.className = 'dlg';
+      d.innerHTML = `<div class="line" lang="en"><span class="who">A</span><span>${n + 1}.</span><span class="sel-set" data-k="q"></span><span>${esc(rest)}</span></div>
+        <div class="line" lang="en"><span class="who">B</span><span class="ans-set sel-set" data-k="a"></span></div><p class="why" hidden></p>`;
+      const mkSet = (k, opts, right, okMsg, noMsg) => {
+        const set = d.querySelector(`[data-k="${k}"]`); let missed = false;
+        opts.forEach(o => {
+          const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.textContent = o;
+          c.addEventListener('click', () => {
+            const w = d.querySelector('.why'); w.hidden = false;
+            if (o === right) {
+              set.innerHTML = `<b style="color:var(--ok)">${esc(o)}</b>`; if (!missed) ynScore++;
+              $('#ynScore').textContent = `${ynScore} / ${YN.length * 2}`;
+              w.className = 'why ok'; w.textContent = okMsg;
+              if (!d.querySelector('.choice')) sayEn(`${qw} ${rest} ${ans}`, null);
+            } else { missed = true; c.classList.add('no'); c.disabled = true; shake(c); w.className = 'why no'; w.textContent = noMsg; }
+          });
+          set.appendChild(c);
+        });
+      };
+      const plural = qw === 'Are';
+      mkSet('q', ['Is', 'Are'], qw, plural ? '맞아요! 여러 개를 물으니 Are there.' : '맞아요! 하나를 물으니 Is there.', '뒤에 오는 말이 하나인가요, 여러 개인가요?');
+      mkSet('a', ANS, ans, '맞아요! ' + why, plural ? 'Are there로 물었으니 there are / aren\'t 중에서, 그림을 보고 골라요.' : 'Is there로 물었으니 there is / isn\'t 중에서, 그림을 보고 골라요.');
+      box.appendChild(d);
+    });
+  }
+  buildYN(); $('#ynReset').addEventListener('click', buildYN);
+
+  /* ================= 연습 ⑥ 낱말 카드로 문장 만들기 ================= */
+  // [뜻, 정답 순서, 필요 없는 카드, 끝 문장부호, 설명]
+  const BUILD = [
+    ['바구니 안에 사과 세 개가 있어요.', ['There', 'are', 'three apples', 'in', 'the basket'], ['is'], '.', 'three apples는 여러 개라서 are'],
+    ['너희 학교 옆에 공원이 있니?', ['Is', 'there', 'a park', 'next to', 'your school'], ['Are'], '?', 'a park는 하나라서 Is there'],
+    ['탁자 밑에 고양이가 없어요.', ['There', "isn't", 'a cat', 'under', 'the table'], ["aren't"], '.', 'a cat은 하나라서 isn\'t'],
+    ['집 앞에 자전거 두 대가 있니?', ['Are', 'there', 'two bikes', 'in front of', 'the house'], ['Is'], '?', 'two bikes는 여러 개라서 Are there'],
+    ['빵집은 은행과 서점 사이에 있어요.', ['The bakery', 'is', 'between', 'the bank', 'and', 'the bookstore'], ['next to'], '.', 'between A and B']
+  ];
+  function buildBuild() {
+    const box = $('#buildList'); box.innerHTML = '';
+    BUILD.forEach(([hint, ans, extra, end, why], n) => {
+      const d = document.createElement('div'); d.className = 'build';
+      d.innerHTML = `<p class="hint">${n + 1}. ${esc(hint)}</p><div class="out" lang="en"></div><div class="chips"></div>
+        <div class="choices"><button class="btn small" type="button" data-a="undo">지우기</button><button class="btn small" type="button" data-a="show">정답 보기</button></div><p class="why" hidden></p>`;
+      const out = d.querySelector('.out'), chips = d.querySelector('.chips'), w = d.querySelector('.why');
+      const full = ans.join(' ') + end;
+      let picked = [];
+      const render = () => {
+        out.className = 'out'; out.textContent = picked.map(c => c.textContent).join(' ') + (picked.length === ans.length ? end : '');
+        if (picked.length === ans.length) {
+          const ok = picked.every((c, i) => c.textContent === ans[i]);
+          out.classList.add(ok ? 'ok' : 'no'); w.hidden = false; w.className = 'why ' + (ok ? 'ok' : 'no');
+          w.textContent = ok ? `정답! ${why}.` : '순서나 is / are를 다시 확인해 보세요.';
+          if (ok) { chips.querySelectorAll('.chip').forEach(c => c.disabled = true); sayEn(full, null); }
+        } else w.hidden = true;
+      };
+      shuffle(ans.concat(extra)).forEach(word => {
+        const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.lang = 'en'; c.textContent = word;
+        c.addEventListener('click', () => { if (picked.length >= ans.length) return; picked.push(c); c.disabled = true; render(); });
+        chips.appendChild(c);
+      });
+      d.querySelector('[data-a="undo"]').addEventListener('click', () => { const c = picked.pop(); if (c) c.disabled = false; chips.querySelectorAll('.chip').forEach(x => { if (!picked.includes(x)) x.disabled = false; }); render(); });
+      d.querySelector('[data-a="show"]').addEventListener('click', () => { w.hidden = false; w.className = 'why'; w.innerHTML = `정답: <b lang="en">${esc(full)}</b> (${esc(why)})`; });
+      box.appendChild(d);
+    });
+  }
+  buildBuild();
+
+  /* ================= 연습 ⑦ 틀린 곳 찾기 ================= */
+  // 글 조각: 문자열 또는 [쓴 말, 바른 말, 종류(p 전치사 / b is·are)]
+  const STORY = ["Hi, I'm Hajun. This is my room. A clock is ", ['under', 'above', 'p'], ' the bed. There ', ['are', 'is', 'b'], ' a teddy bear ', ['on', 'on', 'p'],
+    ' the bed. My cat is sleeping ', ['under', 'under', 'p'], ' the bed. There ', ['is', 'are', 'b'], ' three pencils in the cup. The cup is ', ['on', 'on', 'p'],
+    ' the desk. My chair is ', ['behind', 'in front of', 'p'], ' the desk. My bag is ', ['next to', 'between', 'p'], ' the bed and the desk. There ', ['is', 'is', 'b'],
+    ' a plant ', ['next to', 'next to', 'p'], ' the desk. I love my room!'];
+  const WRONG = STORY.filter(p => Array.isArray(p) && p[0] !== p[1]).length;
+  let fixSel = null, fixFound = 0;
+  function buildFix() {
+    const st = $('#story'); st.innerHTML = ''; fixSel = null; fixFound = 0; let num = 0;
+    $('#fixScore').textContent = `0 / ${WRONG}`; $('#fixChoices').hidden = true; $('#fixAsk').textContent = '밑줄 친 낱말을 눌러 보세요. 그림과 비교해 보면 찾을 수 있어요.';
+    STORY.forEach(p => {
+      if (typeof p === 'string') { st.appendChild(document.createTextNode(p)); return; }
+      num++;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'fx wide';
+      b.innerHTML = `<sup>${num}</sup>${p[0]}`; b.dataset.w = p[0]; b.dataset.r = p[1]; b.dataset.k = p[2]; b.dataset.n = num;
+      b.addEventListener('click', () => pickFix(b));
+      st.appendChild(b);
+    });
+  }
+  function pickFix(b) {
+    if (b.classList.contains('fixed') || b.classList.contains('okk')) return;
+    if (fixSel) fixSel.classList.remove('sel');
+    fixSel = b; b.classList.add('sel');
+    const kind = b.dataset.k;
+    $('#fixAsk').innerHTML = `${b.dataset.n}번 <b lang="en">${b.dataset.w}</b> 는 맞게 썼을까요? 바른 말을 골라 보세요.`;
+    const ch = $('#fixChoices'); ch.innerHTML = ''; ch.hidden = false;
+    (kind === 'b' ? ['is', 'are'] : PREPS).forEach(p => {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.lang = 'en'; c.textContent = p;
+      c.addEventListener('click', () => {
+        const right = b.dataset.r, wrote = b.dataset.w;
+        if (p !== right) { c.classList.add('no'); c.disabled = true; shake(c); $('#fixAsk').textContent = kind === 'b' ? '뒤에 오는 말이 하나인가요, 여러 개인가요?' : '그림에서 그 물건이 어디에 있는지 다시 보세요.'; return; }
+        ch.hidden = true; b.classList.remove('sel');
+        if (wrote === right) { b.classList.add('okk'); $('#fixAsk').innerHTML = `${b.dataset.n}번은 맞게 쓴 거예요.` + (fixFound === WRONG ? ' 틀린 곳 다섯 개는 이미 모두 찾았어요!' : ' 다른 곳을 찾아보세요.'); return; }
+        b.classList.add('fixed'); b.innerHTML = `<sup>${b.dataset.n}</sup><s>${b.dataset.w}</s>${right}`;
+        fixFound++; $('#fixScore').textContent = `${fixFound} / ${WRONG}`;
+        $('#fixAsk').innerHTML = fixFound === WRONG ? '다섯 개를 모두 찾아 고쳤어요! 대단해요.' : `잘 찾았어요! <b lang="en">${b.dataset.w}</b> → <b lang="en">${right}</b>`;
+      });
+      ch.appendChild(c);
+    });
+  }
+  buildFix(); $('#fixReset').addEventListener('click', buildFix);
+
+  /* ================= 수행평가 글쓰기 ================= */
+  // 줄 조각: 문자열 / {o:[보기], ex} 내용 / {n:[[낱말, 여러개?]], id, ex} 명사 / {be:[하나, 여러개], of:id} / {p:true, ex} 위치(자유)
+  const FREEP = ['in', 'on', 'under', 'above', 'in front of', 'behind', 'next to'];
+  const WRITE = [
+    ['This is my room.'],
+    ['There', { be: ['is', 'are'], of: 'n1' }, { n: [['a bed', 0], ['a desk', 0], ['a big window', 0], ['two windows', 1], ['many books', 1], ['three plants', 1]], id: 'n1', ex: 'a big window' }, 'in my room.'],
+    ['My', { o: ['bed', 'desk', 'chair', 'bag', 'lamp'], ex: 'bed' }, 'is', { p: 1, ex: 'next to' }, { o: ['the window', 'the door', 'the desk', 'the bed', 'the closet'], ex: 'the window' }, '.'],
+    ['There', { be: ['is', 'are'], of: 'n2' }, { n: [['a lamp', 0], ['a clock', 0], ['a mirror', 0], ['two pictures', 1], ['some toys', 1], ['many stickers', 1]], id: 'n2', ex: 'two pictures' }, { p: 1, ex: 'above' }, { o: ['my bed', 'my desk', 'the door', 'the window'], ex: 'my bed' }, '.'],
+    ['There', { be: ["isn't", "aren't"], of: 'n3' }, { n: [['a TV', 0], ['a sofa', 0], ['a computer', 0], ['many toys', 1], ['two beds', 1]], id: 'n3', ex: 'a TV' }, 'in my room.'],
+    ['My favorite thing is my', { o: ['teddy bear', 'robot', 'guitar', 'soccer ball'], ex: 'teddy bear' }, '.', "It's", { p: 1, ex: 'on' }, { o: ['my bed', 'my desk', 'the shelf', 'the floor'], ex: 'my bed' }, '.']
+  ];
+  const wSel = [], nouns = {};
+  (function buildWrite() {
+    const box = $('#writeBox');
+    WRITE.forEach(parts => {
+      const line = document.createElement('div'); line.className = 'wline'; line.lang = 'en';
+      parts.forEach(part => {
+        if (typeof part === 'string') { const s = document.createElement('span'); s.textContent = part; line.appendChild(s); return; }
+        const sel = document.createElement('select');
+        let opts, ph = '고르기';
+        if (part.be) { opts = part.be; ph = '?'; sel.className = 'prep'; sel.dataset.be = part.of; sel.dataset.one = part.be[0]; sel.dataset.many = part.be[1]; sel.setAttribute('aria-label', 'is 또는 are 고르기'); }
+        else if (part.n) { opts = part.n.map(x => x[0]); nouns[part.id] = { sel, many: Object.fromEntries(part.n) }; sel.setAttribute('aria-label', '물건 고르기'); }
+        else if (part.p) { opts = FREEP; ph = '위치'; sel.setAttribute('aria-label', '위치 전치사 고르기'); }
+        else { opts = part.o; sel.setAttribute('aria-label', '내용 고르기'); }
+        sel.dataset.ex = part.ex || '';
+        sel.innerHTML = `<option value="">${ph}</option>` + opts.map(o => `<option>${esc(o)}</option>`).join('');
+        sel.addEventListener('change', () => { sel.classList.remove('ok', 'no'); render(); });
+        wSel.push(sel); line.appendChild(sel);
+      });
+      box.appendChild(line);
+    });
+  })();
+  const beAns = s => { const n = nouns[s.dataset.be]; if (!n || !n.sel.value) return ''; return n.many[n.sel.value] ? s.dataset.many : s.dataset.one; };
+  function writeText() {
+    return $$('#writeBox .wline').map(line => [...line.children].map(el => el.tagName === 'SELECT' ? (el.value || '___') : el.textContent).join(' ').replace(/\s+\./g, '.')).join(' ');
+  }
+  function render() { $('#wOut').textContent = writeText(); }
+  render();
+  $('#wCheck').addEventListener('click', () => {
+    let empty = 0, wrong = 0;
+    wSel.forEach(s => {
+      if (!s.value) { empty++; return; }
+      if (s.dataset.be) { const want = beAns(s); const ok = !want || s.value === want; s.classList.toggle('ok', ok); s.classList.toggle('no', !ok); if (!ok) wrong++; }
+    });
+    const m = $('#wMsg');
+    if (empty) { m.className = 'msg no'; m.textContent = `아직 고르지 않은 칸이 ${empty}개 있어요.`; return; }
+    if (wrong) { m.className = 'msg no'; m.textContent = `빨간 칸 ${wrong}개를 다시 골라 보세요. 뒤에 오는 물건이 하나면 is, 여러 개면 are!`; return; }
+    m.className = 'msg ok'; m.textContent = '완벽해요! 내 글 듣기를 누르고 따라 읽으며 발표 연습을 해 보세요.';
+  });
+  $('#wExample').addEventListener('click', () => {
+    wSel.forEach(s => { if (!s.dataset.be) s.value = s.dataset.ex; s.classList.remove('ok', 'no'); });
+    wSel.forEach(s => { if (s.dataset.be) s.value = beAns(s); });
+    render(); $('#wMsg').className = 'msg'; $('#wMsg').textContent = '예시를 채웠어요. 내 방에 맞게 바꿔 보세요.';
+  });
+  $('#wSay').addEventListener('click', () => { auto = false; play(null, writeText().replace(/___/g, ''), 'en', null, null); });
+
+  /* ================= 체크리스트 ================= */
+  const CHECKS = ['in, on, under, above의 뜻을 구별할 수 있어요.', 'in front of, behind, next to, between A and B를 쓸 수 있어요.', '닿아 있으면 on, 떨어져 있으면 above를 써요.', '하나면 There is, 여러 개면 There are를 써요.', "There isn't / There aren't로 없다고 말할 수 있어요.", 'Is there ~? / Are there ~?로 묻고 대답할 수 있어요.', '내 방을 영어로 소개할 수 있어요.'];
+  const saved = store.get('checks', []);
+  CHECKS.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox"${saved.includes(i) ? ' checked' : ''}><span>${t}</span></label>`;
+    li.querySelector('input').addEventListener('change', () => store.set('checks', $$('#checklist input').map((c, k) => c.checked ? k : -1).filter(k => k >= 0)));
+    $('#checklist').appendChild(li);
+  });
+
+  updateUI(); refreshButtons(); preload(0);
+})();
+</script>
+</body>
+</html>
