@@ -1,0 +1,1338 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>소수의 곱셈 맞춤 노트</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --ink:#1f2328; --muted:#5c6370; --line:#e3e0d8; --soft:#f0ece4;
+  --accent:#3f5f9e; --accent-ink:#ffffff; --accent-soft:#e8edf7;
+  --t1:#3f5f9e; --t2:#b5523b; --t3:#3f7a4a; --t4:#6a4c93;
+  --t1-soft:#e8edf7; --t2-soft:#f8e9e4; --t3-soft:#e6f1e7; --t4-soft:#efe9f6;
+  --grid:#d9dfe9; --ok:#2f7a4a; --bad:#b0352a; --scrim:rgba(20,18,15,.5);
+  --f:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15161a; --surface:#1e2026; --ink:#e7e8ea; --muted:#a3a8b1; --line:#30333b; --soft:#262931;
+    --accent:#8fb0ea; --accent-ink:#15161a; --accent-soft:#222c3d;
+    --t1:#8fb0ea; --t2:#ec937c; --t3:#8fcb98; --t4:#b59ae0;
+    --t1-soft:#222c3d; --t2-soft:#3a2722; --t3-soft:#20331f; --t4-soft:#2b2538;
+    --grid:#363b46; --ok:#7fd29a; --bad:#ff8f80; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15161a; --surface:#1e2026; --ink:#e7e8ea; --muted:#a3a8b1; --line:#30333b; --soft:#262931;
+  --accent:#8fb0ea; --accent-ink:#15161a; --accent-soft:#222c3d;
+  --t1:#8fb0ea; --t2:#ec937c; --t3:#8fcb98; --t4:#b59ae0;
+  --t1-soft:#222c3d; --t2-soft:#3a2722; --t3-soft:#20331f; --t4-soft:#2b2538;
+  --grid:#363b46; --ok:#7fd29a; --bad:#ff8f80; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;line-height:1.65;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+h1,h2,h3{margin:0;line-height:1.3;text-wrap:balance}
+p{margin:0}
+[hidden]{display:none!important}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+#app{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;max-width:1180px;margin-inline:auto;padding-inline:16px}
+.top{display:flex;align-items:center;gap:12px;padding-block:10px}
+.brand{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px}
+.brand b{font-size:1.1rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.pager{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.progress{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s ease}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:.95rem;line-height:1.2;transition:transform .12s ease,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.small{min-height:38px;padding:6px 14px;font-size:.88rem}
+.btn svg{width:18px;height:18px;flex:none}
+.btn:disabled{opacity:.4;cursor:default}
+
+.stage{position:relative;overflow:hidden;min-height:0}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;opacity:0;visibility:hidden;transform:translateX(30px);transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s linear .5s;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.slide.back{transform:translateX(-30px)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s}
+.wrap{max-width:1000px;margin-inline:auto;padding-block:22px 30px;display:grid;gap:16px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+.eyebrow{font-size:.82rem;font-weight:800;letter-spacing:.06em;color:var(--accent)}
+h2{font-size:clamp(1.5rem,3.1vw,2.1rem);font-weight:800}
+.lead{color:var(--muted);font-size:1.02rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.card h3{font-size:1rem;font-weight:800}
+.note{font-size:.88rem;color:var(--muted)}
+.tip{border-left:5px solid var(--accent);background:var(--accent-soft);border-radius:0 12px 12px 0;padding:10px 14px;font-size:.95rem}
+.tip.t2{border-color:var(--t2);background:var(--t2-soft)} .tip.t3{border-color:var(--t3);background:var(--t3-soft)} .tip.t4{border-color:var(--t4);background:var(--t4-soft)}
+.mark{font-weight:800;padding:0 4px;border-radius:5px}
+.mark.t1{color:var(--t1);background:var(--t1-soft)} .mark.t2{color:var(--t2);background:var(--t2-soft)} .mark.t3{color:var(--t3);background:var(--t3-soft)} .mark.t4{color:var(--t4);background:var(--t4-soft)}
+.tag{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 10px;border-radius:999px;font-weight:800;font-size:.85rem;color:#fff;white-space:nowrap}
+.tag.t1{background:var(--t1)} .tag.t2{background:var(--t2)} .tag.t3{background:var(--t3)} .tag.t4{background:var(--t4)}
+.formula{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.5}
+.steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
+
+/* 표지 */
+.cover{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:center;min-height:100%}
+.cover h1{font-size:clamp(2.1rem,5vw,3.3rem);font-weight:800;line-height:1.15}
+.cover h1 small{display:block;font-size:.42em;color:var(--muted);font-weight:700;letter-spacing:.02em;margin-bottom:6px}
+.route{display:flex;flex-wrap:wrap;gap:6px}
+.route span{font-size:.85rem;padding:3px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface)}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+.big{font-size:2.6rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.big small{font-size:1rem;color:var(--muted);font-weight:700;margin-left:4px}
+.meter{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--line)}
+.meter i{display:block;height:100%}
+
+/* 진단표 */
+.diag{display:grid;gap:10px}
+.drow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.drow p{grid-column:2/4;font-size:.92rem;color:var(--muted)}
+.drow b{font-size:1.02rem}
+.qno{display:flex;flex-wrap:wrap;gap:4px}
+.qno span{font-size:.8rem;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--soft);font-variant-numeric:tabular-nums}
+
+/* 표 */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:.95rem}
+tr:last-child td{border-bottom:0}
+th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* 퀴즈 공통 */
+.q{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:0}
+.q .sent{font-size:1.1rem;font-weight:600}
+.q .head{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.q .head small{font-size:.8rem;color:var(--muted);font-weight:700}
+.blank{display:inline-block;min-width:3em;border-bottom:2px solid var(--muted);text-align:center;font-weight:800}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choice{min-width:64px;min-height:44px;padding:6px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums;text-align:left;line-height:1.35}
+.choice.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.choice.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.choice:disabled{cursor:default}
+.why{font-size:.92rem}
+.why.ok{color:var(--ok)} .why.no{color:var(--bad)}
+.score{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.score b{font-size:1.4rem;font-variant-numeric:tabular-nums}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.msg{min-height:1.6em;font-size:.95rem}
+.msg.ok{color:var(--ok);font-weight:700} .msg.no{color:var(--bad)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{min-height:40px;padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:.92rem}
+.tabs button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.tabs button.done::after{content:" ✓";color:var(--ok)}
+
+/* 소수점 찍기 */
+.dotq{display:grid;gap:10px;padding:14px 0;border-bottom:1px solid var(--line)}
+.dotq:last-child{border-bottom:0}
+.dotrow{display:flex;align-items:flex-end;flex-wrap:wrap;gap:0}
+.dg{display:grid;place-items:center;width:40px;height:52px;border:1.5px solid var(--grid);border-radius:8px;background:var(--surface);font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+.dg.pad{color:var(--muted);border-style:dashed}
+.dg.cut{color:var(--muted);text-decoration:line-through;opacity:.55}
+.gap{width:22px;height:52px;border:0;background:transparent;padding:0;position:relative;display:grid;place-items:end center}
+.gap::after{content:"";width:8px;height:8px;border-radius:50%;margin-bottom:6px;background:var(--line)}
+.gap:hover::after{background:var(--muted)}
+.gap.on::after{width:12px;height:12px;background:var(--accent)}
+.gap.no::after{background:var(--bad)}
+.gap:disabled{cursor:default}
+
+/* 자릿수 시소 */
+.seesaw{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ss{display:grid;gap:4px;justify-items:center;text-align:center;padding:12px 8px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.ss .formula{font-size:1.15rem}
+.ss small{color:var(--muted);font-size:.84rem}
+.ss .arrow{font-size:.85rem;font-weight:700}
+.ss .arrow .l{color:var(--t2)} .ss .arrow .r{color:var(--t1)}
+
+/* 칸 세로셈 */
+.colwrap{display:grid;gap:12px;justify-items:center}
+.colgrid{display:grid;gap:0;--cw:clamp(30px,8.6vw,48px)}
+.crow{display:grid;grid-template-columns:var(--cw) repeat(9,var(--cw))}
+.cc{height:calc(var(--cw) * 1.1);display:grid;place-items:center;border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);font-size:clamp(1.15rem,3.6vw,1.6rem);font-weight:800;font-variant-numeric:tabular-nums;position:relative}
+.crow .cc:first-child{border-right:2px solid var(--grid);color:var(--muted);font-weight:700}
+.crow.carry .cc{height:calc(var(--cw) * .7);font-size:.9rem;color:var(--bad);border-bottom-style:dashed}
+.cc.pt::after{content:"";position:absolute;right:-5px;bottom:8px;width:9px;height:9px;border-radius:50%;background:var(--ink);z-index:2}
+.crow.bot .cc.pt::after{background:var(--t2)}
+.crow.bot.ok .cc.pt::after{background:var(--ok)}
+.crow.bot.ok .cc{color:var(--ok)}
+.crow.ans .cc{color:var(--accent)}
+.crow.ans .cc.cur{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.crow.sum .cc{border-bottom:2.5px solid var(--ink)}
+.cc.zone{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.keypad{display:grid;grid-template-columns:repeat(5,minmax(0,52px));gap:6px;justify-content:center}
+.keypad button{min-height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-size:1.25rem;font-weight:800}
+.keypad button:disabled{opacity:.35}
+.shift{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+
+/* 끊어 읽기 */
+.prob{font-size:1.16rem;line-height:2.1}
+.tk{display:inline;border:0;background:transparent;padding:2px 2px;margin:0;border-radius:6px;font-size:inherit;line-height:inherit;font-weight:500;color:inherit}
+.tk:hover{background:var(--soft)}
+.tk.u{text-decoration:underline;text-decoration-color:var(--t2);text-decoration-thickness:3px;text-underline-offset:5px;font-weight:700}
+.tk.c{box-shadow:0 0 0 2px var(--t1);border-radius:999px;padding:2px 6px;font-weight:700}
+.tk.miss{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.tk:disabled{cursor:default}
+.mode{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mode button{min-height:42px;padding:6px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700}
+.mode button[aria-pressed="true"].mu{border-color:var(--t2);background:var(--t2-soft);color:var(--t2)}
+.mode button[aria-pressed="true"].mc{border-color:var(--t1);background:var(--t1-soft);color:var(--t1)}
+.tmpl{display:grid;gap:0}
+.tstep{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.tstep:last-child{border-bottom:0}
+.tstep .sn{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:.9rem}
+.tstep.lock{opacity:.4;pointer-events:none}
+.tstep .body{display:grid;gap:8px}
+.tstep .body b{font-size:.98rem}
+
+/* 수 카드 */
+.cards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.ncard{width:58px;height:76px;border-radius:12px;border:2px solid var(--t3);background:var(--surface);font-size:1.9rem;font-weight:800;color:var(--t3);box-shadow:0 3px 0 color-mix(in srgb,var(--t3) 35%,transparent)}
+.ncard:disabled{opacity:.25;box-shadow:none}
+.slots{display:flex;align-items:flex-end;justify-content:center;gap:6px;font-size:2rem;font-weight:800;flex-wrap:wrap}
+.slot{width:58px;height:76px;border-radius:12px;border:2px dashed var(--line);background:var(--soft);font-size:1.9rem;font-weight:800;display:grid;place-items:center;padding:0}
+.slot.f{border-style:solid;border-color:var(--t3);background:var(--t3-soft);color:var(--t3)}
+.slot small{font-size:.62rem;color:var(--muted);font-weight:700}
+.prod{text-align:center;font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums;min-height:1.6em}
+.tried{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.tried span{font-size:.88rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--soft);font-variant-numeric:tabular-nums}
+.tried span.best{background:var(--ok);color:#fff}
+
+/* 세 수 곱하기 체크 */
+.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:1.25rem;font-weight:800;font-variant-numeric:tabular-nums}
+.chain .f{padding:4px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);position:relative}
+.chain .f.used{border-color:var(--t4);background:var(--t4-soft);color:var(--t4)}
+.chain .f.used::after{content:"✓";position:absolute;top:-10px;right:-8px;font-size:.8rem;width:20px;height:20px;border-radius:50%;background:var(--t4);color:#fff;display:grid;place-items:center}
+
+/* 수행평가 */
+.fq{display:grid;gap:10px}
+.fl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:1.06rem;font-weight:600;padding:8px 0;border-bottom:1px dashed var(--line);font-variant-numeric:tabular-nums}
+.fl:last-child{border-bottom:0}
+.fl .lb{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:.8rem;font-weight:800}
+.fl input,.fl select{min-height:42px;border:1.5px solid var(--line);border-radius:10px;padding:4px 8px;background:var(--surface);font-weight:700;font-size:1.02rem}
+.fl input{width:6.2em;text-align:center}
+.fl .ok{border-color:var(--ok);color:var(--ok)} .fl .no{border-color:var(--bad);color:var(--bad)}
+.selfchk{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.selfchk label{display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:.98rem}
+.selfchk input{width:22px;height:22px;margin-top:2px;accent-color:var(--accent);flex:none}
+
+/* 마무리 */
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check input{width:22px;height:22px;margin-top:3px;accent-color:var(--accent);flex:none}
+
+/* 아래 막대 */
+.bottom{padding-block:8px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;border-top:1px solid var(--line)}
+.aprog{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.aprog i{display:block;height:100%;width:0;background:var(--accent)}
+.caption{min-height:2.9em;font-size:.98rem;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;padding-inline:8px;line-height:1.45}
+.caption.on{color:var(--ink);font-weight:600}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+.overlay{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:50}
+.sheet{background:var(--surface);border-radius:18px;max-width:520px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;display:grid;gap:12px}
+.sheet header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.toclist{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.toclist button{width:100%;text-align:left;display:grid;grid-template-columns:2em minmax(0,1fr);gap:8px;padding:9px 10px;border-radius:10px;border:0;background:transparent;font-size:.95rem}
+.toclist button[aria-current="true"]{background:var(--accent-soft);font-weight:700}
+.toclist button span:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+
+@media (max-width:820px){
+  .cols,.cover{grid-template-columns:minmax(0,1fr)}
+  .seesaw{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .hide-s{display:none}
+  .brand small{display:none}
+  .dg{width:34px;height:46px;font-size:1.35rem}
+  .gap{width:18px;height:46px}
+  .ncard,.slot{width:50px;height:66px;font-size:1.6rem}
+}
+@media (max-width:420px){ .hide-xs{display:none} .controls{gap:6px} .controls .btn{padding:8px 12px} }
+@media (prefers-reduced-motion:reduce){ .slide{transition:none} .shake{animation:none} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><b>소수의 곱셈 맞춤 노트</b><small>로운이의 실수 습관 4가지 고치기</small></div>
+    <span class="pager" id="pager">1 / 17</span>
+    <button class="btn small" type="button" id="btnFull" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="icFull"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span id="lbFull" class="hide-s">전체 화면</span></button>
+    <button class="btn small" type="button" id="btnToc">목차</button>
+  </header>
+  <div class="progress"><i id="bar"></i></div>
+
+  <main class="stage" id="stage">
+
+  <!-- 1 표지 -->
+  <section class="slide active" data-id="cover" data-title="표지 · 시작하기">
+    <div class="wrap cover">
+      <div style="display:grid;gap:16px">
+        <p class="eyebrow">수학 · 4. 소수의 곱셈 · 맞춤 학습</p>
+        <h1><small>몰라서가 아니라, 작은 습관 때문에</small>소수의 곱셈<br>실수 고치기 노트</h1>
+        <p class="lead">로운이는 소수의 곱셈 원리를 잘 알고 있어요. 틀린 문제에서 보인 <b>네 가지 실수 습관</b>만 고치면 돼요.</p>
+        <div class="route"><span>소수점 자릿수</span><span>칸 맞춘 세로셈</span><span>자릿수 시소</span><span>문장제 끊어 읽기</span><span>수 카드 규칙</span><span>묶어 계산하기</span><span>쌍둥이 문제 11개</span></div>
+        <div class="cta">
+          <button class="btn primary" type="button" id="startAuto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>영상처럼 보기</button>
+          <button class="btn" type="button" data-go="16">쌍둥이 문제 바로 풀기</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>지난 평가 결과</h3>
+        <p class="big">39<small>/ 50 문항 정답</small></p>
+        <div class="meter" aria-hidden="true"><i style="width:78%;background:var(--ok)"></i><i style="width:6%;background:var(--t1)"></i><i style="width:8%;background:var(--t2)"></i><i style="width:2%;background:var(--t3)"></i><i style="width:6%;background:var(--t4)"></i></div>
+        <p class="note">초록은 맞힌 문제, 나머지 색은 틀린 문제의 실수 유형이에요.</p>
+        <p class="tip">잘한 점: 50번 서술형에서 <b>곱의 소수점 자리를 정하는 이유</b>를 정확하게 설명했어요. 원리는 이미 알고 있다는 뜻이에요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 진단 -->
+  <section class="slide" data-id="diag" data-title="진단 · 틀린 11문제의 4가지 실수 습관">
+    <div class="wrap">
+      <p class="eyebrow">진단</p>
+      <h2>틀린 11문제는 네 가지 습관으로 나뉘어요</h2>
+      <div class="diag">
+        <div class="drow"><span class="tag t1">1</span><b>소수점 자리를 눈짐작으로 정해요</b><div class="qno"><span>13</span><span>20</span><span>35</span></div><p>자연수 곱만 보고 소수점을 빠뜨리거나, 덧셈에서 소수점 줄을 맞추지 않았어요.</p></div>
+        <div class="drow"><span class="tag t2">2</span><b>문장제에서 조건을 빠뜨려요</b><div class="qno"><span>26</span><span>31</span><span>46</span><span>48</span></div><p>구하려는 것을 끝까지 안 읽거나, 중간값(동전 개수 등) 없이 바로 식을 세웠어요.</p></div>
+        <div class="drow"><span class="tag t3">3</span><b>수 카드 문제를 어림짐작으로 풀어요</b><div class="qno"><span>37</span></div><p>가장 작은 곱, 가장 큰 곱을 만드는 배치 규칙이 아직 없어요.</p></div>
+        <div class="drow"><span class="tag t4">4</span><b>마지막 계산에서 삐끗해요</b><div class="qno"><span>28</span><span>47</span><span>49</span></div><p>세 수 중 하나를 안 곱하거나, 받아올림·단위를 빠뜨렸어요.</p></div>
+      </div>
+      <div class="cta">
+        <button class="btn small" type="button" data-go="3">1 자릿수부터</button>
+        <button class="btn small" type="button" data-go="9">2 끊어 읽기</button>
+        <button class="btn small" type="button" data-go="11">3 수 카드</button>
+        <button class="btn small" type="button" data-go="13">4 마무리 계산</button>
+      </div>
+      <p class="note">보호자 메모: 35번은 계산해 보면 ⑤만 값이 0.16으로 달라서, 로운이가 고른 ⑤가 맞았을 수 있어요. 채점을 한 번 확인해 보세요.</p>
+    </div>
+  </section>
+
+  <!-- 3 소수점 자릿수 -->
+  <section class="slide" data-id="point" data-title="습관 1 · 곱의 소수점은 자릿수를 세어 찍기">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">습관 1 · 소수점 자릿수</p>
+        <h2>자연수처럼 곱하고,<br>자릿수를 <span class="mark t1">세어서</span> 찍어요</h2>
+        <ol class="steps">
+          <li>소수점을 떼고 <b>자연수처럼 곱해요.</b></li>
+          <li>두 수의 <b>소수점 아래 자릿수를 더해요.</b></li>
+          <li>더한 자릿수만큼 <b>오른쪽에서부터 세어</b> 소수점을 찍어요.</li>
+          <li>자리가 모자라면 <b>앞에 0을 채우고</b>, 소수 끝의 0은 지워요.</li>
+        </ol>
+        <p class="tip">20번 실수: 48 × 5 = 240만 보고 끝냈어요. 자릿수 세기는 <b>항상 마지막 단계</b>예요.</p>
+      </div>
+      <div class="card">
+        <h3>예) 4.8 × 0.05</h3>
+        <div class="tbl"><table>
+          <tr><th>단계</th><th>계산</th></tr>
+          <tr><td>자연수 곱</td><td class="n">48 × 5 = <b>240</b></td></tr>
+          <tr><td>자릿수 세기</td><td class="n">4.<span class="mark t1">8</span> → 1자리, 0.<span class="mark t1">05</span> → 2자리<br>모두 <b>3자리</b></td></tr>
+          <tr><td>소수점 찍기</td><td class="n">240 → <b>0.240</b></td></tr>
+          <tr><td>끝의 0 지우기</td><td class="n"><b>0.24</b></td></tr>
+        </table></div>
+        <p class="note">거꾸로 4.8 × □ = 0.24 를 풀 때도 같아요. 0.24는 2자리, 4.8은 1자리라서 곱 0.240의 3자리를 맞추려면 □는 2자리, 즉 <b>0.05</b>예요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 10배·0.1배와 자리 맞추기 -->
+  <section class="slide" data-id="move" data-title="습관 1 · 10배, 0.1배와 소수점 줄 맞추기">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">습관 1 · 소수점 이동</p>
+        <h2>더할 때는 <span class="mark t1">소수점끼리</span><br>세로 줄을 맞춰요</h2>
+        <div class="card">
+          <p class="formula">6.22 × 10 = 62.2<br>6.22 × 0.1 = 0.622</p>
+          <p class="note">× 10 → 소수점이 오른쪽으로 한 칸 · × 0.1 → 왼쪽으로 한 칸</p>
+        </div>
+        <p class="tip">13번 실수: 62.2와 0.622를 <b>맨 앞자리 6끼리</b> 맞춰 더했어요. 숫자 모양이 아니라 <b>소수점 위치</b>로 줄을 맞춰야 해요.</p>
+      </div>
+      <div class="card">
+        <h3>칸 노트에 쓰면 이렇게</h3>
+        <div class="tbl"><table style="text-align:center">
+          <tr><th></th><th>십</th><th>일</th><th>.</th><th>0.1</th><th>0.01</th><th>0.001</th></tr>
+          <tr><td></td><td>6</td><td>2</td><td>.</td><td>2</td><td></td><td></td></tr>
+          <tr><td>+</td><td></td><td>0</td><td>.</td><td>6</td><td>2</td><td>2</td></tr>
+          <tr><td></td><td><b>6</b></td><td><b>2</b></td><td><b>.</b></td><td><b>8</b></td><td><b>2</b></td><td><b>2</b></td></tr>
+        </table></div>
+        <p class="note">62.2 + 0.622 = <b>62.822</b>. 빈칸은 0으로 생각해요. 연습 ③에서 직접 칸을 맞춰 볼 거예요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 연습 ① 소수점 찍기 -->
+  <section class="slide" data-id="dot" data-title="연습 ① 소수점 찍기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ① 소수점 찍기</p>
+      <h2>자릿수를 세어서 소수점이 들어갈 틈을 누르세요</h2>
+      <p class="lead">흐린 점선 칸은 자리가 모자랄 때 채우는 0이에요.</p>
+      <div class="card" id="dotList"></div>
+      <div class="score"><span>맞힌 문제</span><b id="dotScore">0 / 6</b><button class="btn small" type="button" id="dotReset">처음부터 다시</button></div>
+    </div>
+  </section>
+
+  <!-- 6 자릿수 시소 -->
+  <section class="slide" data-id="cancel" data-title="습관 1 · 자릿수 시소 (한쪽이 가면 반대쪽도)">
+    <div class="wrap">
+      <p class="eyebrow">습관 1 · 자릿수 시소</p>
+      <h2>한 수의 소수점이 왼쪽으로 가면,<br>다른 수는 <span class="mark t1">오른쪽으로</span> 같은 칸만큼</h2>
+      <div class="seesaw">
+        <div class="ss"><small>처음 식</small><p class="formula">3.2 × 0.5 = 1.6</p></div>
+        <div class="ss"><small>앞 수 × 10, 뒤 수 × 0.1</small><p class="formula">32 × 0.05 = 1.6</p><p class="arrow"><span class="r">→ 1칸</span> · <span class="l">← 1칸</span></p></div>
+        <div class="ss"><small>앞 수 × 0.1, 뒤 수 × 10</small><p class="formula">0.32 × 5 = 1.6</p><p class="arrow"><span class="l">← 1칸</span> · <span class="r">→ 1칸</span></p></div>
+      </div>
+      <div class="cols">
+        <p class="tip">곱하는 두 수의 <b>소수점 아래 자릿수의 합</b>이 같으면 곱도 같아요. 3.2 × 0.5는 1+1=2자리, 32 × 0.05는 0+2=2자리, 0.32 × 5는 2+0=2자리.</p>
+        <p class="tip t2">값이 다른 것 찾기: 320 × 0.0005 는 0+4=<b>4자리</b> → 16에 소수점 4자리 → <b>0.16</b>. 다른 식은 모두 2자리라 1.6이에요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 연습 ② 시소 빈칸 -->
+  <section class="slide" data-id="cancelq" data-title="연습 ② 자릿수 시소 빈칸 채우기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ② 자릿수 시소</p>
+      <h2>곱이 같아지도록 빈칸에 알맞은 수를 고르세요</h2>
+      <div class="card" id="cancelList"></div>
+      <div class="score"><span>맞힌 문제</span><b id="cancelScore">0 / 6</b><button class="btn small" type="button" id="cancelReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 8 연습 ③ 칸 세로셈 -->
+  <section class="slide" data-id="grid" data-title="연습 ③ 칸 맞춘 세로셈 (받아올림까지)" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ③ 칸 노트 세로셈 · 습관 1, 4</p>
+      <h2>소수점 줄을 맞추고, 오른쪽부터 한 칸씩</h2>
+      <div class="tabs" id="colTabs"></div>
+      <div class="card colwrap">
+        <div class="colgrid" id="colGrid"></div>
+        <div class="shift" id="shiftBox">
+          <button class="btn small" type="button" id="shL" aria-label="아래 수를 왼쪽으로">◀ 왼쪽</button>
+          <span class="note">아래 수를 옮겨 소수점을 맞춰요</span>
+          <button class="btn small" type="button" id="shR" aria-label="아래 수를 오른쪽으로">오른쪽 ▶</button>
+          <button class="btn small primary" type="button" id="shOk">줄 맞췄어요</button>
+        </div>
+        <div class="keypad" id="keypad" hidden></div>
+        <p class="msg" id="colMsg" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 끊어 읽기 개념 -->
+  <section class="slide" data-id="read" data-title="습관 2 · 문장제 끊어 읽기 3단계">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">습관 2 · 문장제</p>
+        <h2>바로 계산하지 말고<br><span class="mark t2">끊어 읽기</span> 3단계</h2>
+        <ol class="steps">
+          <li><b>구하려는 것</b>에 밑줄 (끝 문장을 끝까지!)</li>
+          <li>주어진 <b>숫자 조건</b>에 동그라미 (기준이 되는 전체 수까지)</li>
+          <li><b>① 구하려는 것 → ② 중간값 → ③ 최종 식</b> 순서로 빈칸을 먼저 채우고 계산</li>
+        </ol>
+        <p class="tip t2">48번 실수: 동전 <b>전체 80개</b>라는 조건을 빼먹고, 동전 개수(중간값)를 구하지 않은 채 아무 개수나 넣어 계산했어요.</p>
+      </div>
+      <div class="card">
+        <h3>예) 동전 문제 템플릿</h3>
+        <p>동전 <b>60개</b> 중 500원짜리는 <b>전체의 0.35배</b>, 나머지는 100원짜리예요. 동전은 모두 얼마일까요?</p>
+        <div class="tmpl">
+          <div class="tstep"><span class="sn">1</span><div class="body"><b>구하려는 것</b><span>동전 전체 금액 (원)</span></div></div>
+          <div class="tstep"><span class="sn">2</span><div class="body"><b>중간값 = 동전의 개수</b><span class="num">500원: 60 × 0.35 = 21개</span><span class="num">100원: 60 − 21 = 39개</span></div></div>
+          <div class="tstep"><span class="sn">3</span><div class="body"><b>최종 식</b><span class="num">500 × 21 + 100 × 39 = 14400 (원)</span></div></div>
+        </div>
+        <p class="note">26번(둘레와 넓이의 합)은 둘레와 넓이가 중간값, 31번(바르게 계산하기)은 어떤 수가 중간값, 46번은 늘인 가로·세로가 중간값이에요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 연습 ④ 끊어 읽기 -->
+  <section class="slide" data-id="readq" data-title="연습 ④ 밑줄·동그라미 치고 템플릿 채우기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ④ 끊어 읽기 워크시트</p>
+      <h2>밑줄과 동그라미를 친 다음, 3단계를 채워요</h2>
+      <div class="tabs" id="readTabs"></div>
+      <div class="card">
+        <div class="mode">
+          <button type="button" class="mu" id="modeU" aria-pressed="true">밑줄 · 구하려는 것</button>
+          <button type="button" class="mc" id="modeC" aria-pressed="false">동그라미 · 숫자 조건</button>
+          <button type="button" class="btn small primary" id="markOk">확인</button>
+        </div>
+        <p class="prob" id="probText"></p>
+        <p class="msg" id="markMsg" aria-live="polite"></p>
+      </div>
+      <div class="card"><div class="tmpl" id="tmplBox"></div></div>
+    </div>
+  </section>
+
+  <!-- 11 수 카드 규칙 -->
+  <section class="slide" data-id="card" data-title="습관 3 · 수 카드로 가장 작은 곱·가장 큰 곱">
+    <div class="wrap cols">
+      <div style="display:grid;gap:14px">
+        <p class="eyebrow">습관 3 · 수 카드</p>
+        <h2>어림짐작 말고<br><span class="mark t3">자리 규칙</span>으로 배치해요</h2>
+        <p class="lead"><span class="num">□.△ × ☆</span> 에서 □와 ☆은 결과를 크게 바꾸고, 소수 첫째 자리 △는 조금만 바꿔요.</p>
+        <div class="tbl"><table>
+          <tr><th></th><th>△ (소수 첫째 자리)</th><th>☆ (곱하는 수)</th></tr>
+          <tr><td><b>가장 작은 곱</b></td><td>가장 <b>큰</b> 수</td><td>가장 <b>작은</b> 수</td></tr>
+          <tr><td><b>가장 큰 곱</b></td><td>가장 <b>작은</b> 수</td><td>가장 <b>큰</b> 수</td></tr>
+        </table></div>
+        <p class="tip t3">헷갈리면 <b>후보 식 2~3개</b>를 써서 직접 곱해 비교해요.</p>
+      </div>
+      <div class="card">
+        <h3>예) 수 카드 3, 5, 7로 가장 작은 곱</h3>
+        <div class="tbl"><table>
+          <tr><th>후보 식</th><th>곱</th></tr>
+          <tr><td class="n"><b>5.7 × 3</b> (△에 7, ☆에 3)</td><td class="n"><b>17.1</b></td></tr>
+          <tr><td class="n">3.7 × 5</td><td class="n">18.5</td></tr>
+          <tr><td class="n">3.5 × 7</td><td class="n">24.5</td></tr>
+        </table></div>
+        <p class="note">가장 큰 곱은 5.3 × 7 = 37.1 이에요. (7.3 × 5 = 36.5 보다 커요.)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 연습 ⑤ 수 카드 -->
+  <section class="slide" data-id="cardq" data-title="연습 ⑤ 수 카드 게임" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ⑤ 수 카드 게임</p>
+      <h2 id="cardGoal">가장 작은 곱을 만드세요</h2>
+      <div class="tabs" id="cardTabs"></div>
+      <div class="card" style="gap:14px">
+        <div class="cards" id="cardPool"></div>
+        <div class="slots"><button type="button" class="slot" data-s="0"></button><span>.</span><button type="button" class="slot" data-s="1"></button><span>×</span><button type="button" class="slot" data-s="2"></button></div>
+        <p class="prod" id="cardProd"></p>
+        <div class="tried" id="cardTried"></div>
+        <p class="msg" id="cardMsg" aria-live="polite" style="text-align:center"></p>
+        <p class="note" style="text-align:center">카드를 누르면 빈칸에 차례로 들어가요. 들어간 카드를 누르면 다시 빠져요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 끝까지 · 분배법칙 -->
+  <section class="slide" data-id="finish" data-title="습관 4 · 끝까지 곱하기와 묶어 계산하기">
+    <div class="wrap cols">
+      <div class="card">
+        <p class="eyebrow" style="color:var(--t4)">습관 4 · 세 수의 곱셈</p>
+        <h3>곱한 수에 하나씩 체크해요</h3>
+        <div class="chain" id="chain"><span class="f" data-i="0">0.4</span>×<span class="f" data-i="1">1.25</span>×<span class="f" data-i="2">0.8</span></div>
+        <div id="chainQ"></div>
+        <p class="tip t4">28번 실수: 0.4 × 1.25 = 0.5 까지 하고 마지막 수를 그대로 답으로 썼어요. <b>체크 3개</b>를 보고 답을 써요.</p>
+      </div>
+      <div class="card">
+        <p class="eyebrow" style="color:var(--t4)">습관 4 · 묶어 계산하기 (분배법칙)</p>
+        <h3>같은 수를 곱하면, 먼저 더하고 한 번만 곱해요</h3>
+        <p class="formula" style="font-size:1.05rem">136.4 × 7.5 + 163.6 × 7.5<br>= (136.4 + 163.6) × 7.5<br>= 300 × 7.5 = <b>2250</b></p>
+        <p class="note">따로 하면 1023 + 1227 처럼 큰 세로셈을 두 번 하고 또 더해야 해요. 49번은 마지막 덧셈의 받아올림에서 틀렸어요. 묶으면 계산이 한 번으로 줄어요.</p>
+        <div id="distQ"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 연습 ⑥ 단위·어림 -->
+  <section class="slide" data-id="check" data-title="연습 ⑥ 어림으로 검산하고 단위 붙이기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">연습 ⑥ 단위 · 어림 검산 · 습관 1, 4</p>
+      <h2>답을 쓰기 전에 어림해 보고, 단위를 붙여요</h2>
+      <div class="cols">
+        <div class="card"><h3>어림하면 소수점 위치가 보여요</h3><div id="estList"></div></div>
+        <div class="card"><h3>답 뒤에 붙일 단위는?</h3><div id="unitList"></div></div>
+      </div>
+      <div class="score"><span>맞힌 문제</span><b id="chkScore">0 / 7</b><button class="btn small" type="button" id="chkReset">다시 하기</button></div>
+    </div>
+  </section>
+
+  <!-- 15 수행평가 -->
+  <section class="slide" data-id="perf" data-title="수행평가 · 서술형 템플릿으로 풀기" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">수행평가 대비 · 서술형</p>
+      <h2>템플릿 빈칸을 채워 서술형을 완성해요</h2>
+      <div class="tabs" id="perfTabs"></div>
+      <div class="card fq">
+        <p class="prob" id="perfProb" style="line-height:1.8"></p>
+        <div id="perfLines"></div>
+      </div>
+      <div class="card">
+        <h3>제출 전 스스로 점검</h3>
+        <ul class="selfchk" id="perfSelf"></ul>
+      </div>
+      <div class="cta"><button class="btn primary" type="button" id="perfCheck">확인하기</button><button class="btn" type="button" id="perfShow">모범 풀이 보기</button></div>
+      <p class="msg" id="perfMsg" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- 16 쌍둥이 문제 -->
+  <section class="slide" data-id="twin" data-title="쌍둥이 문제 11개 (틀린 문제 숫자 바꾸기)" data-stop="1">
+    <div class="wrap">
+      <p class="eyebrow">최종 점검 · 쌍둥이 문제</p>
+      <h2>틀렸던 11문제, 숫자만 바꿔 다시 풀어요</h2>
+      <p class="lead">문제 모양은 같고 숫자는 새로 바꿨어요. 틀리면 어떤 습관을 점검할지 알려 줘요.</p>
+      <div class="card" id="twinList"></div>
+      <div class="score"><span>맞힌 문제</span><b id="twinScore">0 / 11</b><button class="btn small" type="button" id="twinReset">처음부터 다시</button></div>
+    </div>
+  </section>
+
+  <!-- 17 마무리 -->
+  <section class="slide" data-id="end" data-title="한눈에 정리 · 체크리스트">
+    <div class="wrap cols">
+      <div style="display:grid;gap:12px">
+        <p class="eyebrow">한눈에 정리</p>
+        <h2>시험 볼 때 이것만 기억해요</h2>
+        <div class="diag">
+          <div class="drow"><span class="tag t1">1</span><b>자연수처럼 곱하고 자릿수를 세어 소수점. 더할 땐 소수점 줄 맞추기</b></div>
+          <div class="drow"><span class="tag t2">2</span><b>밑줄(구하려는 것) → 동그라미(숫자) → 중간값 → 최종 식</b></div>
+          <div class="drow"><span class="tag t3">3</span><b>작은 곱: △에 가장 큰 수, ☆에 가장 작은 수. 큰 곱은 반대</b></div>
+          <div class="drow"><span class="tag t4">4</span><b>곱한 수 체크, 묶어 계산, 어림 검산, 단위 붙이기</b></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>스스로 확인해요</h3>
+        <ul class="check" id="checklist"></ul>
+        <p class="note" style="margin-top:6px">음성: 해설은 Google Gemini AI 음성(Kore)으로 만들었고, 음성 파일이 없을 때는 공개 AI 성우 Supertonic 3(MIT 라이선스)이나 기기 목소리로 읽어 줘요. 문제는 로운이의 오답 분석을 바탕으로 숫자를 새로 바꿔 만들었어요.</p>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="bottom">
+    <div class="aprog" aria-hidden="true"><i id="aprogBar"></i></div>
+    <audio id="voice" preload="auto"></audio>
+    <div class="caption" id="caption" aria-live="polite">재생 버튼을 누르면 선생님이 설명해 줘요.</div>
+    <div class="controls">
+      <button class="btn" type="button" id="btnPrev" aria-label="이전 장"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span class="hide-s">이전</span></button>
+      <button class="btn primary" type="button" id="btnAuto"><svg viewBox="0 0 24 24" fill="currentColor" id="icAuto"><path d="M7 4v16l13-8z"/></svg><span id="lbAuto">영상처럼 보기</span></button>
+      <button class="btn" type="button" id="btnListen" aria-label="이 장 듣기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg><span id="lbListen" class="hide-xs">이 장 듣기</span></button>
+      <button class="btn" type="button" id="btnNext" aria-label="다음 장"><span class="hide-s">다음</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<div class="overlay" id="tocBox" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tocTitle">
+    <header><h2 id="tocTitle" style="font-size:1.3rem">목차</h2><button class="btn small" type="button" data-close>닫기</button></header>
+    <ol class="toclist" id="tocList"></ol>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label for="rateSel" style="font-weight:700;font-size:.9rem">읽는 빠르기</label>
+      <select id="rateSel" style="min-height:40px;border-radius:10px;border:1px solid var(--line);padding:4px 8px;background:var(--surface)"><option value="0.85">천천히</option><option value="1" selected>보통</option><option value="1.15">조금 빠르게</option></select>
+    </div>
+  </div>
+</div>
+
+<!-- 한국어 해설 대본 (음성 파일 audio/n_<장 id>.mp3 와 짝). 숫자는 소리 내어 읽는 대로 한글로 적었다. -->
+<script type="application/json" id="narr">{
+"cover": "안녕, 로운아! 오늘은 소수의 곱셈을 로운이에게 꼭 맞게 다시 정리해 볼 거예요. 로운이는 소수의 곱셈 원리를 아주 잘 알고 있어요. 서술형에서 곱의 소수점 자리를 정하는 이유도 정확하게 설명했지요. 그런데 틀린 문제를 살펴보니, 몰라서 틀린 게 아니라 작은 실수가 몇 가지 모양으로 되풀이되었어요. 오늘은 그 실수 습관을 하나씩 고쳐 볼 거예요. 준비됐나요?",
+"diag": "먼저 진단 결과를 볼게요. 쉰 문제 중에 서른아홉 문제를 맞혔어요. 틀린 열한 문제는 네 가지 습관으로 나눌 수 있어요. 첫째, 소수점 자리를 눈짐작으로 정한 실수. 둘째, 문장제에서 조건을 빠뜨리거나 식을 잘못 세운 실수. 셋째, 수 카드로 가장 작은 곱을 만드는 규칙이 없었던 것. 넷째, 마지막 계산에서 삐끗한 실수예요. 이 순서대로 하나씩 연습해 봐요.",
+"point": "소수의 곱셈은 두 단계로 해요. 먼저 소수점을 떼고 자연수처럼 곱해요. 그다음, 곱하는 두 수의 소수점 아래 자릿수를 더한 만큼 곱에 소수점을 찍어요. 사 점 팔 곱하기 영 점 영오를 볼까요? 사십팔 곱하기 오는 이백사십이에요. 소수점 아래 자릿수가 한 자리와 두 자리, 모두 세 자리니까 영 점 이사영, 끝의 영을 지우면 영 점 이사가 돼요. 자연수 곱셈만 보고 끝내면 안 돼요. 자릿수 세기가 꼭 마지막에 와야 해요.",
+"move": "십을 곱하면 소수점이 오른쪽으로 한 칸, 영 점 일을 곱하면 왼쪽으로 한 칸 움직여요. 그런데 이렇게 구한 두 수를 더할 때가 중요해요. 육십이 점 이와 영 점 육이이를 더할 때 맨 앞의 육끼리 맞추면 틀려요. 덧셈은 숫자 모양이 아니라 소수점끼리 세로로 줄을 맞춰야 해요. 칸 노트를 떠올리세요. 소수점이 같은 줄에 있으면, 위아래 숫자도 같은 자리예요.",
+"dot": "연습해 볼까요? 자연수 곱셈 결과가 나와 있어요. 두 수의 소수점 아래 자릿수를 세어서, 소수점이 들어갈 틈을 눌러 보세요. 자리가 모자라면 앞에 영을 채워 두었어요. 여기부터는 직접 해 보는 활동이라 자동 재생을 잠시 멈출게요.",
+"cancel": "이번엔 자릿수 시소예요. 곱하는 두 수 중 하나의 소수점이 왼쪽으로 한 칸 가면, 다른 수의 소수점은 오른쪽으로 한 칸 가야 곱이 그대로예요. 삼 점 이 곱하기 영 점 오는 일 점 육이에요. 삼십이 곱하기 영 점 영오도, 영 점 삼이 곱하기 오도 모두 일 점 육이지요. 두 수의 소수점 아래 자릿수를 더한 값이 같기 때문이에요. 값이 다른 식을 찾을 때도 자릿수의 합을 세어 보면 바로 보여요.",
+"cancelq": "자릿수 시소를 이용해서 빈칸에 들어갈 수를 골라 보세요. 처음 식과 비교해서, 한쪽 수의 소수점이 어느 쪽으로 몇 칸 움직였는지 세어 보면 바로 찾을 수 있어요.",
+"grid": "칸 노트 세로셈이에요. 먼저 아래 수를 왼쪽, 오른쪽 버튼으로 옮겨서 소수점을 위의 수와 같은 줄에 맞추세요. 줄이 맞으면 맨 오른쪽 자리부터 한 칸씩 답을 눌러요. 받아올림이 생기면 윗칸에 작은 빨간 숫자로 표시해 줄 테니, 다음 자리에서 꼭 더해 주세요.",
+"read": "문장제는 바로 계산하지 말고 세 단계로 끊어 읽어요. 첫째, 구하려는 것에 밑줄을 그어요. 마지막 문장을 끝까지 읽어야 해요. 둘째, 주어진 숫자 조건에 동그라미를 쳐요. 전체 개수처럼 기준이 되는 수도 빠뜨리면 안 돼요. 셋째, 구하려는 것까지 가는 데 필요한 중간값을 먼저 구하고, 마지막에 최종 식을 세워요. 동전 문제라면 동전의 개수가 중간값이에요.",
+"readq": "끊어 읽기 연습이에요. 먼저 밑줄 버튼을 누르고 구하려는 것을 누르세요. 다음에 동그라미 버튼을 누르고 숫자 조건을 모두 누르세요. 확인을 누르면 아래에서 구하려는 것, 중간값, 최종 식을 차례로 골라요.",
+"card": "수 카드 문제는 어림짐작 말고 규칙으로 풀어요. 일의 자리 수와 곱하는 수는 결과를 크게 바꾸고, 소수 첫째 자리 수는 조금만 바꿔요. 그래서 가장 작은 곱을 만들려면 가장 큰 수를 소수 첫째 자리에 두고, 가장 작은 수를 곱하는 수로 써요. 가장 큰 곱은 반대로, 가장 작은 수를 소수 첫째 자리에, 가장 큰 수를 곱하는 수로 써요. 헷갈리면 후보 식을 두세 개 써서 직접 비교해 보세요.",
+"cardq": "수 카드 게임이에요. 카드를 차례로 누르면 일의 자리, 소수 첫째 자리, 곱하는 수 순서로 들어가요. 곱이 바로 계산되니까, 여러 가지로 바꿔 보면서 목표에 맞는 식을 찾아보세요. 규칙을 먼저 떠올리고 놓으면 한 번에 찾을 수 있어요.",
+"finish": "식은 잘 세웠는데 마지막에 삐끗하면 너무 아깝죠. 세 수를 곱할 때는 곱한 수에 하나씩 체크해서, 체크가 세 개인지 확인하고 답을 써요. 그리고 같은 수를 곱하는 두 식을 더할 때는 묶어서 계산해요. 백삼십육 점 사 곱하기 칠 점 오 더하기 백육십삼 점 육 곱하기 칠 점 오는, 두 수를 먼저 더해 삼백을 만들고 칠 점 오를 한 번만 곱하면 이천이백오십이에요. 복잡한 세로셈이 한 번으로 줄어서 실수도 줄어요.",
+"check": "답을 쓰기 전에 마지막 점검이에요. 먼저 어림해 보세요. 영 점 육오는 약 영 점 칠, 육 점 사는 약 육이니까 답은 사쯤이어야 해요. 그러면 소수점 위치가 맞는지 바로 알 수 있어요. 그리고 답 뒤에는 단위를 꼭 붙여요. 킬로그램, 원, 개, 제곱미터처럼요.",
+"perf": "수행평가 서술형 연습이에요. 구하려는 것, 중간값, 최종 식 순서로 빈칸을 채우고 계산해요. 마지막에는 단위와 어림 검산까지 스스로 점검해야 완성이에요. 확인하기 버튼을 누르면 어느 칸이 맞았는지 알려 줘요.",
+"twin": "마지막으로 로운이가 틀렸던 열한 문제의 쌍둥이 문제예요. 문제 모양은 같고 숫자만 바꿨어요. 오늘 배운 방법을 떠올리면서 풀어 보세요. 틀리면 어떤 습관을 점검해야 하는지 알려 줄게요.",
+"end": "오늘 정말 잘했어요! 곱의 소수점은 자릿수를 세어서 찍고, 덧셈은 소수점끼리 줄을 맞춰요. 문장제는 밑줄, 동그라미, 중간값 순서로 끊어 읽고, 수 카드는 자리 규칙으로 풀어요. 마지막에는 끝까지 곱했는지, 단위와 어림까지 확인하면 완벽해요. 체크리스트로 스스로 확인해 보세요. 화이팅!"
+}</script>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('mathdec:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('mathdec:' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const NARR = JSON.parse($('#narr').textContent);
+  const IDLE = '재생 버튼을 누르면 선생님이 설명해 줘요.';
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const shake = el => { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  /* ================= 소리 ================= */
+  const player = $('#voice');
+  const synth = window.speechSynthesis || null;
+  let rate = +store.get('rate', 1), token = 0, speaking = false, auto = false, autoTimer = null;
+  $('#rateSel').value = String(rate);
+  $('#rateSel').addEventListener('change', e => { rate = +e.target.value; store.set('rate', rate); player.playbackRate = rate; });
+
+  function pickVoice() {
+    if (!synth) return null;
+    const all = synth.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('ko'));
+    const score = v => { const n = v.name.toLowerCase(); let s = 0;
+      if (/yuna|sora|heami|google 한국|sunhi|jimin/.test(n)) s += 6;
+      if (/natural|neural|premium|enhanced|online/.test(n)) s += 3; return s; };
+    return all.sort((a, b) => score(b) - score(a))[0] || null;
+  }
+  if (synth) { synth.getVoices(); synth.onvoiceschanged = () => synth.getVoices(); }
+  let unlocked = false;
+  const unlock = () => { if (unlocked || !synth) return; unlocked = true; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {} };
+  document.addEventListener('click', unlock, true);
+  document.addEventListener('touchend', unlock, true);
+
+  function setCaption(t, on) { const c = $('#caption'); c.textContent = t; c.classList.toggle('on', !!on); }
+  // 문장 나누기: 소수점(숫자 사이의 점)에서는 끊지 않는다.
+  function sentences(t) { return (t.match(/(?:[^.!?]|\.(?=\d))+[.!?]+|(?:[^.!?]|\.(?=\d))+$/g) || [t]).map(s => s.trim()).filter(Boolean); }
+  function stopAll() {
+    token++; speaking = false; clearTimeout(autoTimer);
+    if (synth) try { synth.cancel(); } catch (e) {}
+    try { player.pause(); } catch (e) {}
+    player.ontimeupdate = player.onended = player.onerror = null;
+    $('#aprogBar').style.width = '0';
+    refreshButtons();
+  }
+  function speakDevice(text, onDone, my) {
+    const list = sentences(text); let k = 0;
+    const next = () => {
+      if (my !== token) return;
+      if (k >= list.length) { finish(my, onDone); return; }
+      const line = list[k++]; setCaption(line, true);
+      if (!synth) { autoTimer = setTimeout(next, Math.max(1600, line.length * 120 / rate)); return; }
+      const u = new SpeechSynthesisUtterance(line);
+      u.lang = 'ko-KR';
+      const v = pickVoice(); if (v) u.voice = v;
+      u.rate = rate * 0.95;
+      let done = false;
+      const fin = () => { if (done) return; done = true; clearTimeout(guard); if (my === token) setTimeout(next, 150); };
+      const guard = setTimeout(fin, (line.length * 300 + 5000) / rate);
+      u.onend = fin; u.onerror = fin;
+      try { synth.speak(u); } catch (e) { fin(); }
+    };
+    setTimeout(next, 60);
+  }
+  function finish(my, onDone) {
+    if (my !== token) return;
+    speaking = false; refreshButtons(); $('#aprogBar').style.width = '0';
+    setCaption(auto ? '' : IDLE, false); onDone && onDone();
+  }
+  // 녹음 파일 재생. 파일이 없으면 기기 목소리로 대신 읽는다.
+  function play(key, text, onDone) {
+    stopAll();
+    const my = ++token; speaking = true; refreshButtons();
+    const parts = sentences(text);
+    const total = parts.reduce((n, s) => n + s.length, 0);
+    let cues = null, ci = -1;
+    setCaption(parts[0], true);
+    player.src = 'audio/' + key + '.mp3';
+    player.defaultPlaybackRate = rate; player.playbackRate = rate;
+    player.ontimeupdate = () => {
+      if (my !== token || !player.duration || !isFinite(player.duration)) return;
+      if (!cues) { let acc = 0; cues = parts.map(s => { const t = acc / total * player.duration; acc += s.length; return t; }); }
+      const t = player.currentTime; let i = cues.length - 1;
+      while (i > 0 && cues[i] > t) i--;
+      if (i !== ci) { ci = i; setCaption(parts[i], true); }
+      $('#aprogBar').style.width = Math.min(100, t / player.duration * 100) + '%';
+    };
+    player.onended = () => finish(my, onDone);
+    player.onerror = () => { if (my !== token) return; player.onerror = null; speakDevice(text, onDone, my); };
+    const pr = player.play();
+    if (pr) pr.catch(err => {
+      if (my !== token || (err && err.name === 'AbortError')) return;
+      if (err && err.name === 'NotSupportedError') { speakDevice(text, onDone, my); return; }
+      speaking = false; auto = false; refreshButtons();
+      setCaption('소리를 켜려면 재생 버튼을 한 번 더 눌러 주세요.', false);
+    });
+  }
+
+  /* ================= 전체 화면 =================
+     자료는 Streamlit 페이지 안의 iframe 에서 돈다. 같은 출처라서 바깥 iframe 요소를 통째로
+     전체 화면으로 만들면 Safari 주소창·Streamlit 막대 없이 자료만 화면 가득 보인다.
+     (아이패드·PC 브라우저 지원. 아이폰 Safari 는 웹페이지 전체 화면을 지원하지 않아 버튼을 숨긴다.) */
+  function fsTarget() { try { if (window.frameElement) return window.frameElement; } catch (e) {} return document.documentElement; }
+  function fsDoc() { try { if (window.frameElement) return window.parent.document; } catch (e) {} return document; }
+  const fsEl = () => { const d = fsDoc(); return d.fullscreenElement || d.webkitFullscreenElement || null; };
+  const fsOk = (() => { const t = fsTarget(); return !!(t.requestFullscreen || t.webkitRequestFullscreen); })();
+  function enterFull() {
+    if (!fsOk || fsEl()) return;
+    const t = fsTarget();
+    try { const r = (t.requestFullscreen || t.webkitRequestFullscreen).call(t); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function exitFull() {
+    const d = fsDoc();
+    try { const r = (d.exitFullscreen || d.webkitExitFullscreen).call(d); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function fsUI() {
+    const on = !!fsEl();
+    $('#lbFull').textContent = on ? '전체 화면 끝' : '전체 화면';
+    $('#icFull').innerHTML = on ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  }
+  if (fsOk) {
+    $('#btnFull').hidden = false;
+    $('#btnFull').addEventListener('click', () => fsEl() ? exitFull() : enterFull());
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => { fsDoc().addEventListener(ev, fsUI); document.addEventListener(ev, fsUI); });
+  }
+
+  /* ================= 슬라이드 ================= */
+  const slides = $$('.slide');
+  let cur = 0;
+  function refreshButtons() {
+    $('#lbAuto').textContent = auto ? '멈춤' : '영상처럼 보기';
+    $('#icAuto').innerHTML = auto ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+    $('#lbListen').textContent = speaking && !auto ? '멈춤' : '이 장 듣기';
+  }
+  function updateUI() {
+    $('#pager').textContent = `${cur + 1} / ${slides.length}`;
+    $('#bar').style.width = ((cur + 1) / slides.length * 100) + '%';
+    $('#btnPrev').disabled = cur === 0; $('#btnNext').disabled = cur === slides.length - 1;
+    $$('#tocList button').forEach((b, i) => b.setAttribute('aria-current', i === cur ? 'true' : 'false'));
+    store.set('slide', cur);
+  }
+  function go(i) {
+    if (i < 0 || i >= slides.length || i === cur) return;
+    const back = i < cur;
+    slides[cur].classList.remove('active');
+    slides.forEach(s => s.classList.toggle('back', back));
+    cur = i; slides[cur].scrollTop = 0; slides[cur].classList.add('active');
+    updateUI();
+    if (auto) narrate(); else { stopAll(); setCaption(IDLE, false); }
+    preload(cur + 1);
+  }
+  function narrate() {
+    const s = slides[cur], id = s.dataset.id;
+    play('n_' + id, NARR[id], () => {
+      if (!auto) return;
+      if (s.dataset.stop || cur === slides.length - 1) { auto = false; refreshButtons(); setCaption('직접 풀어 보고, 다음 버튼으로 넘어가요.', false); return; }
+      autoTimer = setTimeout(() => go(cur + 1), 900);
+    });
+  }
+  function preload(i) { const s = slides[i]; if (!s) return; try { const a = new Audio(); a.preload = 'auto'; a.src = 'audio/n_' + s.dataset.id + '.mp3'; } catch (e) {} }
+
+  $('#btnPrev').addEventListener('click', () => go(cur - 1));
+  $('#btnNext').addEventListener('click', () => go(cur + 1));
+  $('#btnAuto').addEventListener('click', () => {
+    if (auto) { auto = false; stopAll(); setCaption(IDLE, false); return; }
+    enterFull(); auto = true; refreshButtons(); narrate();
+  });
+  $('#startAuto').addEventListener('click', () => { enterFull(); auto = true; refreshButtons(); narrate(); });
+  $('#btnListen').addEventListener('click', () => {
+    if (speaking && !auto) { stopAll(); setCaption(IDLE, false); return; }
+    auto = false; narrate();
+  });
+  $$('[data-go]').forEach(b => b.addEventListener('click', () => { auto = false; go(+b.dataset.go - 1); }));
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, select, textarea')) return;
+    if (!$('#tocBox').hidden) { if (e.key === 'Escape') $('#tocBox').hidden = true; return; }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  });
+  let tx = 0, ty = 0, tOk = false;
+  const stage = $('#stage');
+  stage.addEventListener('touchstart', e => { tOk = !e.target.closest('button, select, input, .tbl, .colgrid, .prob'); tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (!tOk) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { auto = false; go(cur + (dx < 0 ? 1 : -1)); }
+  }, { passive: true });
+
+  slides.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button"><span>${i + 1}</span><span>${s.dataset.title}</span></button>`;
+    li.firstChild.addEventListener('click', () => { $('#tocBox').hidden = true; auto = false; go(i); });
+    $('#tocList').appendChild(li);
+  });
+  $('#btnToc').addEventListener('click', () => { $('#tocBox').hidden = false; });
+  $$('[data-close]').forEach(b => b.addEventListener('click', () => { $('#tocBox').hidden = true; }));
+  $('#tocBox').addEventListener('click', e => { if (e.target.id === 'tocBox') $('#tocBox').hidden = true; });
+
+  /* ================= 공통: 고르기 문제 =================
+     html 은 문제 문장(___ 은 빈칸), opts 는 보기, ans 는 정답, why 는 해설,
+     wrong 은 틀렸을 때 안내 (함수면 고른 보기를 받아 안내를 돌려준다). */
+  function choiceQ(box, o, onScore) {
+    const q = document.createElement('div'); q.className = 'q';
+    const sent = o.html.includes('___') ? o.html.replace('___', '<span class="blank">&nbsp;</span>') : o.html;
+    q.innerHTML = (o.head ? `<div class="head">${o.head}</div>` : '') + `<p class="sent">${sent}</p><div class="choices"></div><p class="why" hidden></p>`;
+    (o.noShuffle ? o.opts : shuffle(o.opts)).forEach(p => {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.innerHTML = p;
+      c.addEventListener('click', () => {
+        const w = q.querySelector('.why');
+        if (p === o.ans) {
+          q.querySelectorAll('.choice').forEach(x => x.disabled = true);
+          c.classList.add('ok');
+          const bl = q.querySelector('.blank'); if (bl) bl.innerHTML = `<span class="mark t1">${o.ans}</span>`;
+          onScore && onScore(!q.dataset.miss);
+          w.hidden = false; w.className = 'why ok'; w.innerHTML = (q.dataset.miss ? '정답이에요. ' : '정답! ') + o.why;
+        } else {
+          q.dataset.miss = '1'; c.classList.add('no'); c.disabled = true; shake(c);
+          w.hidden = false; w.className = 'why no'; w.innerHTML = typeof o.wrong === 'function' ? o.wrong(p) : (o.wrong || '다시 생각해 보세요.');
+        }
+      });
+      q.querySelector('.choices').appendChild(c);
+    });
+    box.appendChild(q);
+    return q;
+  }
+  function scoreSet(scoreEl, total) {
+    let n = 0; const show = () => { $(scoreEl).textContent = `${n} / ${total}`; };
+    show();
+    return { add(first) { if (first) n++; show(); }, reset() { n = 0; show(); } };
+  }
+
+  /* ================= 연습 ① 소수점 찍기 ================= */
+  // a × b 의 자연수 곱 digits 와 소수 자릿수 places. 앞에 채운 0은 pad 개.
+  const DOTS = [
+    { a: '3.6', b: '0.05', nat: '36 × 5 = 180' },
+    { a: '2.7', b: '1.4', nat: '27 × 14 = 378' },
+    { a: '0.6', b: '0.3', nat: '6 × 3 = 18' },
+    { a: '5.25', b: '0.8', nat: '525 × 8 = 4200' },
+    { a: '12.5', b: '0.04', nat: '125 × 4 = 500' },
+    { a: '0.35', b: '0.2', nat: '35 × 2 = 70' }
+  ];
+  const fracLen = s => (s.split('.')[1] || '').length;
+  // 소수 끝의 0을 지운 값
+  const trimDec = s => s.includes('.') ? s.replace(/0+$/, '').replace(/\.$/, '') : s;
+  function buildDots() {
+    const box = $('#dotList'); box.innerHTML = '';
+    const sc = scoreSet('#dotScore', DOTS.length);
+    DOTS.forEach(d => {
+      const prod = d.nat.split('= ')[1];
+      const places = fracLen(d.a) + fracLen(d.b);
+      const pad = Math.max(0, places + 1 - prod.length);
+      const digs = '0'.repeat(pad) + prod;
+      const pos = digs.length - places; // 소수점이 들어갈 틈 (앞에서부터 pos 개 뒤)
+      const ans = digs.slice(0, pos) + '.' + digs.slice(pos);
+      const q = document.createElement('div'); q.className = 'dotq';
+      q.innerHTML = `<p class="formula">${d.a} × ${d.b} = ?</p><p class="note">자연수 곱: <b class="num">${d.nat}</b> · 소수점 아래 자릿수 ${fracLen(d.a)} + ${fracLen(d.b)} = <b>?</b></p><div class="dotrow"></div><p class="why" hidden></p>`;
+      const row = q.querySelector('.dotrow');
+      [...digs].forEach((ch, i) => {
+        const g = document.createElement('span'); g.className = 'dg' + (i < pad ? ' pad' : ''); g.textContent = ch; row.appendChild(g);
+        if (i < digs.length - 1) {
+          const gp = document.createElement('button'); gp.type = 'button'; gp.className = 'gap'; gp.setAttribute('aria-label', `${i + 1}번째 숫자 뒤에 소수점`);
+          gp.addEventListener('click', () => {
+            const w = q.querySelector('.why');
+            if (i + 1 === pos) {
+              q.querySelectorAll('.gap').forEach(x => { x.disabled = true; x.classList.remove('no'); });
+              gp.classList.add('on');
+              const fin = trimDec(ans);
+              // 지워지는 끝 0 표시
+              const cut = ans.length - fin.length - (fin.includes('.') ? 0 : 1);
+              const gs = q.querySelectorAll('.dg'); for (let k = 0; k < cut; k++) gs[gs.length - 1 - k].classList.add('cut');
+              q.querySelector('.note b:last-child').textContent = places;
+              sc.add(!q.dataset.miss);
+              w.hidden = false; w.className = 'why ok';
+              w.innerHTML = `정답! 소수점 아래 ${places}자리 → <b class="num">${ans}</b>` + (fin !== ans ? ` → 끝의 0을 지우면 <b class="num">${fin}</b>` : '');
+            } else {
+              q.dataset.miss = '1'; gp.classList.add('no'); shake(row);
+              const got = digs.length - (i + 1);
+              w.hidden = false; w.className = 'why no';
+              w.textContent = `여기에 찍으면 소수점 아래가 ${got}자리예요. ${d.a}와 ${d.b}의 소수점 아래 자릿수를 더해 보세요.`;
+            }
+          });
+          row.appendChild(gp);
+        }
+      });
+      box.appendChild(q);
+    });
+  }
+  buildDots();
+  $('#dotReset').addEventListener('click', buildDots);
+
+  /* ================= 연습 ② 자릿수 시소 빈칸 ================= */
+  const CANCEL = [
+    { html: '2.4 × 0.3 = 0.72 &nbsp;→&nbsp; 24 × ___ = 0.72', opts: ['3', '0.3', '0.03', '0.003'], ans: '0.03', why: '2.4가 24로 오른쪽으로 1칸 → 0.3은 왼쪽으로 1칸 → 0.03' },
+    { html: '2.4 × 0.3 = 0.72 &nbsp;→&nbsp; 0.24 × ___ = 0.72', opts: ['0.03', '0.3', '3', '30'], ans: '3', why: '2.4가 0.24로 왼쪽으로 1칸 → 0.3은 오른쪽으로 1칸 → 3' },
+    { html: '2.4 × 0.3 = 0.72 &nbsp;→&nbsp; ___ × 0.003 = 0.72', opts: ['2.4', '24', '240', '2400'], ans: '240', why: '0.3이 0.003으로 왼쪽으로 2칸 → 2.4는 오른쪽으로 2칸 → 240' },
+    { html: '1.6 × 0.5 = 0.8 &nbsp;→&nbsp; 0.16 × ___ = 0.8', opts: ['0.05', '0.5', '5', '50'], ans: '5', why: '1.6이 0.16으로 왼쪽으로 1칸 → 0.5는 오른쪽으로 1칸 → 5' },
+    { html: '1.6 × 0.5 = 0.8 &nbsp;→&nbsp; 160 × ___ = 0.8', opts: ['0.5', '0.05', '0.005', '0.0005'], ans: '0.005', why: '1.6이 160으로 오른쪽으로 2칸 → 0.5는 왼쪽으로 2칸 → 0.005' },
+    { html: '곱이 <b>다른</b> 하나는? (자릿수 합을 세어 봐요)', opts: ['45 × 0.04', '4.5 × 0.4', '0.45 × 4', '450 × 0.0004'], ans: '450 × 0.0004', why: '나머지는 자릿수 합이 2라서 1.8, 450 × 0.0004 는 자릿수 합이 4라서 0.18이에요.' }
+  ];
+  function buildCancel() {
+    const box = $('#cancelList'); box.innerHTML = '';
+    const sc = scoreSet('#cancelScore', CANCEL.length);
+    CANCEL.forEach(o => choiceQ(box, Object.assign({ wrong: '한쪽 수의 소수점이 몇 칸, 어느 쪽으로 움직였는지 먼저 세어 보세요.' }, o), f => sc.add(f)));
+  }
+  buildCancel();
+  $('#cancelReset').addEventListener('click', buildCancel);
+
+  /* ================= 연습 ③ 칸 세로셈 =================
+     칸은 자리값 10^4 ~ 10^-4 의 9칸. 아래 수는 shift 칸만큼 밀려 있다(+ 는 왼쪽). */
+  const COLS = [4, 3, 2, 1, 0, -1, -2, -3, -4];
+  const COLP = [
+    { a: '73.5', b: '0.735', shift: 2, tab: '73.5 + 0.735', from: '13번처럼 10배·0.1배 한 두 수 더하기' },
+    { a: '4.08', b: '12.7', shift: -1, tab: '4.08 + 12.7', from: '오른쪽 끝을 맞추면 틀려요' },
+    { a: '1137.6', b: '1312.4', shift: 0, tab: '1137.6 + 1312.4', from: '49번처럼 받아올림이 여러 번' }
+  ];
+  const digitMap = s => { const [i, f = ''] = s.split('.'); const m = {}; [...i].reverse().forEach((d, k) => m[k] = +d); [...f].forEach((d, k) => m[-(k + 1)] = +d); return m; };
+  let cp = 0, cShift = 0, cStage = 'align', cAns = {}, cCarry = {}, cAt = 0, cDone = store.get('colDone', []);
+  function colTabs() {
+    const t = $('#colTabs'); t.innerHTML = '';
+    COLP.forEach((p, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = p.tab; b.setAttribute('aria-pressed', i === cp ? 'true' : 'false'); if (cDone.includes(i)) b.classList.add('done'); b.addEventListener('click', () => { cp = i; colStart(); }); t.appendChild(b); });
+  }
+  function colTarget() {
+    const p = COLP[cp]; const A = digitMap(p.a), B = digitMap(p.b);
+    const lo = Math.min(...Object.keys(A).map(Number), ...Object.keys(B).map(Number));
+    // 합 계산 (자리별, 받아올림 포함)
+    const sum = {}, carry = {}; let c = 0;
+    for (let e = lo; e <= 4; e++) { const v = (A[e] || 0) + (B[e] || 0) + c; sum[e] = v % 10; c = Math.floor(v / 10); if (c) carry[e + 1] = c; }
+    let hi = 4; while (hi > 0 && !sum[hi]) hi--;
+    const order = []; for (let e = lo; e <= hi; e++) order.push(e);
+    return { A, B, lo, hi, sum, carry, order };
+  }
+  function colStart() {
+    cShift = COLP[cp].shift; cStage = 'align'; cAns = {}; cCarry = {}; cAt = 0;
+    $('#shiftBox').hidden = false; $('#keypad').hidden = true;
+    $('#colMsg').className = 'msg'; $('#colMsg').textContent = COLP[cp].from + '. 먼저 아래 수의 소수점을 위의 수와 같은 줄에 맞춰요.';
+    colTabs(); colRender();
+  }
+  function colRender() {
+    const p = COLP[cp]; const T = colTarget();
+    const row = (label, getter, cls, ptCol) => {
+      const r = document.createElement('div'); r.className = 'crow ' + (cls || '');
+      r.innerHTML = `<div class="cc">${label}</div>` + COLS.map(e => { const v = getter(e); return `<div class="cc${e === ptCol ? ' pt' : ''}${e === 0 || e === -1 ? ' zone' : ''}${cls === 'ans' && cStage === 'calc' && T.order[cAt] === e ? ' cur' : ''}">${v == null ? '' : v}</div>`; }).join('');
+      return r;
+    };
+    const g = $('#colGrid'); g.innerHTML = '';
+    g.appendChild(row('', e => cCarry[e] || null, 'carry', null));
+    g.appendChild(row('', e => (T.A[e] != null && e <= Math.max(...Object.keys(T.A).map(Number))) ? T.A[e] : null, '', 0));
+    const bot = row('+', e => T.B[e - cShift] != null ? T.B[e - cShift] : null, 'bot sum' + (cShift === 0 ? ' ok' : ''), cShift);
+    g.appendChild(bot);
+    g.appendChild(row('', e => cAns[e] != null ? cAns[e] : null, 'ans', cStage !== 'align' && Object.keys(cAns).some(k => +k < 0) ? 0 : null));
+  }
+  // 아래 수의 숫자가 칸 밖으로 나가지 않는 범위에서만 옮긴다.
+  const bRange = () => { const ks = Object.keys(digitMap(COLP[cp].b)).map(Number); return [-4 - Math.min(...ks), 4 - Math.max(...ks)]; };
+  $('#shL').addEventListener('click', () => { if (cStage !== 'align') return; if (cShift < bRange()[1]) cShift++; colRender(); });
+  $('#shR').addEventListener('click', () => { if (cStage !== 'align') return; if (cShift > bRange()[0]) cShift--; colRender(); });
+  $('#shOk').addEventListener('click', () => {
+    const m = $('#colMsg');
+    if (cShift !== 0) { m.className = 'msg no'; m.textContent = '빨간 소수점이 위의 검은 소수점과 같은 줄에 있지 않아요. 숫자 모양이 아니라 소수점을 맞춰요.'; shake($('#colGrid')); return; }
+    cStage = 'calc'; $('#shiftBox').hidden = true; $('#keypad').hidden = false;
+    m.className = 'msg ok'; m.textContent = '소수점 줄이 맞았어요! 이제 맨 오른쪽 자리부터 답을 눌러요. 빈칸은 0으로 생각해요.';
+    colRender();
+  });
+  (function buildPad() {
+    const k = $('#keypad');
+    for (let d = 0; d <= 9; d++) {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = d;
+      b.addEventListener('click', () => colKey(d));
+      k.appendChild(b);
+    }
+  })();
+  function colKey(d) {
+    if (cStage !== 'calc') return;
+    const T = colTarget(); const e = T.order[cAt]; const m = $('#colMsg');
+    if (d === T.sum[e]) {
+      cAns[e] = d; if (T.carry[e + 1]) cCarry[e + 1] = T.carry[e + 1];
+      cAt++;
+      if (cAt >= T.order.length) {
+        cStage = 'done'; $('#keypad').hidden = true;
+        let s = ''; for (let x = T.hi; x >= T.lo; x--) { s += T.sum[x]; if (x === 0 && T.lo < 0) s += '.'; }
+        m.className = 'msg ok'; m.textContent = `완성! ${COLP[cp].a} + ${COLP[cp].b} = ${s}` + (trimDec(s) !== s ? ` (= ${trimDec(s)})` : '') + '. 다른 문제도 해 보세요.';
+        if (!cDone.includes(cp)) { cDone.push(cp); store.set('colDone', cDone); }
+        colTabs();
+      } else {
+        m.className = 'msg ok'; m.textContent = T.carry[e + 1] ? `맞아요! 10을 넘어서 윗칸에 받아올림 ${T.carry[e + 1]}을 적었어요. 다음 자리에서 꼭 더해요.` : '맞아요! 다음 자리로 가요.';
+      }
+      colRender();
+    } else {
+      const raw = ((T.A[e] || 0) + (T.B[e] || 0)) % 10;
+      m.className = 'msg no';
+      m.textContent = (cCarry[e] && d === raw) ? `받아올림 ${cCarry[e]}을 더했나요? 윗칸의 빨간 숫자를 보세요.` : '다시 더해 보세요. 이 자리의 위 숫자와 아래 숫자, 받아올림을 모두 더해요.';
+      shake($('#colGrid'));
+    }
+  }
+  colStart();
+
+  /* ================= 연습 ④ 끊어 읽기 =================
+     t: 문제 조각들 [글자, 역할] (g: 구하려는 것 → 밑줄, n: 숫자 조건 → 동그라미) */
+  const READ = [
+    { tab: '동전 문제 (48번형)',
+      t: [['동전이 ', 0], ['60개', 'n'], [' 있어요. 그중 ', 0], ['500원짜리', 'n'], [' 동전은 ', 0], ['전체의 0.35배', 'n'], ['이고, 나머지는 모두 ', 0], ['100원짜리', 'n'], [' 동전이에요. ', 0], ['동전은 모두 얼마', 'g'], ['일까요?', 0]],
+      steps: [
+        { lb: '구하려는 것', opts: ['동전 전체 금액 (원)', '500원짜리 동전의 개수', '동전 전체 개수'], ans: '동전 전체 금액 (원)', why: '마지막 문장 "모두 얼마"가 구하려는 것이에요.' },
+        { lb: '중간값 ① 500원짜리 동전 개수', opts: ['60 × 0.35 = 21 (개)', '500 × 0.35 = 175 (개)', '60 − 0.35 = 59.65 (개)'], ans: '60 × 0.35 = 21 (개)', why: '"전체의 0.35배"의 전체는 동전 60개예요.' },
+        { lb: '중간값 ② 100원짜리 동전 개수', opts: ['60 − 21 = 39 (개)', '60 + 21 = 81 (개)', '21 × 100 = 2100 (개)'], ans: '60 − 21 = 39 (개)', why: '나머지 = 전체 − 500원짜리 개수' },
+        { lb: '최종 식', opts: ['500 × 21 + 100 × 39 = 14400 (원)', '500 × 0.35 + 100 × 60 = 6175 (원)', '500 × 60 = 30000 (원)'], ans: '500 × 21 + 100 × 39 = 14400 (원)', why: '10500 + 3900 = 14400원. 단위 "원"까지 붙여요.' }
+      ] },
+    { tab: '둘레와 넓이의 합 (26번형)',
+      t: [['가로가 ', 0], ['12.5 cm', 'n'], [', 세로가 ', 0], ['5.4 cm', 'n'], ['인 직사각형이 있어요. 이 직사각형의 ', 0], ['둘레와 넓이의 합', 'g'], ['을 구하세요. (둘레와 넓이의 수를 더해요.)', 0]],
+      steps: [
+        { lb: '구하려는 것', opts: ['둘레와 넓이의 합', '넓이', '둘레'], ans: '둘레와 넓이의 합', why: '"둘레와 넓이의 합"이라 두 값을 모두 구해야 해요.' },
+        { lb: '중간값 ① 넓이', opts: ['12.5 × 5.4 = 67.5', '12.5 + 5.4 = 17.9', '12.5 × 2 = 25'], ans: '12.5 × 5.4 = 67.5', why: '직사각형의 넓이 = 가로 × 세로' },
+        { lb: '중간값 ② 둘레', opts: ['(12.5 + 5.4) × 2 = 35.8', '12.5 + 5.4 = 17.9', '12.5 × 5.4 × 2 = 135'], ans: '(12.5 + 5.4) × 2 = 35.8', why: '둘레 = (가로 + 세로) × 2. 가로·세로를 어림하지 말고 그대로 더해요.' },
+        { lb: '최종 식', opts: ['67.5 + 35.8 = 103.3', '67.5 + 17.9 = 85.4', '67.5 × 2 = 135'], ans: '67.5 + 35.8 = 103.3', why: '넓이 + 둘레 = 103.3' }
+      ] },
+    { tab: '바르게 계산하기 (31번형)',
+      t: [['어떤 수에 ', 0], ['3.4를 곱해야', 'n'], [' 할 것을 잘못하여 ', 0], ['4.3을 곱했더니', 'n'], [' ', 0], ['38.7', 'n'], ['이 되었어요. ', 0], ['바르게 계산한 값', 'g'], ['을 구하세요.', 0]],
+      steps: [
+        { lb: '구하려는 것', opts: ['바르게 계산한 값', '어떤 수', '잘못 계산한 값'], ans: '바르게 계산한 값', why: '어떤 수는 중간값이고, 끝까지 가서 바르게 계산한 값을 구해요.' },
+        { lb: '중간값 어떤 수 (□)', opts: ['□ × 4.3 = 38.7, 43 × 9 = 387 이므로 □ = 9', '□ = 38.7 × 4.3', '□ = 38.7 − 4.3 = 34.4'], ans: '□ × 4.3 = 38.7, 43 × 9 = 387 이므로 □ = 9', why: '잘못 계산한 식을 먼저 □로 써요. 43 × □ = 387 을 생각하면 □ = 9.' },
+        { lb: '최종 식', opts: ['9 × 3.4 = 30.6', '38.7 × 3.4 = 131.58', '9 × 4.3 = 38.7'], ans: '9 × 3.4 = 30.6', why: '어떤 수 9에 원래 곱해야 할 3.4를 곱해요.' }
+      ] }
+  ];
+  let rp = 0, rMode = 'u', rDone = store.get('readDone', []);
+  function readTabs() {
+    const t = $('#readTabs'); t.innerHTML = '';
+    READ.forEach((p, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = p.tab; b.setAttribute('aria-pressed', i === rp ? 'true' : 'false'); if (rDone.includes(i)) b.classList.add('done'); b.addEventListener('click', () => { rp = i; readStart(); }); t.appendChild(b); });
+  }
+  function setMode(m) { rMode = m; $('#modeU').setAttribute('aria-pressed', m === 'u' ? 'true' : 'false'); $('#modeC').setAttribute('aria-pressed', m === 'c' ? 'true' : 'false'); }
+  $('#modeU').addEventListener('click', () => setMode('u'));
+  $('#modeC').addEventListener('click', () => setMode('c'));
+  function readStart() {
+    readTabs(); setMode('u');
+    const p = READ[rp]; const box = $('#probText'); box.innerHTML = '';
+    p.t.forEach(([txt, role]) => {
+      // 역할 없는 조각은 낱말마다 누를 수 있게 나눈다 (아무 데나 표시해 보는 것도 허용)
+      const parts = role ? [txt] : txt.split(/(\s+)/);
+      parts.forEach(w => {
+        if (!w.trim()) { box.appendChild(document.createTextNode(w)); return; }
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'tk'; b.textContent = w; b.dataset.role = role || '';
+        b.addEventListener('click', () => {
+          b.classList.remove('miss');
+          const k = rMode === 'u' ? 'u' : 'c', other = k === 'u' ? 'c' : 'u';
+          b.classList.remove(other); b.classList.toggle(k);
+        });
+        box.appendChild(b);
+      });
+    });
+    $('#markMsg').className = 'msg'; $('#markMsg').textContent = '';
+    $('#markOk').disabled = false;
+    tmplBuild(false);
+  }
+  $('#markOk').addEventListener('click', () => {
+    const tks = $$('#probText .tk'); let missG = 0, missN = 0, extra = 0;
+    tks.forEach(b => {
+      const r = b.dataset.role, u = b.classList.contains('u'), c = b.classList.contains('c');
+      let bad = false;
+      if (r === 'g' && !u) { missG++; bad = true; }
+      if (r === 'n' && !c) { missN++; bad = true; }
+      if (!r && (u || c)) { extra++; bad = true; }
+      b.classList.toggle('miss', bad && (u || c || r));
+    });
+    const m = $('#markMsg');
+    if (!missG && !missN && !extra) {
+      m.className = 'msg ok'; m.textContent = '완벽해요! 이제 아래 템플릿을 1단계부터 채워요.';
+      tks.forEach(b => b.disabled = true); $('#markOk').disabled = true; tmplBuild(true); return;
+    }
+    const tips = [];
+    if (missG) tips.push('구하려는 것(마지막 문장)에 밑줄이 빠졌어요');
+    if (missN) tips.push(`동그라미가 필요한 숫자 조건이 ${missN}개 남았어요`);
+    if (extra) tips.push(`표시하지 않아도 되는 곳이 ${extra}군데 있어요`);
+    m.className = 'msg no'; m.textContent = tips.join(' · ') + '.';
+  });
+  function tmplBuild(open) {
+    const p = READ[rp]; const box = $('#tmplBox'); box.innerHTML = '';
+    let at = 0; const rows = [];
+    p.steps.forEach((s, i) => {
+      const d = document.createElement('div'); d.className = 'tstep' + (open && i === 0 ? '' : ' lock');
+      d.innerHTML = `<span class="sn">${i === 0 ? 1 : i === p.steps.length - 1 ? 3 : 2}</span><div class="body"><b>${s.lb}</b><div class="choices"></div><p class="why" hidden></p></div>`;
+      shuffle(s.opts).forEach(o => {
+        const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.textContent = o;
+        c.addEventListener('click', () => {
+          const w = d.querySelector('.why');
+          if (o === s.ans) {
+            d.querySelectorAll('.choice').forEach(x => x.disabled = true); c.classList.add('ok');
+            w.hidden = false; w.className = 'why ok'; w.textContent = s.why;
+            at++;
+            if (rows[at]) rows[at].classList.remove('lock');
+            else { if (!rDone.includes(rp)) { rDone.push(rp); store.set('readDone', rDone); } readTabs(); $('#markMsg').className = 'msg ok'; $('#markMsg').textContent = '이 문제 완성! 다른 문제 탭도 해 보세요.'; }
+          } else {
+            c.classList.add('no'); c.disabled = true; shake(c);
+            w.hidden = false; w.className = 'why no'; w.textContent = '밑줄 친 것과 동그라미 친 숫자를 다시 보세요.';
+          }
+        });
+        d.querySelector('.choices').appendChild(c);
+      });
+      rows.push(d); box.appendChild(d);
+    });
+    if (!open) { const n = document.createElement('p'); n.className = 'note'; n.textContent = '위에서 밑줄과 동그라미를 맞게 치면 템플릿이 열려요.'; box.prepend(n); }
+  }
+  readStart();
+
+  /* ================= 연습 ⑤ 수 카드 ================= */
+  const CARDS = [
+    { c: [2, 6, 8], goal: 'min' }, { c: [2, 6, 8], goal: 'max' },
+    { c: [4, 7, 9], goal: 'min' }, { c: [1, 5, 8], goal: 'max' }
+  ];
+  let kp = 0, kSlots = [null, null, null], kTried = [], kDone = store.get('cardDone', []);
+  const prodOf = (a, b, c) => (10 * a + b) * c; // 실제 곱의 10배 (정수)
+  const fmt10 = n => (n % 10 ? `${Math.floor(n / 10)}.${n % 10}` : String(n / 10));
+  function cardTarget() {
+    const { c, goal } = CARDS[kp]; const all = [];
+    for (const a of c) for (const b of c) for (const z of c) if (a !== b && b !== z && a !== z) all.push(prodOf(a, b, z));
+    return goal === 'min' ? Math.min(...all) : Math.max(...all);
+  }
+  function cardTabs() {
+    const t = $('#cardTabs'); t.innerHTML = '';
+    CARDS.forEach((p, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = `${p.c.join(', ')} · ${p.goal === 'min' ? '가장 작은 곱' : '가장 큰 곱'}`; b.setAttribute('aria-pressed', i === kp ? 'true' : 'false'); if (kDone.includes(i)) b.classList.add('done'); b.addEventListener('click', () => { kp = i; cardStart(); }); t.appendChild(b); });
+  }
+  function cardStart() { kSlots = [null, null, null]; kTried = []; $('#cardMsg').textContent = ''; $('#cardMsg').className = 'msg'; $('#cardGoal').textContent = `수 카드 ${CARDS[kp].c.join(', ')}로 ${CARDS[kp].goal === 'min' ? '가장 작은' : '가장 큰'} 곱을 만드세요`; cardTabs(); cardRender(); }
+  function cardRender() {
+    const pool = $('#cardPool'); pool.innerHTML = '';
+    CARDS[kp].c.forEach(v => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'ncard'; b.textContent = v; b.disabled = kSlots.includes(v);
+      b.addEventListener('click', () => { const i = kSlots.indexOf(null); if (i < 0) return; kSlots[i] = v; cardRender(); cardCheck(); });
+      pool.appendChild(b);
+    });
+    const names = ['일의 자리', '소수 첫째', '곱하는 수'];
+    $$('.slot').forEach((s, i) => { s.classList.toggle('f', kSlots[i] != null); s.innerHTML = kSlots[i] != null ? kSlots[i] : `<small>${names[i]}</small>`; });
+    const full = !kSlots.includes(null);
+    $('#cardProd').textContent = full ? `${kSlots[0]}.${kSlots[1]} × ${kSlots[2]} = ${fmt10(prodOf(...kSlots))}` : '';
+    const best = cardTarget();
+    $('#cardTried').innerHTML = kTried.map(t => `<span class="${t.v === best ? 'best' : ''}">${t.s} = ${fmt10(t.v)}</span>`).join('');
+  }
+  $$('.slot').forEach((s, i) => s.addEventListener('click', () => { if (kSlots[i] == null) return; kSlots[i] = null; cardRender(); }));
+  function cardCheck() {
+    if (kSlots.includes(null)) return;
+    const v = prodOf(...kSlots), s = `${kSlots[0]}.${kSlots[1]} × ${kSlots[2]}`;
+    if (!kTried.some(t => t.s === s)) kTried.push({ s, v });
+    const best = cardTarget(), g = CARDS[kp].goal, m = $('#cardMsg');
+    const srt = CARDS[kp].c.slice().sort((a, b) => a - b);
+    const eul = d => d + ('1678'.includes(String(d)) ? '을' : '를');
+    if (v === best) {
+      m.className = 'msg ok';
+      m.textContent = g === 'min' ? `찾았어요! 가장 큰 ${eul(srt[2])} 소수 첫째 자리에, 가장 작은 ${eul(srt[0])} 곱하는 수에 두었어요.` : `찾았어요! 가장 작은 ${eul(srt[0])} 소수 첫째 자리에, 가장 큰 ${eul(srt[2])} 곱하는 수에 두었어요.`;
+      if (!kDone.includes(kp)) { kDone.push(kp); store.set('cardDone', kDone); }
+      cardTabs();
+    } else {
+      m.className = 'msg no';
+      m.textContent = (g === 'min' ? '더 작게 만들 수 있어요. ' : '더 크게 만들 수 있어요. ') + `규칙: ${g === 'min' ? '△에 가장 큰 수, ☆에 가장 작은 수' : '△에 가장 작은 수, ☆에 가장 큰 수'}. 카드를 눌러 빼고 다시 놓아 보세요.`;
+    }
+    cardRender();
+  }
+  cardStart();
+
+  /* ================= 습관 4: 세 수 곱하기 체크, 묶어 계산 ================= */
+  (function buildChain() {
+    const box = $('#chainQ');
+    const used = i => $$('#chain .f').forEach(f => { if (+f.dataset.i <= i) f.classList.add('used'); });
+    const q1 = choiceQ(box, { html: '1단계: 0.4 × 1.25 = ___', opts: ['0.5', '5', '0.05'], ans: '0.5', why: '4 × 125 = 500, 자릿수 1 + 2 = 3자리 → 0.500 = 0.5. 체크 2개!', wrong: '4 × 125 = 500 이에요. 소수점 아래 자릿수를 세어 보세요.' }, () => {
+      used(1);
+      choiceQ(box, { html: '2단계: 0.5 × 0.8 = ___', opts: ['0.4', '0.8', '4', '0.04'], ans: '0.4', why: '체크 3개 완성! 답은 0.4예요. 0.8을 그대로 쓰면 28번과 같은 실수예요.', wrong: p => p === '0.8' ? '0.8은 아직 곱하지 않은 수예요. 0.5 × 0.8을 끝까지 계산해요.' : '5 × 8 = 40, 자릿수 2자리 → 0.40 = 0.4' }, () => used(2));
+    });
+    used(0); q1.dataset.k = '1';
+  })();
+  choiceQ($('#distQ'), { html: '2.5 × 4.3 + 2.5 × 5.7 을 묶어서 계산하면?', opts: ['2.5 × 10 = 25', '(2.5 + 2.5) × (4.3 + 5.7) = 50', '2.5 × 4.3 × 5.7'], ans: '2.5 × 10 = 25', why: '같이 곱하는 2.5는 그대로 두고, 4.3 + 5.7 = 10 을 먼저 더해요.', wrong: '두 식에 똑같이 곱해지는 수가 무엇인지 찾아보세요.' });
+
+  /* ================= 연습 ⑥ 어림 검산 · 단위 ================= */
+  const EST = [
+    { html: '0.65 × 6.4 &nbsp;<small class="note">어림: 0.7 × 6 ≈ 4.2</small>', opts: ['0.416', '4.16', '41.6'], ans: '4.16', why: '어림값 4.2에 가까운 4.16이 맞아요.' },
+    { html: '2.8 × 3.1 &nbsp;<small class="note">어림: 3 × 3 = 9</small>', opts: ['0.868', '8.68', '86.8'], ans: '8.68', why: '9에 가까운 8.68이에요.' },
+    { html: '19.8 × 0.52 &nbsp;<small class="note">어림: 20 × 0.5 = 10</small>', opts: ['1.0296', '10.296', '102.96'], ans: '10.296', why: '10에 가까운 10.296이에요.' }
+  ];
+  const UNIT = [
+    { html: '1 m의 무게가 0.65 kg인 철근 6.4 m의 무게는 4.16 ___', opts: ['kg', 'm', 'g'], ans: 'kg', why: '무게를 물었으니 kg. 47번처럼 단위를 빠뜨리면 감점이에요.' },
+    { html: '가로 6.3 m, 세로 3.5 m인 직사각형의 넓이는 22.05 ___', opts: ['m²', 'm', 'cm²'], ans: 'm²', why: '넓이는 제곱미터(m²)예요.' },
+    { html: '500원짜리 21개와 100원짜리 39개는 모두 14400 ___', opts: ['원', '개', '원짜리'], ans: '원', why: '금액을 물었으니 원이에요.' },
+    { html: '한 병에 1.5 L씩 든 주스 3.2병의 양은 4.8 ___', opts: ['L', '병', 'mL'], ans: 'L', why: '1.5 L씩이니까 L예요.' }
+  ];
+  function buildCheck() {
+    const sc = scoreSet('#chkScore', EST.length + UNIT.length);
+    $('#estList').innerHTML = ''; $('#unitList').innerHTML = '';
+    EST.forEach(o => choiceQ($('#estList'), Object.assign({ wrong: '어림값과 비교해 보세요. 소수점 위치가 한 칸 다르면 10배 차이가 나요.' }, o), f => sc.add(f)));
+    UNIT.forEach(o => choiceQ($('#unitList'), Object.assign({ wrong: '문제가 무엇을 물었는지 다시 읽어 보세요.' }, o), f => sc.add(f)));
+  }
+  buildCheck();
+  $('#chkReset').addEventListener('click', buildCheck);
+
+  /* ================= 수행평가 서술형 ================= */
+  const PERF = [
+    { tab: '동전 금액 (48번형)',
+      prob: '동전이 <b>50개</b> 있어요. 그중 500원짜리 동전은 <b>전체의 0.4배</b>이고, 나머지는 모두 100원짜리 동전이에요. 동전은 모두 얼마인지 풀이 과정을 쓰고 답을 구하세요.',
+      lines: [
+        ['① 구하려는 것:', { sel: ['동전 전체 금액', '500원 동전 개수', '동전 전체 개수'], ans: '동전 전체 금액' }],
+        ['② 500원 동전 개수:', '50 × 0.4 =', { in: 20 }, '(개)'],
+        ['② 100원 동전 개수:', '50 −', { in: 20 }, '=', { in: 30 }, '(개)'],
+        ['③ 최종 식: 500 ×', { in: 20 }, '+ 100 ×', { in: 30 }, '=', { in: 13000 }],
+        ['답:', { in: 13000 }, { sel: ['원', '개', '원짜리'], ans: '원' }]
+      ],
+      model: '500원짜리 동전은 50 × 0.4 = 20(개), 100원짜리 동전은 50 − 20 = 30(개)예요. 금액은 500 × 20 + 100 × 30 = 10000 + 3000 = 13000(원). 답: 13000원' },
+    { tab: '늘인 직사각형 (46번형)',
+      prob: '가로 <b>3.5 m</b>, 세로 <b>2.5 m</b>인 직사각형 모양 꽃밭의 가로와 세로를 <b>각각 1.2배</b>로 늘였어요. 늘인 꽃밭의 넓이는 몇 m²인지 풀이 과정을 쓰고 답을 구하세요.',
+      lines: [
+        ['① 구하려는 것:', { sel: ['늘인 꽃밭의 넓이', '처음 꽃밭의 넓이', '늘인 가로의 길이'], ans: '늘인 꽃밭의 넓이' }],
+        ['② 늘인 가로: 3.5 ×', { in: 1.2 }, '=', { in: 4.2 }, '(m)'],
+        ['② 늘인 세로: 2.5 ×', { in: 1.2 }, '=', { in: 3 }, '(m)'],
+        ['③ 최종 식:', { in: 4.2 }, '×', { in: 3 }, '=', { in: 12.6 }],
+        ['답:', { in: 12.6 }, { sel: ['m²', 'm', 'cm²'], ans: 'm²' }]
+      ],
+      model: '늘인 가로는 3.5 × 1.2 = 4.2(m), 늘인 세로는 2.5 × 1.2 = 3(m)예요. 넓이는 4.2 × 3 = 12.6(m²). 답: 12.6 m² (문제의 1.2배를 정확히 옮겨 적었는지 확인!)' }
+  ];
+  const SELF = ['구하려는 것에 밑줄을 그었어요.', '숫자 조건을 문제에서 정확히 옮겨 적었어요. (1.2배를 1.5배로 보지 않았어요)', '중간값을 먼저 구했어요.', '어림해 보니 답의 크기가 알맞아요.', '답 뒤에 단위를 붙였어요.'];
+  let pp = 0;
+  function perfStart() {
+    const t = $('#perfTabs'); t.innerHTML = '';
+    PERF.forEach((p, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = p.tab; b.setAttribute('aria-pressed', i === pp ? 'true' : 'false'); b.addEventListener('click', () => { pp = i; perfStart(); }); t.appendChild(b); });
+    const p = PERF[pp]; $('#perfProb').innerHTML = p.prob;
+    const box = $('#perfLines'); box.innerHTML = '';
+    p.lines.forEach(parts => {
+      const l = document.createElement('div'); l.className = 'fl';
+      parts.forEach(x => {
+        if (typeof x === 'string') { const s = document.createElement('span'); s.textContent = x; l.appendChild(s); return; }
+        if (x.sel) { const s = document.createElement('select'); s.innerHTML = '<option value="">고르기</option>' + x.sel.map(o => `<option>${esc(o)}</option>`).join(''); s.dataset.ans = x.ans; l.appendChild(s); return; }
+        const i = document.createElement('input'); i.type = 'text'; i.inputMode = 'decimal'; i.autocomplete = 'off'; i.dataset.ans = x.in; i.setAttribute('aria-label', '빈칸'); l.appendChild(i);
+      });
+      box.appendChild(l);
+    });
+    $('#perfSelf').innerHTML = SELF.map(s => `<li><label><input type="checkbox"><span>${s}</span></label></li>`).join('');
+    $('#perfMsg').className = 'msg'; $('#perfMsg').textContent = '';
+  }
+  $('#perfCheck').addEventListener('click', () => {
+    let empty = 0, wrong = 0;
+    $$('#perfLines input, #perfLines select').forEach(el => {
+      el.classList.remove('ok', 'no');
+      const v = el.value.trim().replace(/,/g, '');
+      if (!v) { empty++; return; }
+      const ok = el.tagName === 'SELECT' ? v === el.dataset.ans : Math.abs(parseFloat(v) - parseFloat(el.dataset.ans)) < 1e-9 && /^-?\d*\.?\d+$/.test(v);
+      el.classList.add(ok ? 'ok' : 'no'); if (!ok) wrong++;
+    });
+    const unchecked = $$('#perfSelf input').filter(c => !c.checked).length;
+    const m = $('#perfMsg');
+    if (empty) { m.className = 'msg no'; m.textContent = `아직 비어 있는 칸이 ${empty}개 있어요.`; return; }
+    if (wrong) { m.className = 'msg no'; m.textContent = `빨간 칸 ${wrong}개를 다시 계산해 보세요. 중간값부터 차례로 확인해요.`; return; }
+    if (unchecked) { m.className = 'msg no'; m.textContent = `계산은 모두 맞았어요! 스스로 점검 ${unchecked}개를 확인하고 체크하면 완성이에요.`; return; }
+    m.className = 'msg ok'; m.textContent = '완벽한 서술형이에요! 다른 문제 탭도 풀어 보세요.';
+  });
+  $('#perfShow').addEventListener('click', () => { const m = $('#perfMsg'); m.className = 'msg'; m.textContent = '모범 풀이: ' + PERF[pp].model; });
+  perfStart();
+
+  /* ================= 쌍둥이 문제 11개 ================= */
+  const T1 = '<span class="tag t1">1 자릿수</span>', T2 = '<span class="tag t2">2 문장제</span>', T3 = '<span class="tag t3">3 수 카드</span>', T4 = '<span class="tag t4">4 마무리</span>';
+  const TWIN = [
+    { no: 13, head: T1, html: '7.35 × 10 + 7.35 × 0.1 의 값은?', opts: ['8.085', '74.235', '80.85', '742.35'], ans: '74.235', why: '73.5 + 0.735 = 74.235. 소수점끼리 줄을 맞춰 더해요.', wrong: '73.5와 0.735를 소수점끼리 맞춰 더했나요? 맨 앞자리끼리 맞추면 안 돼요.' },
+    { no: 20, head: T1, html: '3.6 × ___ = 0.18', opts: ['5', '0.5', '0.05', '0.005'], ans: '0.05', why: '36 × 5 = 180. 0.18은 0.180, 소수 3자리 → 3.6의 1자리 + □의 2자리 → 0.05', wrong: '자연수 곱 36 × 5 = 180 다음에 자릿수를 세어 보세요. 0.18 = 0.180 은 소수 3자리예요.' },
+    { no: 26, head: T2, html: '가로 12.5 cm, 세로 5.4 cm인 직사각형의 둘레와 넓이의 합은?', opts: ['67.5', '85.4', '103.3', '102.3'], ans: '103.3', why: '넓이 67.5 + 둘레 (12.5 + 5.4) × 2 = 35.8 → 103.3', wrong: '둘레는 (가로 + 세로) × 2 예요. 넓이와 둘레를 각각 구해 더해요.' },
+    { no: 28, head: T4, html: '0.4 × 1.25 × 0.8 의 값은?', opts: ['0.8', '0.5', '0.4', '0.04'], ans: '0.4', why: '0.4 × 1.25 = 0.5, 0.5 × 0.8 = 0.4. 체크 3개!', wrong: '곱한 수에 하나씩 체크해 보세요. 세 수를 모두 곱했나요?' },
+    { no: 31, head: T2, html: '어떤 수에 3.4를 곱해야 할 것을 잘못하여 4.3을 곱했더니 38.7이 되었어요. 바르게 계산한 값은?', opts: ['38.7', '30.6', '9', '131.58'], ans: '30.6', why: '□ × 4.3 = 38.7 → □ = 9 (43 × 9 = 387). 9 × 3.4 = 30.6', wrong: '먼저 잘못 계산한 식으로 어떤 수(중간값)를 구하고, 끝까지 가서 바르게 계산해요.' },
+    { no: 35, head: T1, html: '곱이 <b>다른</b> 하나는?', opts: ['56 × 0.03', '5.6 × 0.3', '0.56 × 3', '560 × 0.0003'], ans: '560 × 0.0003', why: '나머지는 자릿수 합 2 → 1.68, 560 × 0.0003 은 자릿수 합 4 → 0.168', wrong: '두 수의 소수점 아래 자릿수의 합을 각각 세어 보세요.' },
+    { no: 37, head: T3, html: '수 카드 2, 6, 8을 한 번씩 써서 □.△ × ☆ 을 만들 때, 가장 작은 곱은?', opts: ['13.6', '16.8', '17.2', '20.8'], ans: '13.6', why: '△에 가장 큰 8, ☆에 가장 작은 2 → 6.8 × 2 = 13.6', wrong: '작은 곱: △에 가장 큰 수, ☆에 가장 작은 수. 후보 식 2~3개를 비교해 보세요.' },
+    { no: 46, head: T2, html: '가로 4.5 m, 세로 2.5 m인 직사각형의 가로와 세로를 각각 1.4배로 늘였어요. 늘인 직사각형의 넓이는?', opts: ['11.25 m²', '15.75 m²', '22.05 m²', '30.87 m²'], ans: '22.05 m²', why: '가로 4.5 × 1.4 = 6.3, 세로 2.5 × 1.4 = 3.5 → 6.3 × 3.5 = 22.05 m²', wrong: '가로와 세로를 "각각" 1.4배 한 뒤 곱해요. 문제의 숫자를 정확히 옮겨 적었나요?' },
+    { no: 47, head: T4, html: '1 m의 무게가 0.65 kg인 철근 6.4 m의 무게는?', opts: ['4.16', '4.16 kg', '41.6 kg', '0.416 kg'], ans: '4.16 kg', why: '0.65 × 6.4 = 4.16. 무게니까 kg를 붙여요.', wrong: p => p === '4.16' ? '계산은 맞았어요! 그런데 단위가 빠졌어요.' : '어림하면 0.7 × 6 ≈ 4.2 예요. 소수점 위치를 확인해요.' },
+    { no: 48, head: T2, html: '동전 60개 중 500원짜리는 전체의 0.35배, 나머지는 100원짜리예요. 동전은 모두 얼마일까요?', opts: ['10500원', '14400원', '30000원', '6175원'], ans: '14400원', why: '500원 60 × 0.35 = 21개, 100원 39개 → 10500 + 3900 = 14400원', wrong: '중간값(동전 개수)부터 구해요. "전체"는 60개예요.' },
+    { no: 49, head: T4, html: '136.4 × 7.5 + 163.6 × 7.5 의 값은?', opts: ['2150', '2240', '2250', '225'], ans: '2250', why: '(136.4 + 163.6) × 7.5 = 300 × 7.5 = 2250. 묶으면 한 번에!', wrong: '7.5로 묶어 보세요. 136.4 + 163.6 을 먼저 더하면 계산이 쉬워요.' }
+  ];
+  function buildTwin() {
+    const box = $('#twinList'); box.innerHTML = '';
+    const sc = scoreSet('#twinScore', TWIN.length);
+    TWIN.forEach(o => choiceQ(box, Object.assign({}, o, { head: `${o.head}<small>${o.no}번 쌍둥이</small>` }), f => sc.add(f)));
+  }
+  buildTwin();
+  $('#twinReset').addEventListener('click', buildTwin);
+
+  /* ================= 체크리스트 ================= */
+  const CHECKS = ['자연수처럼 곱한 뒤 소수점 아래 자릿수를 세어 소수점을 찍어요.', '소수를 더할 때 소수점끼리 세로 줄을 맞춰요.', '한 수의 소수점이 왼쪽으로 가면 다른 수는 오른쪽으로 같은 칸만큼 가야 곱이 같아요.', '문장제에서 구하려는 것에 밑줄, 숫자 조건에 동그라미를 쳐요.', '중간값을 먼저 구하고 최종 식을 세워요.', '수 카드 문제를 자리 규칙과 후보 식 비교로 풀어요.', '세 수의 곱셈에서 곱한 수를 하나씩 체크해요.', '같은 수를 곱하는 식은 묶어서 한 번에 계산해요.', '어림으로 검산하고 답에 단위를 붙여요.'];
+  const saved = store.get('checks', []);
+  CHECKS.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox"${saved.includes(i) ? ' checked' : ''}><span>${t}</span></label>`;
+    li.querySelector('input').addEventListener('change', () => store.set('checks', $$('#checklist input').map((c, k) => c.checked ? k : -1).filter(k => k >= 0)));
+    $('#checklist').appendChild(li);
+  });
+
+  updateUI(); refreshButtons(); preload(0);
+})();
+</script>
+</body>
+</html>
