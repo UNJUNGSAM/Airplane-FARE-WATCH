@@ -99,6 +99,17 @@ CATALOG: list[dict] = [
         "slides": 16,
         "minutes": 8,
     },
+    {
+        "slug": "math_decimal",
+        "title": "소수의 곱셈 맞춤 노트",
+        "level": "elem",
+        "grade": 5,
+        "term": 2,
+        "unit": "4. 소수의 곱셈",
+        "desc": "로운이의 실수 습관 4가지(소수점 자릿수, 문장제, 수 카드, 마무리 계산)를 쌍둥이 문제로 고쳐요.",
+        "slides": 17,
+        "minutes": 7,
+    },
 ]
 
 
