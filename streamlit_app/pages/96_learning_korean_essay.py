@@ -103,6 +103,7 @@ html, body, .stApp, [data-testid="stMarkdownContainer"], .stButton button, input
 .ec-note { font-size: .86rem; color: #5c6370; line-height: 1.6; }
 .stButton button[kind="primary"] { background: #a8472f !important; border-color: #a8472f !important; border-radius: 999px !important;
   min-height: 52px; font-weight: 800 !important; font-size: 1.05rem !important; }
+.stButton button[kind="primary"], .stButton button[kind="primary"] * { color: #fff !important; }
 [data-testid="stFileUploaderDropzone"] { background: #fff; border-radius: 14px; }
 /* 기기가 어두운 화면이어도 밝은 공책 느낌으로 */
 .stApp, .stApp label, .stApp p, .stApp li, .stApp summary, .stApp [data-testid="stMarkdownContainer"] { color: #1f2328; }

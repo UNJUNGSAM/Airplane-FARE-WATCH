@@ -19,7 +19,7 @@ print("tts models:", tts_models[:4])
 img = (Path(__file__).parent / "sample.jpg").read_bytes()
 img, mime = ec.prepare_image(img, "image/jpeg")
 t = time.time()
-res = ec.analyze([(img, mime)], "", "", "초등 5학년", "로운", on_try=lambda m: print("try", m))
+res = ec.analyze([(img, mime)], "", "", "초등 5학년", "로운")
 print("analyze seconds:", round(time.time() - t, 1))
 (out / "result.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
 # 음성: 첫 장은 Gemini Kore, 하나는 Supertonic

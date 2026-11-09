@@ -111,7 +111,7 @@ def prepare_image(data: bytes, mime: str) -> tuple[bytes, str]:
 # ---------------------------------------------------------------------------
 # 첨삭 지침 (선생님 말투가 여기서 정해진다)
 # ---------------------------------------------------------------------------
-SYSTEM = """당신은 15년 차 초·중등 독서논술 전문 강사입니다. 독서논술 학원에서 초등 고학년 첨삭 수업을 맡고 있습니다.
+COMMON = """당신은 15년 차 초·중등 독서논술 전문 강사입니다. 독서논술 학원에서 초등 고학년 첨삭 수업을 맡고 있습니다.
 학생의 독서감상문(손글씨 사진 또는 텍스트)을 판독하고, 1대1 첨삭 수업 자료를 JSON 으로 만듭니다.
 
 [수업 태도]
@@ -129,7 +129,6 @@ SYSTEM = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
 - 사진이 여러 장이면 순서대로 이어 붙입니다. 제목·책 제목·이름이 보이면 따로 적습니다.
 - 독서감상문이 아니거나 글씨를 거의 읽을 수 없으면 readable 을 false 로 하고 problem 에 이유를 적은 뒤 나머지는 비워 둡니다.
 
-[첨삭 순서] 원문 판독 → 진단(평가표) → 강점 2가지 → 처방(문단 구성, 문체·호응, 어휘, 맞춤법·띄어쓰기) → 생각을 키우는 질문 → 완성본 → 공책 한 줄 코멘트 → 추천 독서록 2편.
 
 [처방 기준]
 - 문단 구성: 서론(책 소개, 읽게 된 까닭, 짧은 줄거리) - 본론(인상 깊은 장면, 인물의 행동에 대한 내 생각과 그 까닭) - 결론(배운 점, 내 삶과 연결한 다짐). 학생의 실제 문장이 어디로 가야 하는지 알려 줍니다.
@@ -142,7 +141,11 @@ SYSTEM = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
 - 학생에게 직접 말하는 수업 말투로 씁니다. 화면에 보이는 내용을 그대로 나열하지 말고, 핵심을 짚어 설명합니다.
 - 숫자는 읽는 대로 한글로 씁니다(예: 두 가지, 세 번째 문단). 괄호, 따옴표, 화살표, 대괄호, 기호, 영어 약어를 쓰지 않습니다.
 - 학생 이름이 주어지면 "OO 학생" 또는 "OO이가 쓴 이 문장은"처럼 자연스럽게 부르되 존댓말을 지킵니다.
-- 각 대본은 한국어 150~380자입니다. model1, model2 는 짧은 소개 한두 문장 뒤에 추천 독서록 본문 전체를 그대로 읽습니다.
+- 각 대본은 한국어 150~380자입니다.
+"""
+
+SYSTEM_COACH = COMMON + """
+[할 일] 첨삭 순서: 원문 판독 → 진단(평가표) → 강점 2가지 → 처방(문단 구성, 문체·호응, 어휘, 맞춤법·띄어쓰기) → 생각을 키우는 질문 → 완성본 → 공책 한 줄 코멘트.
 
 [출력 JSON 형식] 아래 키를 모두 채웁니다. 문자열 안의 문단 구분은 \\n\\n 입니다.
 {
@@ -193,10 +196,6 @@ SYSTEM = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
    "frames": ["문장 틀 1 (예: 내가 가장 인상 깊었던 장면은 ~이다.)", "문장 틀 2", "문장 틀 3"],
    "checklist": ["다음 독서록을 쓸 때 스스로 점검할 항목 5개"]
  },
- "model_essays": [
-   {"form": "정석 독후감", "title": "제목", "text": "같은 책으로 쓴 모범 독후감. 같은 학년 우수작 수준, 서론-본론-결론, 650~900자", "points": ["이 글에서 배울 점 3개"], "highlight": ["본문에 그대로 있는 배울 만한 구절 3~4개"]},
-   {"form": "편지글 또는 주장하는 서평 중 이 책에 어울리는 형식", "title": "제목", "text": "400~700자", "points": ["배울 점 3개"], "highlight": ["구절 2~3개"]}
- ],
  "narration": {
    "intro": "수업 시작. 오늘 무엇을 어떤 순서로 하는지",
    "read": "원문 판독 결과와 대괄호 표시 안내",
@@ -209,29 +208,49 @@ SYSTEM = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
    "practice": "연습 문제 안내 (직접 푸는 활동이라 짧게)",
    "question": "생각을 키우는 질문 제시",
    "final": "완성본에서 무엇이 달라졌는지",
-   "model1": "추천 독서록 1 소개 + 본문 전체",
-   "model2": "추천 독서록 2 소개 + 본문 전체",
    "task": "다시 쓰기 과제와 점검표 안내",
    "end": "수업 정리. 다음 독서록에서 지킬 것 한두 가지"
  }
 }
-- strengths 는 정확히 2개, practice 는 학생 글의 실제 문제로 4~6개, model_essays 는 정확히 2편입니다.
-- 추천 독서록은 학생 글을 고친 것이 아니라 선생님이 같은 책으로 새로 쓴 예시 글입니다. 학생이 읽고 따라 배울 수 있게 씁니다.
+- strengths 는 정확히 2개, practice 는 학생 글의 실제 문제로 4~6개입니다.
+"""
+
+SYSTEM_MODEL = COMMON + """
+[할 일] 이 학생이 읽은 책으로 학생이 읽고 따라 배울 "추천 독서록" 두 편을 새로 씁니다. 학생 글을 고치는 것이 아니라 선생님이 쓴 예시 글입니다.
+- 학생 글에서 책 제목과 내용을 확인합니다. 학생이 다룬 장면과 주제를 살리되, 더 깊은 생각과 근거, 정돈된 문단 구성을 보여 줍니다.
+- 같은 학년 우수작 수준의 어휘와 문장으로 씁니다. 어른 평론처럼 쓰지 않습니다.
+- 잘 모르는 책이면 학생 글에 나온 내용만으로 씁니다. 줄거리를 지어내지 않습니다.
+
+[출력 JSON 형식]
+{
+ "book_title": "책 제목",
+ "model_essays": [
+   {"form": "정석 독후감", "title": "제목", "text": "같은 책으로 쓴 모범 독후감. 같은 학년 우수작 수준, 서론-본론-결론, 650~900자", "points": ["이 글에서 배울 점 3개"], "highlight": ["본문에 그대로 있는 배울 만한 구절 3~4개"]},
+   {"form": "편지글 또는 주장하는 서평 중 이 책에 어울리는 형식", "title": "제목", "text": "400~700자", "points": ["배울 점 3개"], "highlight": ["구절 2~3개"]}
+ ],
+ "narration": {
+   "model1": "추천 독서록 1을 읽기 전에 선생님이 하는 소개 두세 문장. 이 글에서 무엇을 눈여겨 들을지",
+   "model2": "추천 독서록 2 소개 두세 문장. 형식이 어떻게 다른지"
+ }
+}
+- model_essays 는 정확히 2편입니다. highlight 의 구절은 text 안에 글자 그대로 있어야 합니다.
 """
 
 
-def _user_prompt(book: str, grade: str, name: str, typed: str, n_images: int) -> str:
+def _user_prompt(book: str, grade: str, name: str, typed: str, n_images: int, job: str) -> str:
     lines = [f"학생 학년: {grade}"]
     if name:
         lines.append(f"학생 이름: {name}")
     if book:
         lines.append(f"책 제목(보호자 입력): {book}")
     if n_images:
-        lines.append(f"첨부한 독후감 사진 {n_images}장을 판독해 첨삭 수업 자료를 만들어 주세요.")
+        lines.append(f"첨부한 학생 독후감 사진 {n_images}장을 읽고 {job}")
     if typed:
         lines.append("아래는 학생 글을 그대로 옮겨 적은 것입니다. 이 글을 원문으로 삼으세요."
                      if not n_images else "아래는 보호자가 덧붙인 글입니다. 사진과 함께 참고하세요.")
         lines.append("----- 학생 글 -----\n" + typed.strip())
+    if not n_images:
+        lines.append(f"위 학생 글을 읽고 {job}")
     lines.append("출력은 지정한 JSON 하나만.")
     return "\n".join(lines)
 
@@ -299,52 +318,120 @@ def _parse_json(text: str) -> dict:
         raise
 
 
+def _gen_config(model: str, thinking: bool) -> dict:
+    cfg: dict[str, Any] = {"responseMimeType": "application/json", "temperature": 0.4,
+                           "maxOutputTokens": 16000}
+    if thinking:
+        # 생각을 길게 하면 3분이 넘게 걸린다. 첨삭은 짧게 생각해도 충분하다.
+        if re.match(r"gemini-([3-9]|\d\d)", model):
+            cfg["thinkingConfig"] = {"thinkingLevel": "low"}
+        elif "2.5" in model:
+            cfg["thinkingConfig"] = {"thinkingBudget": 1024}
+    return cfg
+
+
+def _stream(model: str, key: str, body: dict, read_timeout: int = 120) -> str:
+    """streamGenerateContent(SSE)로 받아 글자를 모은다. 오래 걸려도 중간에 끊기지 않는다."""
+    req = urllib.request.Request(
+        f"{API}/models/{model}:streamGenerateContent?alt=sse&key={key}",
+        data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+    chunks: list[str] = []
+    reason = ""
+    with urllib.request.urlopen(req, timeout=read_timeout) as resp:
+        for raw in resp:
+            line = raw.decode("utf-8", errors="replace").strip()
+            if not line.startswith("data:"):
+                continue
+            try:
+                ev = json.loads(line[5:].strip())
+            except json.JSONDecodeError:
+                continue
+            cand = (ev.get("candidates") or [{}])[0]
+            for part in cand.get("content", {}).get("parts", []) or []:
+                if part.get("text") and not part.get("thought"):
+                    chunks.append(part["text"])
+            reason = cand.get("finishReason") or reason
+    text = "".join(chunks)
+    if not text.strip():
+        raise ValueError(f"빈 응답 {reason}")
+    return text
+
+
+def _ask(key: str, models: list[str], system: str, parts: list[dict], deadline: float) -> dict:
+    """모델을 차례로 바꿔 가며 JSON 을 받는다."""
+    last = ""
+    for model in models[:4]:
+        for thinking in (True, False):
+            if time.time() > deadline:
+                raise CoachError(f"첨삭이 너무 오래 걸려 멈췄어요. 잠시 뒤 다시 해 주세요. ({last[:120]})")
+            body = {"systemInstruction": {"parts": [{"text": system}]},
+                    "contents": [{"role": "user", "parts": parts}],
+                    "generationConfig": _gen_config(model, thinking)}
+            try:
+                return _parse_json(_stream(model, key, body))
+            except urllib.error.HTTPError as e:
+                detail = e.read().decode(errors="replace")[:300]
+                last = f"{model}: {e.code} {detail}"
+                if e.code in (400, 401, 403) and "API key" in detail:
+                    raise CoachError("Gemini 키가 맞지 않아요. Streamlit Secrets 의 GEMINI_API_KEY 를 확인해 주세요.")
+                if e.code == 400 and thinking and "thinking" in detail.lower():
+                    continue  # 이 모델은 생각 설정을 모른다 -> 설정 없이 다시
+                break
+            except (json.JSONDecodeError, ValueError) as e:
+                last = f"{model}: 결과를 읽지 못함 ({e})"
+                break
+            except Exception as e:  # 시간 초과·연결 끊김
+                last = f"{model}: {type(e).__name__} {e}"
+                break
+    if "429" in last:
+        raise CoachError("오늘 Gemini 사용 한도를 다 썼어요. 내일(한국 시간 오후 5시 이후) 다시 해 주세요.")
+    raise CoachError(f"첨삭을 만들지 못했어요. 잠시 뒤 다시 해 주세요. ({last[:160]})")
+
+
 def analyze(images: list[tuple[bytes, str]], typed: str = "", book: str = "",
-            grade: str = "초등 5학년", name: str = "", on_try=None) -> dict:
-    """독후감을 판독·첨삭한다. 실패하면 CoachError."""
+            grade: str = "초등 5학년", name: str = "") -> dict:
+    """독후감을 판독·첨삭한다. 첨삭과 추천 독서록을 동시에 요청해 기다리는 시간을 줄인다. 실패하면 CoachError."""
     key = api_key()
     if not key:
         raise CoachError("NO_KEY")
     if not images and not typed.strip():
         raise CoachError("독후감 사진을 올리거나 글을 입력해 주세요.")
-    parts: list[dict] = [{"text": _user_prompt(book, grade, name, typed, len(images))}]
-    for data, mime in images:
-        parts.append({"inlineData": {"mimeType": mime, "data": base64.b64encode(data).decode()}})
-    body = {
-        "systemInstruction": {"parts": [{"text": SYSTEM}]},
-        "contents": [{"role": "user", "parts": parts}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.4,
-                             "maxOutputTokens": 24000},
-    }
+    img_parts = [{"inlineData": {"mimeType": mime, "data": base64.b64encode(data).decode()}}
+                 for data, mime in images]
+    coach_parts = [{"text": _user_prompt(book, grade, name, typed, len(images),
+                                         "첨삭 수업 자료를 만들어 주세요.")}] + img_parts
+    model_parts = [{"text": _user_prompt(book, grade, name, typed, len(images),
+                                         "같은 책으로 추천 독서록 두 편을 써 주세요.")}] + img_parts
     text_models, _ = _models(key)
-    last = ""
-    started = time.time()
-    for model in text_models[:4]:
-        if time.time() - started > 240:
-            break
-        if on_try:
-            on_try(model)
+    deadline = time.time() + 280
+    box: dict[str, Any] = {}
+
+    def side() -> None:
         try:
-            res = _post(f"{API}/models/{model}:generateContent?key={key}", body, timeout=200)
-            cand = (res.get("candidates") or [{}])[0]
-            out = "".join(p.get("text", "") for p in cand.get("content", {}).get("parts", [])
-                          if not p.get("thought"))
-            if not out.strip():
-                last = f"{model}: 빈 응답 ({cand.get('finishReason', '')})"
-                continue
-            return normalize(_parse_json(out))
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode(errors="replace")[:300]
-            last = f"{model}: {e.code} {detail}"
-            if e.code in (400, 401, 403) and "API key" in detail:
-                raise CoachError("Gemini 키가 맞지 않아요. Streamlit Secrets 의 GEMINI_API_KEY 를 확인해 주세요.")
-        except (json.JSONDecodeError, ValueError) as e:
-            last = f"{model}: 결과를 읽지 못함 ({e})"
-        except Exception as e:  # 시간 초과·연결 끊김
-            last = f"{model}: {type(e).__name__} {e}"
-    if "429" in last:
-        raise CoachError("오늘 Gemini 사용 한도를 다 썼어요. 내일(한국 시간 오후 5시 이후) 다시 해 주세요.")
-    raise CoachError(f"첨삭을 만들지 못했어요. 잠시 뒤 다시 해 주세요. ({last[:160]})")
+            box["model"] = _ask(key, text_models, SYSTEM_MODEL, model_parts, deadline)
+        except Exception as e:  # 추천 독서록이 없어도 첨삭은 보여 준다
+            box["model_err"] = e
+
+    th = threading.Thread(target=side, daemon=True)
+    th.start()
+    coach = _ask(key, text_models, SYSTEM_COACH, coach_parts, deadline)
+    th.join(timeout=max(5, deadline - time.time()))
+    extra = box.get("model") if isinstance(box.get("model"), dict) else {}
+    merged = dict(coach)
+    merged["model_essays"] = extra.get("model_essays") or coach.get("model_essays") or []
+    nar = dict(coach.get("narration") or {})
+    for k, v in (extra.get("narration") or {}).items():
+        nar.setdefault(k, v)
+    merged["narration"] = nar
+    if not merged.get("book_title") and extra.get("book_title"):
+        merged["book_title"] = extra["book_title"]
+    out = normalize(merged)
+    # 추천 독서록 대본 = 선생님 소개 + 본문 전체 (본문을 두 번 쓰게 하지 않으려고 여기서 붙인다)
+    for i, m in enumerate(out["model_essays"], 1):
+        intro = out["narration"].get(f"model{i}", "")
+        title = f"제목은 {m['title']}입니다. " if m["title"] else ""
+        out["narration"][f"model{i}"] = clean_speech(f"{intro} {title}{m['text']}")
+    return out
 
 
 def _s(v: Any) -> str:
