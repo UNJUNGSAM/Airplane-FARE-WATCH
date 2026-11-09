@@ -500,6 +500,10 @@ def normalize(d: dict) -> dict:
                     for f in _list(d.get("vocab")) if isinstance(f, dict) and _s(f.get("before"))]
     out["spelling"] = [{k: _s(f.get(k)) for k in ("before", "after", "rule")}
                        for f in _list(d.get("spelling")) if isinstance(f, dict) and _s(f.get("before"))]
+    # 고친 것과 원래가 같은 항목(가끔 나온다)은 뺀다
+    for key in ("spelling", "vocab", "agreement"):
+        out[key] = [f for f in out[key] if f["before"] != f.get("after")]
+    out["style"]["fixes"] = [f for f in out["style"]["fixes"] if f["before"] != f["after"]]
     prac = []
     for p in _list(d.get("practice")):
         if not isinstance(p, dict):
