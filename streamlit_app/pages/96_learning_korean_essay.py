@@ -55,6 +55,9 @@ if lid:
         saved = None
     if saved:
         st.markdown(study_page._FULLSCREEN_CSS, unsafe_allow_html=True)
+        # 휴대폰에서는 막대에 링크가 둘이라 과목 표시를 숨겨 가로로 넘치지 않게 한다
+        st.markdown("<style>@media (max-width:520px){.sb-tag{display:none}} .sb-bar{overflow:hidden}</style>",
+                    unsafe_allow_html=True)
         st.markdown(top_bar(f'<a href="learning_{SLUG}" target="_self">새 글 첨삭</a>'), unsafe_allow_html=True)
         essay_coach.start_voice(lid, saved["lesson"])  # 만들다 멈춘 음성이 있으면 이어서
         payload = {"lesson": saved["lesson"],
