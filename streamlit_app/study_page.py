@@ -110,6 +110,19 @@ CATALOG: list[dict] = [
         "slides": 17,
         "minutes": 7,
     },
+    {
+        # 고정 자료가 아니라, 보호자가 올린 독후감 사진을 Gemini 가 읽고 그때그때 첨삭 수업을 만든다.
+        # 본문은 pages/96_learning_korean_essay.py + essay_coach.py, 화면 틀은 static/learning/korean_essay/lesson.html
+        "slug": "korean_essay",
+        "title": "독서논술 첨삭 교실",
+        "level": "elem",
+        "grade": 5,
+        "term": 2,
+        "unit": "독서감상문 쓰기 · 초5 이상",
+        "desc": "독후감 사진을 올리면 원문 판독, 진단, 처방, 완성본까지 1대1로 첨삭하고 추천 독서록 두 편을 함께 읽어요.",
+        "slides": 15,
+        "minutes": 10,
+    },
 ]
 
 
