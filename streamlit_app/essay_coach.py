@@ -146,6 +146,7 @@ COMMON = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
 - 각 대본은 한국어 250~450자입니다(practice 는 120자 안팎). 짧게 요약하지 말고, 화면의 핵심 내용을 실제 수업처럼 풀어 설명합니다.
 - 처방 대본(structure, style, vocab, spelling)은 학생 글의 실제 문장이나 낱말을 하나 이상 짚어 말하고, 왜 틀렸는지와 고친 모습을 함께 말합니다.
 - 숫자 낱말은 바르게 씁니다(네 가지, 세 문단, 다섯 개).
+- 대본에서도 "훌륭하다", "대단하다", "멋지다", "최고", "완벽" 같은 감탄은 쓰지 않습니다.
 """
 
 SYSTEM_COACH = COMMON + """
@@ -201,19 +202,19 @@ SYSTEM_COACH = COMMON + """
    "checklist": ["다음 독서록을 쓸 때 스스로 점검할 항목 5개"]
  },
  "narration": {
-   "intro": "수업 시작. 오늘 무엇을 어떤 순서로 하는지",
-   "read": "원문 판독 결과와 대괄호 표시 안내",
-   "diag": "평가표 설명과 오늘의 핵심 과제",
-   "strength": "강점 두 가지",
-   "structure": "문단 구성 처방",
-   "style": "문체와 호응 처방",
-   "vocab": "어휘 처방",
-   "spelling": "맞춤법과 띄어쓰기 처방",
-   "practice": "연습 문제 안내 (직접 푸는 활동이라 짧게)",
-   "question": "생각을 키우는 질문 제시",
-   "final": "완성본에서 무엇이 달라졌는지",
-   "task": "다시 쓰기 과제와 점검표 안내",
-   "end": "수업 정리. 다음 독서록에서 지킬 것 한두 가지"
+   "intro": "(250자 안팎) 인사, 오늘 다룰 책과 글, 수업 순서, 오늘의 핵심 과제 예고",
+   "read": "(200자 안팎) 원문을 그대로 옮긴 까닭, 대괄호 표시 뜻, 글의 분량과 첫인상을 사실대로",
+   "diag": "(350자 안팎) 평가표 네 항목을 하나씩 짚어 단계와 근거를 말하고, 가장 먼저 고칠 것을 분명히",
+   "strength": "(300자 안팎) 강점 두 가지를 학생 문장을 인용하며 왜 효과가 있는지 설명",
+   "structure": "(400자 안팎) 지금 구성의 문제, 서론·본론·결론 각각에 학생의 어느 문장이 가고 무엇을 더 써야 하는지",
+   "style": "(400자 안팎) 섞인 문체를 실제 문장으로 보여 주고 어느 쪽으로 통일하는지, 호응이 어긋난 문장과 고친 문장",
+   "vocab": "(350자 안팎) 막연한 낱말 각각을 왜 바꾸는지, 어떤 말로 바꾸면 무엇이 더 정확해지는지",
+   "spelling": "(350자 안팎) 틀린 표기마다 바른 표기와 규칙을 짧게. 다음에 스스로 점검하는 방법",
+   "practice": "(120자 안팎) 연습 문제 안내. 직접 푸는 활동",
+   "question": "(250자 안팎) 질문을 읽어 주고, 어떻게 생각을 펼치면 좋은지 실마리",
+   "final": "(350자 안팎) 완성본에서 무엇이 어떻게 달라졌는지 문단·문체·어휘·표기 순서로",
+   "task": "(250자 안팎) 다시 쓰기 과제 방법과 점검표 쓰는 법",
+   "end": "(250자 안팎) 오늘 배운 것 요약, 다음 독서록에서 꼭 지킬 두 가지"
  }
 }
 - strengths 는 정확히 2개, practice 는 학생 글의 실제 문제로 4~6개입니다. practice 의 보기는 서로 비슷해 보여 생각해야 고를 수 있게 만들고, 정답이 늘 같은 자리에 오지 않게 합니다.
@@ -224,6 +225,8 @@ SYSTEM_MODEL = COMMON + """
 [할 일] 이 학생이 읽은 책으로 학생이 읽고 따라 배울 "추천 독서록" 두 편을 새로 씁니다. 학생 글을 고치는 것이 아니라 선생님이 쓴 예시 글입니다.
 - 학생 글에서 책 제목과 내용을 확인합니다. 학생이 다룬 장면과 주제를 살리되, 더 깊은 생각과 근거, 정돈된 문단 구성을 보여 줍니다.
 - 같은 학년 우수작 수준의 어휘와 문장으로 씁니다. 어른 평론처럼 쓰지 않습니다.
+- 본문은 그 자체로 완성된 한 편의 글입니다. 학생 이름이나 "학생은 ~라고 썼지만" 같은 첨삭 말은 넣지 않습니다. 글쓴이는 "나"입니다.
+- 정석 독후감은 "~다"체(해라체)로 끝까지 통일합니다. 편지글은 편지 말투로 씁니다. 맞춤법과 띄어쓰기는 틀림없이 씁니다.
 - 잘 모르는 책이면 학생 글에 나온 내용만으로 씁니다. 줄거리를 지어내지 않습니다.
 
 [출력 JSON 형식]
@@ -328,7 +331,6 @@ def _gen_config(model: str, thinking: bool) -> dict:
     cfg: dict[str, Any] = {"responseMimeType": "application/json", "temperature": 0.4,
                            "maxOutputTokens": 16000}
     if thinking:
-        cfg["mediaResolution"] = "MEDIA_RESOLUTION_HIGH"  # 손글씨를 더 자세히 본다
         # 생각을 길게 하면 3분이 넘게 걸린다. 첨삭은 짧게 생각해도 충분하다.
         if re.match(r"gemini-([3-9]|\d\d)", model):
             cfg["thinkingConfig"] = {"thinkingLevel": "low"}
@@ -361,7 +363,8 @@ def _stream(model: str, key: str, body: dict, read_timeout: int = 75) -> str:
             reason = cand.get("finishReason") or reason
     text = "".join(chunks)
     print(f"[essay] {model} 받은 조각 {len(chunks)}개, 글자 {len(text)}, 끝난 이유 {reason}, 끝부분 {text[-60:]!r}", flush=True)
-    if not text.strip() or (reason and reason not in ("STOP", "MAX_TOKENS")):
+    # 끝난 이유가 없으면 중간에 끊긴 것이다 (2026-11 시험: 일부 모델에서 스트림이 몇 초 만에 끊김)
+    if not text.strip() or reason not in ("STOP", "MAX_TOKENS"):
         raise ValueError(f"응답이 끊김 finishReason={reason} 길이={len(text)} 앞부분={text[:80]!r}")
     return text
 
