@@ -352,6 +352,7 @@ def _stream(model: str, key: str, body: dict, read_timeout: int = 75) -> str:
             try:
                 ev = json.loads(line[5:].strip())
             except json.JSONDecodeError:
+                print(f"[essay] SSE 줄을 못 읽음: {line[:120]!r}", flush=True)
                 continue
             cand = (ev.get("candidates") or [{}])[0]
             for part in cand.get("content", {}).get("parts", []) or []:
@@ -359,6 +360,7 @@ def _stream(model: str, key: str, body: dict, read_timeout: int = 75) -> str:
                     chunks.append(part["text"])
             reason = cand.get("finishReason") or reason
     text = "".join(chunks)
+    print(f"[essay] {model} 받은 조각 {len(chunks)}개, 글자 {len(text)}, 끝난 이유 {reason}, 끝부분 {text[-60:]!r}", flush=True)
     if not text.strip() or (reason and reason not in ("STOP", "MAX_TOKENS")):
         raise ValueError(f"응답이 끊김 finishReason={reason} 길이={len(text)} 앞부분={text[:80]!r}")
     return text
