@@ -23,7 +23,12 @@ import essay_coach as ec  # noqa: E402
 branch = os.environ["BRANCH"]
 priv = rsa.generate_private_key(public_exponent=65537, key_size=3072)
 pub = priv.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
-print("RUNNER-PUB-BEGIN\n" + pub.decode() + "RUNNER-PUB-END", flush=True)
+GIT_ID = ["-c", "user.name=github-actions[bot]", "-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com"]
+# 진행 중인 실행의 로그는 바로 읽을 수 없어서, 일회용 공개 키를 브랜치에 올린다 (공개 키라 괜찮다)
+(HERE / "runner.pub").write_bytes(pub)
+subprocess.run(["git", "add", str(HERE / "runner.pub")], check=True)
+subprocess.run(["git", *GIT_ID, "commit", "-qm", "chore: 일회용 공개 키 [skip ci]"], check=True)
+subprocess.run(["git", "push", "-q", "origin", f"HEAD:{branch}"], check=True)
 blob = None
 for _ in range(90):
     time.sleep(10)
@@ -48,7 +53,5 @@ subprocess.run(["git", "fetch", "-q", "origin", branch], check=True)
 subprocess.run(["git", "checkout", "-q", f"origin/{branch}"], check=True)
 (HERE / "result.enc").write_bytes(sealed)
 subprocess.run(["git", "add", str(HERE / "result.enc")], check=True)
-subprocess.run(["git", "-c", "user.name=github-actions[bot]", "-c",
-                "user.email=41898282+github-actions[bot]@users.noreply.github.com",
-                "commit", "-qm", "chore: 암호화된 첨삭 시험 결과 [skip ci]"], check=True)
+subprocess.run(["git", *GIT_ID, "commit", "-qm", "chore: 암호화된 첨삭 시험 결과 [skip ci]"], check=True)
 subprocess.run(["git", "push", "-q", "origin", f"HEAD:{branch}"], check=True)
