@@ -310,11 +310,11 @@ def _parse_json(text: str) -> dict:
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
     try:
-        return json.loads(text)
+        return json.loads(text, strict=False)
     except json.JSONDecodeError:
         a, b = text.find("{"), text.rfind("}")
         if a >= 0 and b > a:
-            return json.loads(text[a:b + 1])
+            return json.loads(text[a:b + 1], strict=False)
         raise
 
 
@@ -352,8 +352,8 @@ def _stream(model: str, key: str, body: dict, read_timeout: int = 120) -> str:
                     chunks.append(part["text"])
             reason = cand.get("finishReason") or reason
     text = "".join(chunks)
-    if not text.strip():
-        raise ValueError(f"빈 응답 {reason}")
+    if not text.strip() or (reason and reason not in ("STOP", "MAX_TOKENS")):
+        raise ValueError(f"응답이 끊김 finishReason={reason} 길이={len(text)} 앞부분={text[:80]!r}")
     return text
 
 
@@ -367,11 +367,15 @@ def _ask(key: str, models: list[str], system: str, parts: list[dict], deadline: 
             body = {"systemInstruction": {"parts": [{"text": system}]},
                     "contents": [{"role": "user", "parts": parts}],
                     "generationConfig": _gen_config(model, thinking)}
+            t0 = time.time()
             try:
-                return _parse_json(_stream(model, key, body))
+                got = _parse_json(_stream(model, key, body))
+                print(f"[essay] {model} thinking={thinking} ok {time.time() - t0:.0f}s", flush=True)
+                return got
             except urllib.error.HTTPError as e:
                 detail = e.read().decode(errors="replace")[:300]
                 last = f"{model}: {e.code} {detail}"
+                print(f"[essay] {last[:200]}", flush=True)
                 if e.code in (400, 401, 403) and "API key" in detail:
                     raise CoachError("Gemini 키가 맞지 않아요. Streamlit Secrets 의 GEMINI_API_KEY 를 확인해 주세요.")
                 if e.code == 400 and thinking and "thinking" in detail.lower():
@@ -379,9 +383,11 @@ def _ask(key: str, models: list[str], system: str, parts: list[dict], deadline: 
                 break
             except (json.JSONDecodeError, ValueError) as e:
                 last = f"{model}: 결과를 읽지 못함 ({e})"
+                print(f"[essay] {last} {time.time() - t0:.0f}s", flush=True)
                 break
             except Exception as e:  # 시간 초과·연결 끊김
                 last = f"{model}: {type(e).__name__} {e}"
+                print(f"[essay] {last} {time.time() - t0:.0f}s", flush=True)
                 break
     if "429" in last:
         raise CoachError("오늘 Gemini 사용 한도를 다 썼어요. 내일(한국 시간 오후 5시 이후) 다시 해 주세요.")
