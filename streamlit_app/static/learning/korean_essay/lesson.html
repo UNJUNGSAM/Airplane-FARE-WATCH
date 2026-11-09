@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>독서논술 첨삭 수업</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --ink:#1f2328; --muted:#5c6370; --line:#e3e0d8; --soft:#f0ece4;
+  --accent:#a8472f; --accent-ink:#ffffff; --accent-soft:#f6e8e2;
+  --t1:#3f5f9e; --t2:#b0352a; --t3:#3f7a4a; --t4:#6a4c93;
+  --t1-soft:#e8edf7; --t2-soft:#f8e6e2; --t3-soft:#e6f1e7; --t4-soft:#efe9f6;
+  --paper:#fffdf7; --rule:#e9e2d0; --ok:#2f7a4a; --bad:#b0352a; --scrim:rgba(20,18,15,.5);
+  --f:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15161a; --surface:#1e2026; --ink:#e7e8ea; --muted:#a3a8b1; --line:#30333b; --soft:#262931;
+    --accent:#ec937c; --accent-ink:#15161a; --accent-soft:#3a2722;
+    --t1:#8fb0ea; --t2:#ff8f80; --t3:#8fcb98; --t4:#b59ae0;
+    --t1-soft:#222c3d; --t2-soft:#3a2420; --t3-soft:#20331f; --t4-soft:#2b2538;
+    --paper:#1b1d22; --rule:#2c2f36; --ok:#7fd29a; --bad:#ff8f80; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15161a; --surface:#1e2026; --ink:#e7e8ea; --muted:#a3a8b1; --line:#30333b; --soft:#262931;
+  --accent:#ec937c; --accent-ink:#15161a; --accent-soft:#3a2722;
+  --t1:#8fb0ea; --t2:#ff8f80; --t3:#8fcb98; --t4:#b59ae0;
+  --t1-soft:#222c3d; --t2-soft:#3a2420; --t3-soft:#20331f; --t4-soft:#2b2538;
+  --paper:#1b1d22; --rule:#2c2f36; --ok:#7fd29a; --bad:#ff8f80; --scrim:rgba(0,0,0,.6); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:17px;line-height:1.7;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere;-webkit-text-size-adjust:100%}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+h1,h2,h3{margin:0;line-height:1.3;text-wrap:balance}
+p{margin:0}
+[hidden]{display:none!important}
+
+#app{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;max-width:1180px;margin-inline:auto;padding-inline:16px}
+.top{display:flex;align-items:center;gap:10px;padding-block:10px}
+.brand{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px}
+.brand b{font-size:1.1rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pager{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.progress{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s ease}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:.95rem;line-height:1.2;transition:transform .12s ease,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.small{min-height:38px;padding:6px 14px;font-size:.88rem}
+.btn svg{width:18px;height:18px;flex:none}
+.btn:disabled{opacity:.4;cursor:default}
+
+.stage{position:relative;overflow:hidden;min-height:0}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;opacity:0;visibility:hidden;transform:translateX(30px);transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s linear .5s;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.slide.back{transform:translateX(-30px)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1),visibility 0s}
+.wrap{max-width:1000px;margin-inline:auto;padding-block:22px 30px;display:grid;gap:16px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+.eyebrow{font-size:.82rem;font-weight:800;letter-spacing:.06em;color:var(--accent)}
+h2{font-size:clamp(1.45rem,3vw,2rem);font-weight:800}
+.lead{color:var(--muted);font-size:1.02rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.card h3{font-size:1rem;font-weight:800}
+.note{font-size:.88rem;color:var(--muted)}
+.tip{border-left:5px solid var(--accent);background:var(--accent-soft);border-radius:0 12px 12px 0;padding:10px 14px;font-size:.97rem}
+.tip.t1{border-color:var(--t1);background:var(--t1-soft)} .tip.t3{border-color:var(--t3);background:var(--t3-soft)} .tip.t4{border-color:var(--t4);background:var(--t4-soft)}
+.tip b{font-weight:800}
+.tag{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:26px;padding:0 10px;border-radius:999px;font-weight:800;font-size:.8rem;color:#fff;white-space:nowrap;background:var(--accent)}
+.tag.t1{background:var(--t1)} .tag.t2{background:var(--t2)} .tag.t3{background:var(--t3)} .tag.t4{background:var(--t4)} .tag.ghost{background:var(--soft);color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:.95rem}
+.kv dt{color:var(--muted);font-weight:700}
+.kv dd{margin:0;font-weight:600}
+
+/* 표지 */
+.cover{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:center;min-height:100%}
+.cover h1{font-size:clamp(2rem,4.6vw,3.1rem);font-weight:800;line-height:1.18}
+.cover h1 small{display:block;font-size:.4em;color:var(--muted);font-weight:700;letter-spacing:.02em;margin-bottom:8px}
+.route{display:flex;flex-wrap:wrap;gap:6px;counter-reset:r}
+.route span{font-size:.85rem;padding:3px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface)}
+.route span::before{counter-increment:r;content:counter(r) " ";font-weight:800;color:var(--accent)}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+
+/* 원고지 느낌의 원문 */
+.paper{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 20px;font-size:1.08rem;line-height:2.15;
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(2.15em - 1px),var(--rule) calc(2.15em - 1px),var(--rule) 2.15em);background-attachment:local;white-space:pre-wrap}
+.paper p{margin:0 0 .2em}
+.unsure{background:color-mix(in srgb,var(--t4) 16%,transparent);color:var(--t4);border-radius:4px;padding:0 2px;font-weight:700}
+.mk{border-radius:3px;padding:0 1px;text-decoration-thickness:2.5px;text-underline-offset:5px}
+.mk.sp{background:var(--t2-soft);color:var(--t2);font-weight:700}
+.mk.vo{text-decoration:underline wavy var(--t1);text-decoration-thickness:1.5px}
+.mk.ag{text-decoration:underline var(--t4)}
+.mk.sy{text-decoration:underline dotted var(--t3)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.legend i{display:inline-block;width:22px;height:12px;border-radius:3px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{min-height:40px;padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:.92rem}
+.tabs button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+/* 평가표 */
+.rub{display:grid;gap:10px}
+.rrow{display:grid;grid-template-columns:7.5em auto minmax(0,1fr);gap:6px 14px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.rrow b{font-size:1rem}
+.rrow p{font-size:.94rem;color:var(--muted)}
+.lv{display:inline-flex;gap:3px}
+.lv i{width:22px;height:8px;border-radius:4px;background:var(--line)}
+.lv.l3 i{background:var(--ok)} .lv.l2 i:nth-child(-n+2){background:var(--t1)} .lv.l1 i:first-child{background:var(--bad)}
+.lvname{font-size:.8rem;font-weight:800;margin-left:6px}
+.lv.l3+.lvname{color:var(--ok)} .lv.l2+.lvname{color:var(--t1)} .lv.l1+.lvname{color:var(--bad)}
+
+/* 강점 */
+blockquote{margin:0;padding:10px 14px;border-left:4px solid var(--t3);background:var(--t3-soft);border-radius:0 10px 10px 0;font-weight:600}
+
+/* 구성 */
+.parts{display:grid;gap:10px}
+.prt{display:grid;grid-template-columns:4.2em minmax(0,1fr);gap:4px 14px;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.prt .pn{grid-row:span 3;display:grid;place-items:center;align-self:start;height:3.2em;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-weight:800}
+.prt .role{font-weight:700}
+.prt .from{font-size:.94rem}
+.prt .from::before{content:"내 글에서  ";color:var(--muted);font-weight:700;font-size:.82rem}
+.prt .miss{font-size:.94rem;color:var(--t2)}
+.prt .miss::before{content:"더 쓸 것  ";font-weight:800;font-size:.82rem}
+
+/* 고쳐 쓰기 표 */
+.fix{display:grid;gap:10px}
+.fx{display:grid;gap:6px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.fx .b{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 70%,transparent)}
+.fx .a{font-weight:700}
+.fx .a::before{content:"고친 문장  ";font-size:.8rem;font-weight:800;color:var(--ok)}
+.fx .w{font-size:.9rem;color:var(--muted)}
+.voc{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.vc{display:grid;gap:6px;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.vc .pair{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:1.08rem}
+.vc .pair s{color:var(--muted)}
+.vc .pair b{color:var(--t1)}
+.vc .ctx{font-size:.94rem}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:.96rem}
+tr:last-child td{border-bottom:0}
+th{font-size:.82rem;color:var(--muted);font-weight:700;background:var(--soft)}
+td.bad{color:var(--bad);font-weight:700}
+td.good{color:var(--ok);font-weight:800}
+
+/* 연습 */
+.q{display:grid;gap:8px;padding:14px 0;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:0}
+.q .head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.86rem;color:var(--muted);font-weight:700}
+.q .sent{font-size:1.06rem;font-weight:600;background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+.q .ask{font-weight:700}
+.choices{display:grid;gap:8px}
+.choice{min-height:46px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:1rem;text-align:left;line-height:1.45}
+.choice.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.choice.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.choice:disabled{cursor:default}
+.why{font-size:.94rem}
+.why.ok{color:var(--ok)} .why.no{color:var(--bad)}
+.score{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.score b{font-size:1.4rem;font-variant-numeric:tabular-nums}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+
+/* 질문·쓰기 */
+.bigq{font-size:clamp(1.25rem,2.6vw,1.6rem);font-weight:800;line-height:1.5}
+textarea{width:100%;min-height:9em;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper);font-size:1.02rem;line-height:1.8;resize:vertical}
+textarea:focus{outline:none;border-color:var(--accent)}
+.frames{display:flex;flex-wrap:wrap;gap:8px}
+.frames button{min-height:40px;padding:6px 12px;border-radius:10px;border:1.5px dashed var(--accent);background:var(--accent-soft);color:var(--ink);font-size:.93rem;text-align:left;line-height:1.4}
+.count{font-size:.85rem;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check input{width:22px;height:22px;margin-top:3px;accent-color:var(--accent);flex:none}
+
+/* 완성본·추천 독서록 */
+.essay{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 22px;font-size:1.08rem;line-height:2}
+.essay p{margin:0 0 .9em;text-indent:1em}
+.essay p:last-child{margin-bottom:0}
+.essay h3{font-size:1.15rem;margin-bottom:10px;text-align:center}
+.hl{background:linear-gradient(transparent 58%,color-mix(in srgb,var(--t1) 28%,transparent) 58%);font-weight:700}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.duo .paper{font-size:.98rem}
+.points{margin:0;padding-left:1.3em;display:grid;gap:6px}
+
+/* 보호자 */
+.cm{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--paper);border:1px dashed var(--line)}
+.cm p{font-weight:600}
+
+/* 아래 막대 */
+.bottom{padding-block:8px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;border-top:1px solid var(--line)}
+.aprog{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
+.aprog i{display:block;height:100%;width:0;background:var(--accent)}
+.caption{min-height:2.9em;font-size:.98rem;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;padding-inline:8px;line-height:1.45}
+.caption.on{color:var(--ink);font-weight:600}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.vstate{font-size:.8rem;color:var(--muted);white-space:nowrap}
+
+.overlay{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:50}
+.sheet{background:var(--surface);border-radius:18px;max-width:520px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;display:grid;gap:12px}
+.sheet header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.toclist{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.toclist button{width:100%;text-align:left;display:grid;grid-template-columns:2em minmax(0,1fr);gap:8px;padding:9px 10px;border-radius:10px;border:0;background:transparent;font-size:.95rem}
+.toclist button[aria-current="true"]{background:var(--accent-soft);font-weight:700}
+.toclist button span:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+
+@media (max-width:820px){
+  .cols,.cover,.duo{grid-template-columns:minmax(0,1fr)}
+  .rrow{grid-template-columns:minmax(0,1fr) auto}
+  .rrow p{grid-column:1/-1}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .hide-s{display:none}
+  .brand small{display:none}
+  .paper,.essay{padding:12px 14px;font-size:1rem}
+  .cm{grid-template-columns:minmax(0,1fr) auto}
+  .cm .tag{grid-column:1/-1;justify-self:start}
+}
+@media (max-width:420px){ .hide-xs{display:none} .controls{gap:6px} .controls .btn{padding:8px 12px} }
+@media (prefers-reduced-motion:reduce){ .slide{transition:none} .shake{animation:none} }
+@media print{ body{overflow:visible} #app{display:block;height:auto} .slide{position:static;opacity:1;visibility:visible;transform:none;overflow:visible;page-break-after:always} .bottom,.top button,.progress{display:none} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><b id="brandTitle">독서논술 첨삭 수업</b><small id="brandSub"></small></div>
+    <span class="pager" id="pager">1 / 1</span>
+    <button class="btn small" type="button" id="btnFull" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="icFull"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span id="lbFull" class="hide-s">전체 화면</span></button>
+    <button class="btn small" type="button" id="btnSave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span id="lbSave" class="hide-s">수업 저장</span></button>
+    <button class="btn small" type="button" id="btnToc">목차</button>
+  </header>
+  <div class="progress"><i id="bar"></i></div>
+
+  <main class="stage" id="stage"></main>
+
+  <footer class="bottom">
+    <div class="aprog" aria-hidden="true"><i id="aprogBar"></i></div>
+    <audio id="voice" preload="auto"></audio>
+    <div class="caption" id="caption" aria-live="polite">재생 버튼을 누르면 선생님이 수업을 진행해요.</div>
+    <div class="controls">
+      <button class="btn" type="button" id="btnPrev" aria-label="이전 장"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span class="hide-s">이전</span></button>
+      <button class="btn primary" type="button" id="btnAuto"><svg viewBox="0 0 24 24" fill="currentColor" id="icAuto"><path d="M7 4v16l13-8z"/></svg><span id="lbAuto">영상처럼 보기</span></button>
+      <button class="btn" type="button" id="btnListen" aria-label="이 장 듣기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg><span id="lbListen" class="hide-xs">이 장 듣기</span></button>
+      <button class="btn" type="button" id="btnNext" aria-label="다음 장"><span class="hide-s">다음</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<div class="overlay" id="tocBox" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tocTitle">
+    <header><h2 id="tocTitle" style="font-size:1.3rem">목차</h2><button class="btn small" type="button" data-close>닫기</button></header>
+    <ol class="toclist" id="tocList"></ol>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label for="rateSel" style="font-weight:700;font-size:.9rem">읽는 빠르기</label>
+      <select id="rateSel" style="min-height:40px;border-radius:10px;border:1px solid var(--line);padding:4px 8px;background:var(--surface)"><option value="0.85">천천히</option><option value="1" selected>보통</option><option value="1.15">조금 빠르게</option></select>
+      <span class="vstate" id="vstate"></span>
+    </div>
+    <p class="note">음성: 선생님 해설은 Google Gemini AI 음성(Kore)으로 만들고, 하루 사용 한도에 걸리면 공개 AI 성우 Supertonic 3, 그것도 없으면 기기 목소리로 읽어요. 첨삭 내용은 Gemini AI 가 만든 것이라 보호자가 한 번 살펴봐 주세요.</p>
+  </div>
+</div>
+
+<!-- 첨삭 결과 (페이지가 채워 넣는다) -->
+<script type="application/json" id="data">/*__DATA__*/</script>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const shake = el => { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
+  const paras = t => String(t || '').split(/\n\s*\n|\n/).map(s => s.trim()).filter(Boolean);
+
+  const ALL = JSON.parse($('#data').textContent);
+  const L = ALL.lesson || {};
+  const META = ALL.meta || {};
+  const LID = META.id || 'local';
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('essay:' + LID + ':' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('essay:' + LID + ':' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const NARR = L.narration || {};
+  const name = L.student_name || META.name || '';
+  const book = L.book_title || META.book || '';
+  const IDLE = '재생 버튼을 누르면 선생님이 수업을 진행해요.';
+
+  $('#brandTitle').textContent = book ? `『${book}』 첨삭 수업` : '독서논술 첨삭 수업';
+  $('#brandSub').textContent = [name, META.grade].filter(Boolean).join(' · ');
+  document.title = $('#brandTitle').textContent;
+
+  /* ================= 장 만들기 ================= */
+  const S = [];  // {id, title, html, stop, after}
+  const levelOf = v => /우수|상/.test(v) ? 3 : /보완|하|부족/.test(v) ? 1 : 2;
+  const levelName = n => ['', '보완', '보통', '우수'][n];
+
+  // 원문 위에 첨삭 표시를 얹는다 (맞춤법·어휘·호응·문체)
+  function markup(text, withMarks) {
+    const marks = [];
+    if (withMarks) {
+      const add = (arr, key, cls) => (arr || []).forEach(x => { const s = (x[key] || '').trim(); if (s.length >= 1) marks.push({ s, cls }); });
+      add(L.spelling, 'before', 'sp'); add(L.vocab, 'before', 'vo'); add(L.agreement, 'before', 'ag');
+      add((L.style || {}).fixes, 'before', 'sy');
+    }
+    const used = [];
+    marks.sort((a, b) => b.s.length - a.s.length).forEach(m => {
+      let from = 0, i;
+      while ((i = text.indexOf(m.s, from)) >= 0) {
+        const e = i + m.s.length;
+        if (!used.some(u => i < u.e && e > u.s)) { used.push({ s: i, e, cls: m.cls }); break; }
+        from = i + 1;
+      }
+    });
+    used.sort((a, b) => a.s - b.s);
+    const seg = s => esc(s).replace(/\[([^\]\n]{0,30})\]/g, '<span class="unsure">[$1]</span>');
+    let out = '', p = 0;
+    used.forEach(u => { out += seg(text.slice(p, u.s)) + `<span class="mk ${u.cls}">${seg(text.slice(u.s, u.e))}</span>`; p = u.e; });
+    return out + seg(text.slice(p));
+  }
+
+  const steps = ['원문 판독', '진단', '강점', '구성', '문체·호응', '어휘', '맞춤법', '연습', '생각 질문', '완성본', '추천 독서록', '다시 쓰기'];
+  const D = L.diagnosis || {};
+  const rub = D.rubric || [];
+  S.push({ id: 'intro', title: '표지 · 오늘의 수업', html: `
+    <div class="wrap cover">
+      <div style="display:grid;gap:16px">
+        <p class="eyebrow">국어 · 독서논술 첨삭 수업</p>
+        <h1><small>${esc(name ? name + ' 학생의 독서감상문' : '독서감상문 첨삭')}</small>${esc(book ? '『' + book + '』' : (L.essay_title || '나의 독후감'))}<br>첨삭 수업</h1>
+        ${D.focus ? `<p class="tip"><b>오늘의 핵심 과제</b><br>${esc(D.focus)}</p>` : ''}
+        <div class="route">${steps.map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="cta">
+          <button class="btn primary" type="button" id="startAuto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>영상처럼 보기</button>
+          <button class="btn" type="button" data-goid="model1">추천 독서록 바로 읽기</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>글 정보</h3>
+        <dl class="kv">
+          ${book ? `<dt>책</dt><dd>${esc(book)}${L.book_author ? ' · ' + esc(L.book_author) : ''}</dd>` : ''}
+          ${L.essay_title ? `<dt>글 제목</dt><dd>${esc(L.essay_title)}</dd>` : ''}
+          <dt>분량</dt><dd>${L.char_count || 0}자 · ${paras(L.transcription).length}문단</dd>
+          ${META.grade ? `<dt>학년</dt><dd>${esc(META.grade)}</dd>` : ''}
+        </dl>
+        ${rub.length ? `<div class="rub" style="gap:6px">${rub.map(r => { const n = levelOf(r.level); return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="font-weight:700;font-size:.94rem">${esc(r.area)}</span><span><span class="lv l${n}"><i></i><i></i><i></i></span><span class="lvname">${levelName(n)}</span></span></div>`; }).join('')}</div>` : ''}
+      </div>
+    </div>` });
+
+  S.push({ id: 'read', title: '1 원문 판독', html: `
+    <div class="wrap">
+      <p class="eyebrow">1단계 · 원문 판독</p>
+      <h2>먼저 쓴 글을 그대로 옮겨 읽습니다</h2>
+      <p class="lead">맞춤법과 띄어쓰기는 고치지 않고 쓴 그대로 옮겼어요. 글씨가 애매한 곳은 <span class="unsure">[대괄호]</span>로 표시했어요.</p>
+      <div class="tabs" role="group" aria-label="보기 방식"><button type="button" data-view="raw" aria-pressed="true">원문 그대로</button><button type="button" data-view="mark" aria-pressed="false">첨삭 표시 보기</button></div>
+      <div class="legend" id="legend" hidden><span><i style="background:var(--t2-soft);border:1px solid var(--t2)"></i>맞춤법·띄어쓰기</span><span><i style="border-bottom:2px solid var(--t1)"></i>어휘</span><span><i style="border-bottom:2px solid var(--t4)"></i>호응</span><span><i style="border-bottom:2px dotted var(--t3)"></i>문체</span></div>
+      <div class="paper" id="rawText"></div>
+      ${(L.uncertain || []).length ? `<div class="card"><h3>판독 메모</h3><ul class="points">${L.uncertain.map(u => `<li>${esc(u)}</li>`).join('')}</ul><p class="note">사진과 다르게 읽은 곳이 있으면, 보호자가 글을 직접 입력해 다시 첨삭받을 수 있어요.</p></div>` : ''}
+    </div>`,
+    after(el) {
+      const box = $('#rawText', el);
+      const render = m => { box.innerHTML = markup(L.transcription || '', m); $('#legend', el).hidden = !m; };
+      render(false);
+      $$('[data-view]', el).forEach(b => b.addEventListener('click', () => { $$('[data-view]', el).forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); render(b.dataset.view === 'mark'); }));
+    } });
+
+  S.push({ id: 'diag', title: '2 진단 · 평가표', html: `
+    <div class="wrap">
+      <p class="eyebrow">2단계 · 진단</p>
+      <h2>네 가지 기준으로 글을 평가합니다</h2>
+      ${D.overall ? `<p class="lead">${esc(D.overall)}</p>` : ''}
+      <div class="rub">${rub.map(r => { const n = levelOf(r.level); return `<div class="rrow"><b>${esc(r.area)}</b><span><span class="lv l${n}"><i></i><i></i><i></i></span><span class="lvname">${levelName(n)}</span></span><p>${esc(r.note)}</p></div>`; }).join('')}</div>
+      ${D.focus ? `<p class="tip"><b>가장 먼저 고칠 것</b> · ${esc(D.focus)}</p>` : ''}
+      <p class="note">평가 단계: 우수 · 보통 · 보완. 학년 수준의 독서논술 기준으로 판단했어요.</p>
+    </div>` });
+
+  const ST = L.strengths || [];
+  if (ST.length) S.push({ id: 'strength', title: '3 강점', html: `
+    <div class="wrap">
+      <p class="eyebrow">3단계 · 강점</p>
+      <h2>이 글에서 살릴 점 ${ST.length}가지</h2>
+      <p class="lead">다음 글에서도 그대로 이어 가야 할 부분입니다.</p>
+      <div class="cols">${ST.map((s, i) => `<div class="card"><h3><span class="tag t3">${i + 1}</span> ${esc(s.title)}</h3>${s.quote ? `<blockquote>${esc(s.quote)}</blockquote>` : ''}<p>${esc(s.why)}</p></div>`).join('')}</div>
+    </div>` });
+
+  const STR = L.structure || {};
+  if ((STR.parts || []).length || STR.diagnosis) S.push({ id: 'structure', title: '4 처방 · 문단 구성', html: `
+    <div class="wrap">
+      <p class="eyebrow">4단계 · 처방 ① 문단 구성</p>
+      <h2>서론 · 본론 · 결론으로 나누어 봅시다</h2>
+      ${STR.diagnosis ? `<p class="tip t1">${esc(STR.diagnosis)}</p>` : ''}
+      <div class="parts">${(STR.parts || []).map(p => `<div class="prt"><span class="pn">${esc(p.part)}</span><p class="role">${esc(p.role)}</p>${p.from_text ? `<p class="from">${esc(p.from_text)}</p>` : '<p></p>'}${p.missing ? `<p class="miss">${esc(p.missing)}</p>` : '<p></p>'}</div>`).join('')}</div>
+    </div>` });
+
+  const SY = L.style || {}, AG = L.agreement || [];
+  const fixList = (arr, label) => arr.map(f => `<div class="fx"><span class="tag ghost" style="justify-self:start">${label}</span><p class="b">${esc(f.before)}</p><p class="a">${esc(f.after)}</p>${f.why ? `<p class="w">${esc(f.why)}</p>` : ''}</div>`).join('');
+  if ((SY.fixes || []).length || AG.length || SY.diagnosis) S.push({ id: 'style', title: '5 처방 · 문체와 호응', html: `
+    <div class="wrap">
+      <p class="eyebrow">5단계 · 처방 ② 문체와 문장 호응</p>
+      <h2>문장 끝을 통일하고, 주어와 서술어를 맞춥니다</h2>
+      ${SY.diagnosis ? `<p class="tip t3">${esc(SY.diagnosis)}</p>` : ''}
+      <div class="fix">${fixList(SY.fixes || [], '문체')}${fixList(AG, '호응')}</div>
+      ${!(SY.fixes || []).length && !AG.length ? '<p class="note">고칠 문장이 없어요. 지금처럼 문장 끝을 한 가지로 맞춰 쓰세요.</p>' : ''}
+    </div>` });
+
+  const VO = L.vocab || [];
+  if (VO.length) S.push({ id: 'vocab', title: '6 처방 · 어휘', html: `
+    <div class="wrap">
+      <p class="eyebrow">6단계 · 처방 ③ 어휘</p>
+      <h2>막연한 말을 정확한 말로 바꿉니다</h2>
+      <p class="lead">같은 생각이라도 낱말이 정확하면 글이 훨씬 또렷해져요.</p>
+      <div class="voc">${VO.map(v => `<div class="vc"><p class="pair"><s>${esc(v.before)}</s><span aria-hidden="true">›</span><b>${esc(v.after)}</b></p>${v.context ? `<p class="ctx">${esc(v.context)}</p>` : ''}${v.why ? `<p class="note">${esc(v.why)}</p>` : ''}</div>`).join('')}</div>
+    </div>` });
+
+  const SP = L.spelling || [];
+  S.push({ id: 'spelling', title: '7 처방 · 맞춤법과 띄어쓰기', html: `
+    <div class="wrap">
+      <p class="eyebrow">7단계 · 처방 ④ 맞춤법과 띄어쓰기</p>
+      <h2>${SP.length ? `바르게 고칠 표기 ${SP.length}개` : '맞춤법은 잘 지켰어요'}</h2>
+      ${SP.length ? `<div class="tbl"><table><thead><tr><th>쓴 글</th><th>바른 표기</th><th>규칙</th></tr></thead><tbody>${SP.map(s => `<tr><td class="bad">${esc(s.before)}</td><td class="good">${esc(s.after)}</td><td>${esc(s.rule)}</td></tr>`).join('')}</tbody></table></div>
+      <p class="note">자주 틀리는 표기는 공책 맨 뒤에 모아 적어 두고, 다음 독서록을 다 쓴 뒤 그 목록으로 점검하세요.</p>` : '<p class="lead">표기 오류가 거의 없습니다. 다 쓴 뒤 소리 내어 읽으며 점검하는 습관을 이어 가세요.</p>'}
+    </div>` });
+
+  const PR = L.practice || [];
+  if (PR.length) S.push({ id: 'practice', title: '연습 · 내 문장 고쳐 쓰기', stop: true, html: `
+    <div class="wrap">
+      <p class="eyebrow">연습 · 내 글에서 나온 문제</p>
+      <h2>내 문장을 직접 고쳐 봅시다</h2>
+      <div class="score"><span class="note">처음에 맞힌 문제</span><b id="pScore">0 / ${PR.length}</b><button class="btn small" type="button" id="pReset">다시 풀기</button></div>
+      <div class="card" id="pList"></div>
+    </div>`,
+    after(el) {
+      const build = () => {
+        const box = $('#pList', el); box.innerHTML = '';
+        let n = 0; const show = () => { $('#pScore', el).textContent = `${n} / ${PR.length}`; }; show();
+        PR.forEach((p, qi) => {
+          const q = document.createElement('div'); q.className = 'q';
+          q.innerHTML = `<div class="head"><span class="tag t1">${qi + 1}</span>${esc(p.kind || '고쳐 쓰기')}</div>${p.sentence ? `<p class="sent">${esc(p.sentence)}</p>` : ''}<p class="ask">${esc(p.question || '바르게 고친 것을 고르세요.')}</p><div class="choices"></div><p class="why" hidden></p>`;
+          const order = shuffle(p.options.map((o, i) => i));
+          order.forEach(i => {
+            const c = document.createElement('button'); c.type = 'button'; c.className = 'choice'; c.textContent = p.options[i];
+            c.addEventListener('click', () => {
+              const w = q.querySelector('.why'); w.hidden = false;
+              if (i === p.answer) {
+                q.querySelectorAll('.choice').forEach(x => x.disabled = true); c.classList.add('ok');
+                if (!q.dataset.miss) { n++; show(); }
+                w.className = 'why ok'; w.textContent = (q.dataset.miss ? '맞습니다. ' : '정답입니다. ') + (p.explain || '');
+              } else {
+                q.dataset.miss = '1'; c.classList.add('no'); c.disabled = true; shake(c);
+                w.className = 'why no'; w.textContent = '다시 보세요. 앞에서 배운 처방을 떠올려 봅시다.';
+              }
+            });
+            q.querySelector('.choices').appendChild(c);
+          });
+          box.appendChild(q);
+        });
+      };
+      build(); $('#pReset', el).addEventListener('click', build);
+    } });
+
+  const TQ = L.think_question || {};
+  if (TQ.question) S.push({ id: 'question', title: '생각을 키우는 질문', stop: true, html: `
+    <div class="wrap">
+      <p class="eyebrow">생각을 키우는 질문</p>
+      <h2>책 속 문제를 내 생활로 가져와 봅시다</h2>
+      <div class="card"><p class="bigq">${esc(TQ.question)}</p>${TQ.hint ? `<p class="tip t4">실마리 · ${esc(TQ.hint)}</p>` : ''}</div>
+      <label for="qAns" style="font-weight:700">내 생각 (세 문장 이상, 까닭을 함께)</label>
+      <textarea id="qAns" placeholder="나는 ~라고 생각한다. 왜냐하면 ~ 때문이다. 예를 들어 ~"></textarea>
+      <p class="count" id="qCount">0자</p>
+    </div>`,
+    after(el) { const t = $('#qAns', el); t.value = store.get('qAns', ''); const c = () => { $('#qCount', el).textContent = t.value.replace(/\s/g, '').length + '자'; store.set('qAns', t.value); }; t.addEventListener('input', c); c(); } });
+
+  if (L.final_version) S.push({ id: 'final', title: '최종 추천 완성본', html: `
+    <div class="wrap">
+      <p class="eyebrow">완성본</p>
+      <h2>생각은 그대로, 표현만 다듬었습니다</h2>
+      <div class="tabs" role="group" aria-label="보기 방식"><button type="button" data-fv="final" aria-pressed="true">완성본</button><button type="button" data-fv="duo" aria-pressed="false">원문과 나란히</button></div>
+      <div id="fvOne" class="essay">${L.essay_title ? `<h3>${esc(L.essay_title)}</h3>` : ''}${paras(L.final_version).map(p => `<p>${esc(p)}</p>`).join('')}</div>
+      <div id="fvDuo" class="duo" hidden><div style="display:grid;gap:6px"><span class="note">원문</span><div class="paper">${markup(L.transcription || '', true)}</div></div><div style="display:grid;gap:6px"><span class="note">완성본</span><div class="essay">${paras(L.final_version).map(p => `<p>${esc(p)}</p>`).join('')}</div></div></div>
+      <p class="note">완성본을 그대로 베껴 쓰기보다, 바뀐 곳을 찾아 내 공책에 고쳐 써 보세요.</p>
+    </div>`,
+    after(el) { $$('[data-fv]', el).forEach(b => b.addEventListener('click', () => { $$('[data-fv]', el).forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); const duo = b.dataset.fv === 'duo'; $('#fvDuo', el).hidden = !duo; $('#fvOne', el).hidden = duo; })); } });
+
+  (L.model_essays || []).forEach((m, i) => {
+    let body = paras(m.text).map(p => esc(p));
+    (m.highlight || []).forEach(h => { const e = esc(h); if (e.length > 1) body = body.map(p => p.includes(e) ? p.replace(e, `<span class="hl">${e}</span>`) : p); });
+    S.push({ id: 'model' + (i + 1), title: `추천 독서록 ${i + 1} · ${m.form || ''}`, html: `
+    <div class="wrap">
+      <p class="eyebrow">추천 독서록 ${i + 1} · ${esc(m.form || '예시 글')}</p>
+      <h2>좋은 글을 읽어야 좋은 글을 씁니다</h2>
+      <p class="lead">선생님이 같은 책으로 쓴 예시 글이에요. 성우 선생님 목소리를 들으며 눈으로 따라 읽어 보세요. 밑줄 친 곳은 꼭 배울 표현입니다.</p>
+      <div class="cols" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">
+        <div class="essay">${m.title ? `<h3>${esc(m.title)}</h3>` : ''}${body.map(p => `<p>${p}</p>`).join('')}</div>
+        <div class="card"><h3>이 글에서 배울 점</h3><ol class="points">${(m.points || []).map(p => `<li>${esc(p)}</li>`).join('')}</ol></div>
+      </div>
+    </div>` });
+  });
+
+  const TK = L.task || {};
+  if (TK.instruction || (TK.checklist || []).length) S.push({ id: 'task', title: '수행평가 대비 · 다시 쓰기', stop: true, html: `
+    <div class="wrap">
+      <p class="eyebrow">수행평가 대비 · 다시 쓰기</p>
+      <h2>${esc(TK.title || '배운 처방으로 한 문단 다시 쓰기')}</h2>
+      ${TK.instruction ? `<p class="tip">${esc(TK.instruction)}</p>` : ''}
+      ${(TK.frames || []).length ? `<div style="display:grid;gap:6px"><span class="note">문장 틀을 누르면 아래 칸에 들어가요</span><div class="frames">${TK.frames.map((f, i) => `<button type="button" data-frame="${i}">${esc(f)}</button>`).join('')}</div></div>` : ''}
+      <textarea id="tAns" placeholder="여기에 다시 써 보세요."></textarea>
+      <p class="count" id="tCount">0자</p>
+      ${(TK.checklist || []).length ? `<div class="card"><h3>다 쓰고 스스로 점검하기</h3><ul class="check">${TK.checklist.map((c, i) => `<li><label><input type="checkbox" data-chk="${i}"><span>${esc(c)}</span></label></li>`).join('')}</ul></div>` : ''}
+    </div>`,
+    after(el) {
+      const t = $('#tAns', el); t.value = store.get('tAns', '');
+      const c = () => { $('#tCount', el).textContent = t.value.replace(/\s/g, '').length + '자'; store.set('tAns', t.value); };
+      t.addEventListener('input', c); c();
+      $$('[data-frame]', el).forEach(b => b.addEventListener('click', () => { const f = TK.frames[+b.dataset.frame]; t.value = (t.value.trim() ? t.value.replace(/\s*$/, ' ') : '') + f; c(); t.focus(); }));
+      const saved = store.get('chk', {});
+      $$('[data-chk]', el).forEach(x => { x.checked = !!saved[x.dataset.chk]; x.addEventListener('change', () => { saved[x.dataset.chk] = x.checked; store.set('chk', saved); }); });
+    } });
+
+  const CM = L.comments || {};
+  S.push({ id: 'end', title: '정리 · 보호자 코멘트', html: `
+    <div class="wrap">
+      <p class="eyebrow">수업 정리</p>
+      <h2>다음 독서록에서 지킬 것</h2>
+      ${D.focus ? `<p class="tip"><b>오늘의 핵심 과제</b> · ${esc(D.focus)}</p>` : ''}
+      <div class="cols">
+        <div class="card"><h3>공책 하단 한 줄 코멘트 (보호자·교사용)</h3>
+          ${CM.praise ? `<div class="cm"><span class="tag t3">칭찬형</span><p>${esc(CM.praise.replace(/^\[칭찬형\]\s*/, ''))}</p><button class="btn small" type="button" data-copy="praise">복사</button></div>` : ''}
+          ${CM.question ? `<div class="cm"><span class="tag t1">질문형</span><p>${esc(CM.question.replace(/^\[질문형\]\s*/, ''))}</p><button class="btn small" type="button" data-copy="question">복사</button></div>` : ''}
+        </div>
+        <div class="card"><h3>보호자에게 · 다음 지도 포인트</h3><ul class="points">${(L.parent_note || []).map(p => `<li>${esc(p.replace(/^보호자에게\s*[:：]\s*/, ''))}</li>`).join('')}</ul></div>
+      </div>
+      <div class="cta"><button class="btn" type="button" data-goid="read">처음부터 다시 보기</button><button class="btn" type="button" id="saveEnd">이 수업 파일로 저장</button></div>
+      <p class="note">첨삭은 AI 가 만든 것이라 판독이나 처방이 틀릴 수 있어요. 보호자가 한 번 확인해 주세요.</p>
+    </div>`,
+    after(el) {
+      $$('[data-copy]', el).forEach(b => b.addEventListener('click', () => {
+        const t = (CM[b.dataset.copy] || '').replace(/^\[(칭찬형|질문형)\]\s*/, '');
+        const done = () => { b.textContent = '복사됨'; setTimeout(() => { b.textContent = '복사'; }, 1500); };
+        try { navigator.clipboard.writeText(t).then(done, () => {}); } catch (e) {}
+      }));
+      $('#saveEnd', el).addEventListener('click', saveCopy);
+    } });
+
+  const stage = $('#stage');
+  S.forEach((s, i) => {
+    const el = document.createElement('section');
+    el.className = 'slide' + (i === 0 ? ' active' : '');
+    el.dataset.id = s.id; el.dataset.title = s.title; if (s.stop) el.dataset.stop = '1';
+    el.innerHTML = s.html; stage.appendChild(el);
+    if (s.after) s.after(el);
+  });
+
+  /* ================= 소리 ================= */
+  const player = $('#voice');
+  const synth = window.speechSynthesis || null;
+  const BASE = META.base || '';
+  const AUD = META.audio || {};
+  let VST = { files: {}, pending: [], done: !BASE };
+  let rate = +store.get('rate', 1), token = 0, speaking = false, auto = false, autoTimer = null;
+  $('#rateSel').value = String(rate);
+  $('#rateSel').addEventListener('change', e => { rate = +e.target.value; store.set('rate', rate); player.playbackRate = rate; });
+
+  function pullStatus() {
+    if (!BASE) return Promise.resolve(VST);
+    return fetch(BASE + 'status.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => { if (j) VST = j; showVState(); return VST; }).catch(() => VST);
+  }
+  function showVState() {
+    const keys = S.map(s => s.id).filter(k => NARR[k]);
+    const have = keys.filter(k => AUD[k] || (VST.files || {})[k]).length;
+    $('#vstate').textContent = BASE || Object.keys(AUD).length ? (have >= keys.length ? '선생님 음성 준비 완료' : `선생님 음성 ${have} / ${keys.length} 준비됨`) : '';
+  }
+  (function poll() { pullStatus().then(st => { if (BASE && !st.done) setTimeout(poll, 4000); }); })();
+  const srcOf = k => AUD[k] || ((VST.files || {})[k] ? BASE + VST.files[k] : null);
+  const isPending = k => BASE && !VST.done && !(VST.failed || []).includes(k);
+
+  function pickVoice() {
+    if (!synth) return null;
+    const all = synth.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('ko'));
+    const score = v => { const n = v.name.toLowerCase(); let s = 0;
+      if (/yuna|sora|heami|google 한국|sunhi|jimin/.test(n)) s += 6;
+      if (/natural|neural|premium|enhanced|online/.test(n)) s += 3; return s; };
+    return all.sort((a, b) => score(b) - score(a))[0] || null;
+  }
+  if (synth) { synth.getVoices(); synth.onvoiceschanged = () => synth.getVoices(); }
+  let unlocked = false;
+  const unlock = () => { if (unlocked || !synth) return; unlocked = true; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {} };
+  document.addEventListener('click', unlock, true);
+  document.addEventListener('touchend', unlock, true);
+
+  function setCaption(t, on) { const c = $('#caption'); c.textContent = t; c.classList.toggle('on', !!on); }
+  function sentences(t) { return (String(t).match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [t]).map(s => s.trim()).filter(Boolean); }
+  function stopAll() {
+    token++; speaking = false; clearTimeout(autoTimer);
+    if (synth) try { synth.cancel(); } catch (e) {}
+    try { player.pause(); } catch (e) {}
+    player.ontimeupdate = player.onended = player.onerror = null;
+    $('#aprogBar').style.width = '0';
+    refreshButtons();
+  }
+  function speakDevice(text, onDone, my) {
+    const list = sentences(text); let k = 0;
+    const next = () => {
+      if (my !== token) return;
+      if (k >= list.length) { finish(my, onDone); return; }
+      const line = list[k++]; setCaption(line, true);
+      if (!synth) { autoTimer = setTimeout(next, Math.max(1600, line.length * 120 / rate)); return; }
+      const u = new SpeechSynthesisUtterance(line);
+      u.lang = 'ko-KR'; const v = pickVoice(); if (v) u.voice = v; u.rate = rate * 0.95;
+      let done = false;
+      const fin = () => { if (done) return; done = true; clearTimeout(guard); if (my === token) setTimeout(next, 150); };
+      const guard = setTimeout(fin, (line.length * 300 + 5000) / rate);
+      u.onend = fin; u.onerror = fin;
+      try { synth.speak(u); } catch (e) { fin(); }
+    };
+    setTimeout(next, 60);
+  }
+  function finish(my, onDone) {
+    if (my !== token) return;
+    speaking = false; refreshButtons(); $('#aprogBar').style.width = '0';
+    setCaption(auto ? '' : IDLE, false); onDone && onDone();
+  }
+  // 선생님 음성 재생. 아직 만드는 중이면 잠시 기다리고, 없으면 기기 목소리로 읽는다.
+  function play(key, text, onDone) {
+    stopAll();
+    const my = ++token; speaking = true; refreshButtons();
+    if (!text) { finish(my, onDone); return; }
+    const parts = sentences(text);
+    const total = parts.reduce((n, s) => n + s.length, 0);
+    let waited = 0;
+    const start = () => {
+      if (my !== token) return;
+      const src = srcOf(key);
+      if (!src) {
+        if (isPending(key) && waited < 90000) {
+          setCaption('선생님 목소리를 준비하고 있어요. 잠시만 기다려 주세요.', false);
+          waited += 2500; autoTimer = setTimeout(() => pullStatus().then(start), 2500); return;
+        }
+        speakDevice(text, onDone, my); return;
+      }
+      let cues = null, ci = -1;
+      setCaption(parts[0], true);
+      player.src = src;
+      player.defaultPlaybackRate = rate; player.playbackRate = rate;
+      player.ontimeupdate = () => {
+        if (my !== token || !player.duration || !isFinite(player.duration)) return;
+        if (!cues) { let acc = 0; cues = parts.map(s => { const t = acc / total * player.duration; acc += s.length; return t; }); }
+        const t = player.currentTime; let i = cues.length - 1;
+        while (i > 0 && cues[i] > t) i--;
+        if (i !== ci) { ci = i; setCaption(parts[i], true); }
+        $('#aprogBar').style.width = Math.min(100, t / player.duration * 100) + '%';
+      };
+      player.onended = () => finish(my, onDone);
+      player.onerror = () => { if (my !== token) return; player.onerror = null; speakDevice(text, onDone, my); };
+      const pr = player.play();
+      if (pr) pr.catch(err => {
+        if (my !== token || (err && err.name === 'AbortError')) return;
+        if (err && err.name === 'NotSupportedError') { speakDevice(text, onDone, my); return; }
+        speaking = false; auto = false; refreshButtons();
+        setCaption('소리를 켜려면 재생 버튼을 한 번 더 눌러 주세요.', false);
+      });
+    };
+    start();
+  }
+
+  /* ================= 전체 화면 ================= */
+  function fsTarget() { try { if (window.frameElement) return window.frameElement; } catch (e) {} return document.documentElement; }
+  function fsDoc() { try { if (window.frameElement) return window.parent.document; } catch (e) {} return document; }
+  const fsEl = () => { const d = fsDoc(); return d.fullscreenElement || d.webkitFullscreenElement || null; };
+  const fsOk = (() => { const t = fsTarget(); return !!(t.requestFullscreen || t.webkitRequestFullscreen); })();
+  function enterFull() {
+    if (!fsOk || fsEl()) return;
+    const t = fsTarget();
+    try { const r = (t.requestFullscreen || t.webkitRequestFullscreen).call(t); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function exitFull() {
+    const d = fsDoc();
+    try { const r = (d.exitFullscreen || d.webkitExitFullscreen).call(d); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  }
+  function fsUI() {
+    const on = !!fsEl();
+    $('#lbFull').textContent = on ? '전체 화면 끝' : '전체 화면';
+    $('#icFull').innerHTML = on ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  }
+  if (fsOk) {
+    $('#btnFull').hidden = false;
+    $('#btnFull').addEventListener('click', () => fsEl() ? exitFull() : enterFull());
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => { fsDoc().addEventListener(ev, fsUI); document.addEventListener(ev, fsUI); });
+  }
+
+  /* ================= 슬라이드 ================= */
+  const slides = $$('.slide');
+  let cur = 0;
+  function refreshButtons() {
+    $('#lbAuto').textContent = auto ? '멈춤' : '영상처럼 보기';
+    $('#icAuto').innerHTML = auto ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+    $('#lbListen').textContent = speaking && !auto ? '멈춤' : '이 장 듣기';
+  }
+  function updateUI() {
+    $('#pager').textContent = `${cur + 1} / ${slides.length}`;
+    $('#bar').style.width = ((cur + 1) / slides.length * 100) + '%';
+    $('#btnPrev').disabled = cur === 0; $('#btnNext').disabled = cur === slides.length - 1;
+    $$('#tocList button').forEach((b, i) => b.setAttribute('aria-current', i === cur ? 'true' : 'false'));
+    store.set('slide', cur);
+  }
+  function go(i) {
+    if (i < 0 || i >= slides.length || i === cur) return;
+    const back = i < cur;
+    slides[cur].classList.remove('active');
+    slides.forEach(s => s.classList.toggle('back', back));
+    cur = i; slides[cur].scrollTop = 0; slides[cur].classList.add('active');
+    updateUI();
+    if (auto) narrate(); else { stopAll(); setCaption(IDLE, false); }
+    preload(cur + 1);
+  }
+  function narrate() {
+    const s = slides[cur], id = s.dataset.id;
+    play(id, NARR[id], () => {
+      if (!auto) return;
+      if (s.dataset.stop || cur === slides.length - 1) { auto = false; refreshButtons(); setCaption(s.dataset.stop ? '직접 해 보고, 다음 버튼으로 넘어가세요.' : IDLE, false); return; }
+      autoTimer = setTimeout(() => go(cur + 1), 900);
+    });
+  }
+  function preload(i) { const s = slides[i]; if (!s) return; const src = srcOf(s.dataset.id); if (!src || src.startsWith('data:')) return; try { const a = new Audio(); a.preload = 'auto'; a.src = src; } catch (e) {} }
+  const goId = id => { const i = slides.findIndex(s => s.dataset.id === id); if (i >= 0) go(i); };
+
+  $('#btnPrev').addEventListener('click', () => go(cur - 1));
+  $('#btnNext').addEventListener('click', () => go(cur + 1));
+  $('#btnAuto').addEventListener('click', () => {
+    if (auto) { auto = false; stopAll(); setCaption(IDLE, false); return; }
+    enterFull(); auto = true; refreshButtons(); narrate();
+  });
+  $('#startAuto').addEventListener('click', () => { enterFull(); auto = true; refreshButtons(); narrate(); });
+  $('#btnListen').addEventListener('click', () => {
+    if (speaking && !auto) { stopAll(); setCaption(IDLE, false); return; }
+    auto = false; narrate();
+  });
+  $$('[data-goid]').forEach(b => b.addEventListener('click', () => { auto = false; goId(b.dataset.goid); }));
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, select, textarea')) return;
+    if (!$('#tocBox').hidden) { if (e.key === 'Escape') $('#tocBox').hidden = true; return; }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  });
+  let tx = 0, ty = 0, tOk = false;
+  stage.addEventListener('touchstart', e => { tOk = !e.target.closest('button, select, input, textarea, .tbl, .paper, .essay'); tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (!tOk) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { auto = false; go(cur + (dx < 0 ? 1 : -1)); }
+  }, { passive: true });
+
+  slides.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button"><span>${i + 1}</span><span>${esc(s.dataset.title)}</span></button>`;
+    li.firstChild.addEventListener('click', () => { $('#tocBox').hidden = true; auto = false; go(i); });
+    $('#tocList').appendChild(li);
+  });
+  $('#btnToc').addEventListener('click', () => { $('#tocBox').hidden = false; pullStatus(); });
+  $$('[data-close]').forEach(b => b.addEventListener('click', () => { $('#tocBox').hidden = true; }));
+  $('#tocBox').addEventListener('click', e => { if (e.target.id === 'tocBox') $('#tocBox').hidden = true; });
+
+  /* ================= 수업 저장 (음성까지 담은 HTML 한 파일) ================= */
+  const toDataURL = blob => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(blob); });
+  let saving = false;
+  async function saveCopy() {
+    if (saving) return; saving = true;
+    const lb = $('#lbSave'); const old = lb.textContent; lb.textContent = '저장 준비 중';
+    try {
+      await pullStatus();
+      const audio = Object.assign({}, AUD);
+      for (const [k, f] of Object.entries(VST.files || {})) {
+        if (audio[k]) continue;
+        try { const r = await fetch(BASE + f); if (r.ok) { const u = await toDataURL(await r.blob()); if (u) audio[k] = u; } } catch (e) {}
+      }
+      const clone = document.documentElement.cloneNode(true);
+      clone.querySelector('#stage').innerHTML = '';
+      clone.querySelector('#tocList').innerHTML = '';
+      clone.querySelector('#tocBox').hidden = true;
+      const data = Object.assign({}, ALL, { meta: Object.assign({}, META, { base: '', audio }) });
+      clone.querySelector('#data').textContent = JSON.stringify(data).replace(/</g, '\\u003c');
+      const html = '<!doctype html>\n' + clone.outerHTML;
+      const d = new Date(); const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+      const fname = `독서논술첨삭_${(book || '독후감').replace(/[\\/:*?"<>|\s]+/g, '')}_${ymd}.html`;
+      const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+      const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 4000);
+      lb.textContent = '저장됨';
+    } catch (e) { lb.textContent = '저장 실패'; }
+    setTimeout(() => { lb.textContent = old; saving = false; }, 2500);
+  }
+  $('#btnSave').addEventListener('click', saveCopy);
+
+  // 지난번 보던 장으로
+  const last = +store.get('slide', 0);
+  if (last > 0 && last < slides.length) { slides[0].classList.remove('active'); cur = last; slides[cur].classList.add('active'); }
+  updateUI(); preload(cur); preload(cur + 1); showVState();
+})();
+</script>
+</body>
+</html>
