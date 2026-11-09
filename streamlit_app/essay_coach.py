@@ -39,7 +39,7 @@ GRADES = ["초등 3학년", "초등 4학년", "초등 5학년", "초등 6학년"
 
 # 글 판독·첨삭에 쓸 모델. 실제로 쓸 수 있는 모델 목록을 먼저 읽어 아래 순서로 고르고,
 # 목록을 못 읽으면 이 순서대로 시도한다.
-FALLBACK_TEXT_MODELS = [
+FALLBACK_TEXT_MODELS = [  # 앞에 있을수록 먼저
     "gemini-3.6-flash",
     "gemini-3.5-flash",
     "gemini-3-flash-preview",
@@ -115,7 +115,8 @@ COMMON = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
 학생의 독서감상문(손글씨 사진 또는 텍스트)을 판독하고, 1대1 첨삭 수업 자료를 JSON 으로 만듭니다.
 
 [수업 태도]
-- 칭찬은 근거가 분명한 것만, 짧고 구체적으로 합니다. "정말 훌륭해요", "최고예요", "완벽해요" 같은 과장된 감탄은 쓰지 않습니다.
+- 칭찬은 근거가 분명한 것만, 짧고 구체적으로 합니다. "훌륭하다", "최고", "완벽", "대단하다", "멋지다", "정말 잘했다", "돋보인다" 같은 감탄과 느낌표는 쓰지 않습니다. 잘된 점은 "이 문장은 ~해서 효과가 있습니다"처럼 사실로 말합니다.
+- 칭찬과 지적의 비율은 대략 3대 7입니다. 수업 시간 대부분은 고칠 점과 고치는 방법에 씁니다.
 - 부족한 점은 돌려 말하지 말고 분명히 짚습니다. 반드시 왜 문제인지와 어떻게 고치는지를 함께 제시합니다.
 - 평가 대상은 글이지 학생이 아닙니다. 다른 학생과 비교하거나 꾸짖지 않습니다.
 - 말투는 학생에게 수업하는 존댓말입니다. "~입니다", "~해 봅시다", "~하세요"를 씁니다. 반말, 아기 말투, 이모지는 쓰지 않습니다.
@@ -126,6 +127,7 @@ COMMON = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
 [판독 규칙]
 - 사진 속 손글씨를 띄어쓰기와 맞춤법 오류까지 고치지 말고 그대로 옮깁니다. 줄이 아니라 문단이 바뀐 곳에서만 줄을 바꿉니다.
 - 번지거나 흘려 써서 애매한 글자는 문맥상 가장 그럴듯한 글자로 추정해 [대괄호]로 표시합니다.
+- 판독이 애매한 글자를 맞춤법 오류로 단정하지 않습니다. 사진에서 분명히 틀리게 쓴 것만 오류로 지적합니다. 학생이 맞게 쓴 낱말을 틀렸다고 하면 안 됩니다.
 - 사진이 여러 장이면 순서대로 이어 붙입니다. 제목·책 제목·이름이 보이면 따로 적습니다.
 - 독서감상문이 아니거나 글씨를 거의 읽을 수 없으면 readable 을 false 로 하고 problem 에 이유를 적은 뒤 나머지는 비워 둡니다.
 
@@ -141,7 +143,9 @@ COMMON = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
 - 학생에게 직접 말하는 수업 말투로 씁니다. 화면에 보이는 내용을 그대로 나열하지 말고, 핵심을 짚어 설명합니다.
 - 숫자는 읽는 대로 한글로 씁니다(예: 두 가지, 세 번째 문단). 괄호, 따옴표, 화살표, 대괄호, 기호, 영어 약어를 쓰지 않습니다.
 - 학생 이름이 주어지면 "OO 학생" 또는 "OO이가 쓴 이 문장은"처럼 자연스럽게 부르되 존댓말을 지킵니다.
-- 각 대본은 한국어 150~380자입니다.
+- 각 대본은 한국어 250~450자입니다(practice 는 120자 안팎). 짧게 요약하지 말고, 화면의 핵심 내용을 실제 수업처럼 풀어 설명합니다.
+- 처방 대본(structure, style, vocab, spelling)은 학생 글의 실제 문장이나 낱말을 하나 이상 짚어 말하고, 왜 틀렸는지와 고친 모습을 함께 말합니다.
+- 숫자 낱말은 바르게 씁니다(네 가지, 세 문단, 다섯 개).
 """
 
 SYSTEM_COACH = COMMON + """
@@ -184,10 +188,10 @@ SYSTEM_COACH = COMMON + """
  "vocab": [{"before": "원문의 낱말이나 표현", "after": "대안 표현", "context": "고친 문장 예", "why": "이유"}],
  "spelling": [{"before": "원문 표기", "after": "바른 표기", "rule": "짧은 규칙 설명"}],
  "practice": [
-   {"kind": "맞춤법|어휘|호응|문체", "sentence": "학생 글의 문장", "question": "무엇을 고르는지", "options": ["보기1", "보기2", "보기3"], "answer": 정답 번호(0부터), "explain": "해설 한 문장"}
+   {"kind": "맞춤법|어휘|호응|문체|구성", "sentence": "학생 글의 문장을 글자 그대로", "question": "무엇을 고르는지 한 문장", "options": ["보기1", "보기2", "보기3"], "answer": 정답 번호(0부터), "explain": "해설 한 문장"}
  ],
  "think_question": {"question": "책의 핵심 문제를 학생의 실제 생활(학교, 친구, 가족)과 잇는 열린 질문 하나", "hint": "생각을 시작하는 실마리 한 문장"},
- "final_version": "최종 추천 완성본 (학생의 생각·감상·어조 100% 유지, 문단 나누기와 표기·호응만 다듬음)",
+ "final_version": "최종 추천 완성본. 학생의 생각·감상·어조를 그대로 두고 문단 나누기, 맞춤법·띄어쓰기, 문체 통일, 호응, 위 vocab 에서 제안한 낱말 바꾸기만 반영합니다. 학생이 쓰지 않은 새 생각, 감정, 줄거리를 덧붙이지 않습니다.",
  "comments": {"praise": "[칭찬형] 공책 하단 1~2줄", "question": "[질문형] 칭찬과 생각 확장 질문 1~2줄"},
  "parent_note": ["보호자에게: 다음 지도 포인트 (2~3개)"],
  "task": {
@@ -212,7 +216,8 @@ SYSTEM_COACH = COMMON + """
    "end": "수업 정리. 다음 독서록에서 지킬 것 한두 가지"
  }
 }
-- strengths 는 정확히 2개, practice 는 학생 글의 실제 문제로 4~6개입니다.
+- strengths 는 정확히 2개, practice 는 학생 글의 실제 문제로 4~6개입니다. practice 의 보기는 서로 비슷해 보여 생각해야 고를 수 있게 만들고, 정답이 늘 같은 자리에 오지 않게 합니다.
+- comments 는 공책에 손으로 적을 짧은 문장입니다. 느낌표와 과장된 칭찬 없이 구체적으로 씁니다.
 """
 
 SYSTEM_MODEL = COMMON + """
@@ -293,8 +298,9 @@ def _models(key: str) -> tuple[list[str], list[str]]:
         kind = 0 if (m.group(2) == "flash" and not m.group(3)) else (1 if m.group(2) == "pro" else 2)
         return (kind, -ver, 1 if m.group(4) else 0, n)
 
-    text = sorted((n for n in names if rank(n)), key=rank)
-    text += [n for n in FALLBACK_TEXT_MODELS if n in names and n not in text]
+    # 검증된 모델을 먼저 쓴다. (2026-11 시험: 3.8·3.7 flash 는 무료 키에서 2분 넘게 응답이 없었고 3.6 flash 는 30초 안팎)
+    text = [n for n in FALLBACK_TEXT_MODELS if n in names]
+    text += sorted((n for n in names if rank(n) and n not in text), key=rank)
     tts = [n for n in TTS_MODELS if n in names]
     tts += sorted((n for n in names if "tts" in n and n not in tts), reverse=True)
     text, tts = text or FALLBACK_TEXT_MODELS, tts or TTS_MODELS
@@ -322,6 +328,7 @@ def _gen_config(model: str, thinking: bool) -> dict:
     cfg: dict[str, Any] = {"responseMimeType": "application/json", "temperature": 0.4,
                            "maxOutputTokens": 16000}
     if thinking:
+        cfg["mediaResolution"] = "MEDIA_RESOLUTION_HIGH"  # 손글씨를 더 자세히 본다
         # 생각을 길게 하면 3분이 넘게 걸린다. 첨삭은 짧게 생각해도 충분하다.
         if re.match(r"gemini-([3-9]|\d\d)", model):
             cfg["thinkingConfig"] = {"thinkingLevel": "low"}
@@ -330,7 +337,7 @@ def _gen_config(model: str, thinking: bool) -> dict:
     return cfg
 
 
-def _stream(model: str, key: str, body: dict, read_timeout: int = 120) -> str:
+def _stream(model: str, key: str, body: dict, read_timeout: int = 75) -> str:
     """streamGenerateContent(SSE)로 받아 글자를 모은다. 오래 걸려도 중간에 끊기지 않는다."""
     req = urllib.request.Request(
         f"{API}/models/{model}:streamGenerateContent?alt=sse&key={key}",
@@ -378,8 +385,11 @@ def _ask(key: str, models: list[str], system: str, parts: list[dict], deadline: 
                 print(f"[essay] {last[:200]}", flush=True)
                 if e.code in (400, 401, 403) and "API key" in detail:
                     raise CoachError("Gemini 키가 맞지 않아요. Streamlit Secrets 의 GEMINI_API_KEY 를 확인해 주세요.")
-                if e.code == 400 and thinking and "thinking" in detail.lower():
-                    continue  # 이 모델은 생각 설정을 모른다 -> 설정 없이 다시
+                if e.code == 400 and thinking:
+                    continue  # 이 모델이 모르는 설정이 있다 -> 기본 설정으로 다시
+                if e.code in (500, 503) and thinking:
+                    time.sleep(3)
+                    continue  # 잠깐 붐빈다 -> 한 번 더
                 break
             except (json.JSONDecodeError, ValueError) as e:
                 last = f"{model}: 결과를 읽지 못함 ({e})"
