@@ -1,7 +1,7 @@
 """학습자료 페이지 공통 코드.
 
-항공권 감시 콘솔과는 별개다. shared(감시 콘솔)를 임포트하지 않으므로
-비밀번호 없이 누구나 열 수 있고, 감시 콘솔 코드가 바뀌어도 영향을 받지 않는다.
+항공권 감시 콘솔과는 별개다. shared(감시 콘솔)를 임포트하지 않으므로 감시 콘솔 코드가 바뀌어도
+영향을 받지 않는다. 대신 학습자료만의 비밀번호 문(gate)이 있다 (아래 '비밀번호' 부분).
 
 자료 한 개 = static/learning/<slug>/ 폴더 하나 (slug = 과목_주제, 영문 소문자)
     index.html      자료 본문 (그대로 넣은 HTML)
@@ -18,6 +18,11 @@
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
+import os
+from datetime import date
 from html import escape
 from pathlib import Path
 
@@ -197,6 +202,141 @@ def load_html(slug: str) -> str:
     return html.replace("'audio/", f"'{prefix}").replace('"audio/', f'"{prefix}')
 
 
+# ---------------------------------------------------------------------------
+# 비밀번호 (학습자료 전체)
+# ---------------------------------------------------------------------------
+# 비밀번호는 8144. 저장소가 공개라 글자 그대로 두지 않고 해시만 둔다.
+# Secrets 에 STUDY_PASSWORD 를 넣으면 그 값이 대신 비밀번호가 된다.
+_PW_HASH = "0c94f7a7a7d4e9306eebeb16207d59c3b7f4c5d731b453c3193ae5d29e8bd40f"  # sha256("rowoon-study:" + 비밀번호)
+_OK = "_study_ok"
+_COOKIE = "rowoon_study"
+_TOKEN_DAYS = 60  # 한 번 들어오면 이 기기에서는 약 두 달 동안 다시 묻지 않는다
+
+
+def _secret(name: str) -> str:
+    val = os.environ.get(name, "").strip()
+    if val:
+        return val
+    try:
+        if name in st.secrets:
+            return str(st.secrets[name]).strip()
+        for k in list(st.secrets.keys()):  # [섹션] 안에 넣은 경우
+            v = st.secrets[k]
+            if hasattr(v, "keys") and name in v:
+                return str(v[name]).strip()
+    except Exception:  # noqa: BLE001 - Secrets 가 없는 로컬 실행
+        pass
+    return ""
+
+
+def _check_pw(pw: str) -> bool:
+    pw = (pw or "").strip()
+    custom = _secret("STUDY_PASSWORD")
+    if custom:
+        return hmac.compare_digest(pw, custom)
+    return hmac.compare_digest(hashlib.sha256(f"rowoon-study:{pw}".encode()).hexdigest(), _PW_HASH)
+
+
+def _token(period: int) -> str:
+    """접속 표(토큰). 공개 저장소에 없는 값(Gemini 키 등)으로 서명해 아무나 만들 수 없게 한다."""
+    basis = "|".join([_secret("STUDY_PASSWORD") or _PW_HASH, _secret("GEMINI_API_KEY"), _secret("APP_PASSWORD")])
+    return hmac.new(basis.encode(), f"rowoon-study:{period}".encode(), hashlib.sha256).hexdigest()[:24]
+
+
+def _period(day: date | None = None) -> int:
+    return (day or date.today()).toordinal() // _TOKEN_DAYS
+
+
+def _token_ok(tok: str | None) -> bool:
+    if not tok:
+        return False
+    now = _period()
+    return any(hmac.compare_digest(str(tok), _token(now - off)) for off in (0, 1))
+
+
+def tq(sep: str = "?") -> str:
+    """앱 안의 HTML 링크 뒤에 붙일 접속 표 (새로 고쳐도 다시 묻지 않게)."""
+    tok = st.session_state.get(_OK)
+    return f"{sep}k={tok}" if isinstance(tok, str) and tok else ""
+
+
+def gate() -> None:
+    """비밀번호를 넣기 전에는 자료를 보여 주지 않는다. set_page_config 다음에 부른다."""
+    tok = st.session_state.get(_OK)
+    if not tok:
+        for cand in (st.query_params.get("k"), _cookie()):
+            if _token_ok(cand):
+                tok = cand
+                break
+    if tok:
+        st.session_state[_OK] = tok
+        if st.query_params.get("k") != tok:
+            try:
+                st.query_params["k"] = tok
+            except Exception:  # noqa: BLE001
+                pass
+        return
+    _login()
+    st.stop()
+
+
+def _cookie() -> str:
+    try:
+        return st.context.cookies.get(_COOKIE, "") or ""
+    except Exception:  # noqa: BLE001 - 구버전
+        return ""
+
+
+def _login() -> None:
+    st.markdown(
+        """
+<style>
+header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"], #MainMenu, footer,
+[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none !important; }
+.stApp { background: #f7f6f3; }
+.stApp, .stApp input, .stApp button { font-family: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif !important; }
+[data-testid="stMainBlockContainer"], .block-container { max-width: 400px !important; padding: 16vh 16px 40px !important; }
+.lg-mark { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 14px;
+           background: #1f2328; color: #fff; font-weight: 800; font-size: 20px; }
+.lg-t { text-align: center; font-size: 22px; font-weight: 800; color: #1f2328; }
+.lg-s { text-align: center; font-size: 14px; color: #646870; margin: 6px 0 18px; }
+.stApp input { background: #fff !important; color: #1f2328 !important; font-size: 20px !important; letter-spacing: .3em; text-align: center; }
+.stFormSubmitButton button { min-height: 48px; border-radius: 999px !important; background: #1f2328 !important; border-color: #1f2328 !important; }
+.stFormSubmitButton button, .stFormSubmitButton button * { color: #fff !important; font-weight: 800 !important; font-size: 16px !important; }
+[data-testid="stElementContainer"]:has(iframe[height="0"]) { display: none !important; }
+</style>
+<div class="lg-mark">로</div><div class="lg-t">로운 학습자료실</div>
+<div class="lg-s">비밀번호를 넣어 주세요.</div>
+""",
+        unsafe_allow_html=True,
+    )
+    with st.form("study_login", border=False):
+        pw = st.text_input("비밀번호", type="password", label_visibility="collapsed", placeholder="비밀번호",
+                           max_chars=20)
+        ok = st.form_submit_button("들어가기", type="primary", use_container_width=True)
+    if not ok:
+        return
+    if not _check_pw(pw):
+        st.error("비밀번호가 맞지 않아요.")
+        return
+    tok = _token(_period())
+    st.session_state[_OK] = tok
+    st.query_params["k"] = tok  # 항공권 앱의 ?t= 와 겹치지 않게 k 를 쓴다
+    # 이 기기에 접속 표를 쿠키로 남긴다 (아이패드 홈 화면 앱에서도 다시 묻지 않게).
+    # 쿠키가 저장된 뒤 화면을 다시 불러오면 자료가 열린다.
+    days = _TOKEN_DAYS
+    components.html(
+        "<script>try{var d=window.parent.document;"
+        f"d.cookie={json.dumps(f'{_COOKIE}={tok}; path=/; max-age={days * 86400}; SameSite=Lax')}"
+        "+(location.protocol==='https:'?'; Secure':'');}catch(e){}"
+        "setTimeout(function(){try{window.parent.location.reload();}catch(e){}},150);</script>",
+        height=0,
+    )
+    st.markdown('<div class="lg-s">들어가는 중이에요…</div>', unsafe_allow_html=True)
+    if st.button("화면이 그대로면 여기를 눌러 주세요", use_container_width=True):
+        st.rerun()
+
+
 def show(slug: str) -> None:
     """학습자료 한 개를 화면 가득 보여 준다."""
     item = find(slug)
@@ -206,9 +346,10 @@ def show(slug: str) -> None:
         layout="wide",
         initial_sidebar_state="collapsed",
     )
+    gate()
     st.markdown(_FULLSCREEN_CSS, unsafe_allow_html=True)
     subj = SUBJECTS[subject_of(item)]
-    home = st.session_state.get(HOME_KEY, "learning")
+    home = st.session_state.get(HOME_KEY, "learning") + tq()
     st.markdown(
         # 자료 제목은 자료 안에 이미 있으므로 막대에는 돌아가기 링크와 과목만 둔다.
         f'<div class="sb-bar"><a href="{home}" target="_self">&lsaquo; 학습자료 목록</a><span class="sb-space"></span>'
