@@ -198,6 +198,12 @@ textarea:focus{outline:none;border-color:var(--accent)}
 .aprog i{display:block;height:100%;width:0;background:var(--accent)}
 .caption{min-height:2.9em;font-size:.98rem;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;padding-inline:8px;line-height:1.45}
 .caption.on{color:var(--ink);font-weight:600}
+.caption.reading{color:var(--ink);font-weight:700}
+.caption .rt{display:inline-block;min-width:2.6em;margin-left:.4em;padding:1px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--line);font-variant-numeric:tabular-nums;font-size:.9em}
+.aprog.read i{background:var(--muted);transition:width 1s linear}
+@keyframes nextPulse{0%,100%{box-shadow:0 0 0 0 rgba(168,71,47,.45)}50%{box-shadow:0 0 0 9px rgba(168,71,47,0)}}
+#btnNext.ready{animation:nextPulse 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){#btnNext.ready{animation:none;outline:3px solid currentColor}}
 .controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .vstate{font-size:.8rem;color:var(--muted);white-space:nowrap}
 
@@ -560,7 +566,7 @@ textarea:focus{outline:none;border-color:var(--accent)}
   const BASE = META.base || '';
   const AUD = META.audio || {};
   let VST = { files: {}, pending: [], done: !BASE };
-  let rate = +store.get('rate', 1), token = 0, speaking = false, auto = false, autoTimer = null;
+  let rate = +store.get('rate', 1), token = 0, speaking = false, auto = false, autoTimer = null, readTimer = null;
   $('#rateSel').value = String(rate);
   $('#rateSel').addEventListener('change', e => { rate = +e.target.value; store.set('rate', rate); player.playbackRate = rate; });
 
@@ -594,7 +600,7 @@ textarea:focus{outline:none;border-color:var(--accent)}
   function setCaption(t, on) { const c = $('#caption'); c.textContent = t; c.classList.toggle('on', !!on); }
   function sentences(t) { return (String(t).match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [t]).map(s => s.trim()).filter(Boolean); }
   function stopAll() {
-    token++; speaking = false; clearTimeout(autoTimer);
+    token++; speaking = false; clearTimeout(autoTimer); endReading();
     if (synth) try { synth.cancel(); } catch (e) {}
     try { player.pause(); } catch (e) {}
     player.ontimeupdate = player.onended = player.onerror = null;
@@ -712,16 +718,53 @@ textarea:focus{outline:none;border-color:var(--accent)}
     slides[cur].classList.remove('active');
     slides.forEach(s => s.classList.toggle('back', back));
     cur = i; slides[cur].scrollTop = 0; slides[cur].classList.add('active');
-    updateUI();
+    endReading(); updateUI();
     if (auto) narrate(); else { stopAll(); setCaption(IDLE, false); }
     preload(cur + 1);
+  }
+  /* 독서논술 진행 방식: 선생님 설명이 끝나면 넘어가지 않고 멈춰서, 아이가 화면의 첨삭 내용을 읽을 시간을 준다.
+     글 양에 맞춘 읽는 시간이 지나면 '다음'을 누르라는 표시만 나온다 (저절로 넘어가지 않는다).
+     직접 해 보는 장(연습·질문·다시 쓰기)은 시간 없이 바로 '다 하면 다음'을 안내한다. */
+  const QUICK = new Set(['intro', 'model1', 'model2']);   // 설명이 곧 본문인 장: 읽는 시간을 짧게
+  function readSeconds(s) {
+    const n = (s.innerText || '').replace(/\s+/g, '').length;
+    const sec = Math.round(n / 8 / Math.min(rate, 1.15));        // 초등 고학년 묵독 약 1분에 450~500자
+    return QUICK.has(s.dataset.id) ? 4 : Math.max(10, Math.min(90, sec));
+  }
+  function endReading() {
+    clearInterval(readTimer); readTimer = null;
+    $('.aprog').classList.remove('read'); $('#btnNext').classList.remove('ready', 'primary'); $('#caption').classList.remove('reading');
+  }
+  function askNext(msg) {
+    endReading(); $('#aprogBar').style.width = '0';
+    const nb = $('#btnNext'); if (!nb.disabled) nb.classList.add('ready', 'primary');
+    setCaption(msg, true);
+  }
+  function readPause(s) {
+    if (s.dataset.stop) { askNext('직접 해 보고, 다 하면 ‘다음’을 눌러 넘어가요.'); return; }
+    const total = readSeconds(s); let left = total;
+    const c = $('#caption'), bar = $('#aprogBar');
+    $('.aprog').classList.add('read'); bar.style.width = '100%';
+    const draw = () => {
+      c.classList.add('on', 'reading');
+      c.innerHTML = '화면의 내용을 천천히 읽어 보세요.<span class="rt">' + left + '초</span>';
+      bar.style.width = (left / total * 100) + '%';
+    };
+    draw();
+    readTimer = setInterval(() => {
+      left--;
+      if (left > 0) { draw(); return; }
+      c.classList.remove('reading');
+      askNext(cur === slides.length - 1 ? '수업이 끝났어요. 다시 쓴 글을 보호자께 보여 드리세요.' : '다 읽었으면 ‘다음’을 눌러 넘어가요.');
+    }, 1000);
   }
   function narrate() {
     const s = slides[cur], id = s.dataset.id;
     play(id, NARR[id], () => {
       if (!auto) return;
-      if (s.dataset.stop || cur === slides.length - 1) { auto = false; refreshButtons(); setCaption(s.dataset.stop ? '직접 해 보고, 다음 버튼으로 넘어가세요.' : IDLE, false); return; }
-      autoTimer = setTimeout(() => go(cur + 1), 900);
+      if (cur === slides.length - 1) { auto = false; refreshButtons(); setCaption(IDLE, false); return; }
+      if (id === 'intro') { autoTimer = setTimeout(() => go(cur + 1), 900); return; }  // 인사는 바로 넘어간다
+      readPause(s);
     });
   }
   function preload(i) { const s = slides[i]; if (!s) return; const src = srcOf(s.dataset.id); if (!src || src.startsWith('data:')) return; try { const a = new Audio(); a.preload = 'auto'; a.src = src; } catch (e) {} }
@@ -750,7 +793,7 @@ textarea:focus{outline:none;border-color:var(--accent)}
   stage.addEventListener('touchend', e => {
     if (!tOk) return;
     const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
-    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { auto = false; go(cur + (dx < 0 ? 1 : -1)); }
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { if (dx > 0) auto = false; go(cur + (dx < 0 ? 1 : -1)); }
   }, { passive: true });
 
   slides.forEach((s, i) => {

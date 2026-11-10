@@ -47,9 +47,11 @@ FALLBACK_TEXT_MODELS = [  # 앞에 있을수록 먼저
     "gemini-flash-latest",
 ]
 TTS_MODELS = [
+    # 기본 목소리: Kore + gemini-2.5-flash-preview-tts
+    # ('소수의 곱셈 맞춤 노트' 11번 장부터 나온 목소리. 보호자가 고른 목소리라 맨 앞에 둔다.)
+    "gemini-2.5-flash-preview-tts",
     "gemini-3.1-flash-tts-preview",
     "gemini-3.1-flash-preview-tts",
-    "gemini-2.5-flash-preview-tts",
     "gemini-2.5-pro-preview-tts",
 ]
 VOICE = "Kore"
@@ -730,21 +732,37 @@ _RUNNING: set[str] = set()
 _RUN_LOCK = threading.Lock()
 
 
-def start_voice(lid: str, data: dict) -> None:
-    """해설 음성을 뒤에서 만든다. 이미 돌고 있거나 다 만든 수업이면 아무것도 안 한다."""
+def voice_done(lid: str, data: dict) -> bool:
+    status = read_status(lid)
+    return bool(status.get("done")) and all(k in status.get("files", {}) for k, _ in voice_items(data))
+
+
+def start_voice(lid: str, data: dict, on_done=None) -> None:
+    """해설 음성을 뒤에서 만든다. 이미 돌고 있거나 다 만든 수업이면 아무것도 안 한다.
+
+    on_done(lid): 음성을 다 만든 뒤 부를 함수 (웹에서 만든 수업을 보관함에 올릴 때).
+    """
     d = lesson_dir(lid)
     items = voice_items(data)
-    status = read_status(lid)
-    if status.get("done") and all(k in status.get("files", {}) for k, _ in items):
+    if voice_done(lid, data):
         return
     with _RUN_LOCK:
         if lid in _RUNNING:
             return
         _RUNNING.add(lid)
-    threading.Thread(target=_voice_worker, args=(lid, d, items), daemon=True).start()
+    threading.Thread(target=_voice_worker, args=(lid, d, items, on_done), daemon=True).start()
 
 
-def _voice_worker(lid: str, d: Path, items: list[tuple[str, str]]) -> None:
+def make_voice_now(lid: str, data: dict) -> dict:
+    """음성을 지금 바로(이 스레드에서) 모두 만든다. GitHub Actions 에서 쓴다. 끝난 status 를 돌려준다."""
+    d = lesson_dir(lid)
+    with _RUN_LOCK:
+        _RUNNING.add(lid)
+    _voice_worker(lid, d, voice_items(data))
+    return read_status(lid)
+
+
+def _voice_worker(lid: str, d: Path, items: list[tuple[str, str]], on_done=None) -> None:
     try:
         key = api_key()
         _, tts_models = _models(key) if key else ([], [])
@@ -786,6 +804,11 @@ def _voice_worker(lid: str, d: Path, items: list[tuple[str, str]]) -> None:
         status["done"] = True
         status["pending"] = []
         _status_write(d, status)
+        if on_done:
+            try:
+                on_done(lid)
+            except Exception as e:  # noqa: BLE001 - 보관에 실패해도 수업은 그대로 볼 수 있다
+                print(f"[essay] 보관 실패 {lid[:6]}: {e}")
     finally:
         with _RUN_LOCK:
             _RUNNING.discard(lid)

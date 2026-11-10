@@ -33,9 +33,11 @@ JOBS_DIR = Path(__file__).resolve().parent / "jobs"
 
 # 앞에 있을수록 먼저 시도한다. 목록에 없는 TTS 모델이 새로 나오면 맨 뒤에서 시도한다.
 PREFERRED_MODELS = [
+    # 기본 목소리: Kore + gemini-2.5-flash-preview-tts
+    # ('소수의 곱셈 맞춤 노트' 11번 장부터 나온 목소리. 보호자가 고른 목소리라 맨 앞에 둔다.)
+    "gemini-2.5-flash-preview-tts",
     "gemini-3.1-flash-tts-preview",
     "gemini-3.1-flash-preview-tts",
-    "gemini-2.5-flash-preview-tts",
     "gemini-2.5-pro-preview-tts",
 ]
 

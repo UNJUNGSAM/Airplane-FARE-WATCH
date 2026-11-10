@@ -1,0 +1,86 @@
+name: essay
+
+# 독서논술 첨삭 수업 만들기 (클로드 채팅방에 올린 독후감 사진용).
+# 작업 브랜치(claude/...)에 tools/essay_inbox/<번호>.bin (잠근 사진)을 올리면 실행된다.
+#   1. 잠근 사진을 열어 Gemini 로 첨삭 수업과 선생님 음성을 만든다.
+#   2. 수업을 잠가 main 의 streamlit_app/essay_store/ 에 올린다 → 학습자료실 '지난 수업'에 나타난다.
+#   3. 작업 브랜치의 받은편지함 파일을 지운다.
+# 공개 열쇠(tools/essay_inbox/inbox_pub.txt)가 Gemini 키와 맞지 않으면 새로 써서 브랜치에 커밋한다.
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["tools/essay_inbox/**", ".github/workflows/essay.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: essay
+  cancel-in-progress: false
+
+jobs:
+  essay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 준비
+        run: pip install cryptography pillow numpy lameenc supertonic
+
+      - name: 공개 열쇠 확인
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python tools/essay_inbox/process.py --pub
+
+      - name: 첨삭 수업 만들기
+        id: make
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python tools/essay_inbox/process.py
+
+      - name: 수업을 main 보관함에 올리기
+        id: upload
+        if: always()
+        run: |
+          set -e
+          [ -s tools/essay_inbox/.made ] || { echo "올릴 수업이 없어요."; exit 0; }
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git worktree add -f /tmp/main origin/main
+          mkdir -p /tmp/main/streamlit_app/essay_store
+          while read -r id; do
+            cp "streamlit_app/essay_store/$id.lesson" "streamlit_app/essay_store/$id.meta" /tmp/main/streamlit_app/essay_store/
+          done < tools/essay_inbox/.made
+          cd /tmp/main
+          git add streamlit_app/essay_store
+          git commit -m "chore: 독서논술 수업 보관 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git push origin HEAD:main && exit 0
+            sleep $((i * 5))
+            git pull --rebase origin main
+          done
+          exit 1
+
+      # main 에 못 올렸으면 받은편지함을 지우지 않는다 (다시 실행하면 처음부터 다시 만든다)
+      - name: 받은편지함 정리
+        if: always() && steps.upload.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f tools/essay_inbox/.made
+          git add -A -- tools/essay_inbox
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "chore: 독서논술 받은편지함 정리 [skip ci]"
+          for i in 1 2 3; do
+            git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep 5
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+          done
+          exit 1
