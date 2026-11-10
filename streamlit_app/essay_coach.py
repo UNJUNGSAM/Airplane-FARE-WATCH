@@ -54,34 +54,39 @@ TTS_MODELS = [
     "gemini-3.1-flash-preview-tts",
     "gemini-2.5-pro-preview-tts",
 ]
-# 두 선생님이 함께 진행한다 (보호자 지시 2026-11-10).
-#   주 선생님   Kore (여성)  + gemini-2.5-flash-preview-tts  ← '소수의 곱셈' 11번 장부터 나온 그 목소리
-#   보조 선생님 Charon (남성) + gemini-3.1-flash-tts-preview
-# 모델마다 하루 무료 한도가 따로라서, 두 모델로 나누면 한 수업을 끝까지 만들기도 쉬워진다.
+# 세 선생님이 함께 진행한다 (보호자 지시 2026-11-10).
+# 선생님마다 목소리와 모델을 하나로 고정한다. 한도에 걸려도 다른 모델이나 다른 목소리로 대신 만들지 않고,
+# 그 장은 비워 두었다가 다음 날 한도가 풀리면 이어서 만든다 (보호자: "주 선생님 목소리가 갑자기 바뀌면 안 된다").
+# 모델마다 하루 무료 한도가 따로라서, 주 선생님(2.5) 분량을 한도 안으로 줄이고 나머지를 3.1 선생님들이 나눠 맡는다.
+#   주 선생님      Kore  (여성) + gemini-2.5-flash-preview-tts  ← '소수의 곱셈' 11번 장부터 나온 그 목소리, 7장
+#   보조 선생님    Charon(남성) + gemini-3.1-flash-tts-preview  원문·강점·어휘·맞춤법·연습, 5장
+#   독서록 선생님  Leda  (여성) + gemini-3.1-flash-tts-preview  생각 질문·추천 독서록 두 편, 3장
 VOICE = "Kore"
 VOICE_STYLE = (
     "경력이 오래된 독서논술 학원 선생님이 학생 한 명과 마주 앉아 첨삭 수업을 하듯, "
     "차분하고 또렷하며 신뢰감 있게 읽어 주세요. 과장된 감탄 없이, 중요한 곳은 힘주어 천천히:"
 )
-ASSIST_VOICE = "Charon"
-ASSIST_STYLE = (
-    "독서논술 학원의 보조 선생님이 옆에서 수업을 거들듯, 차분하고 친절하게, "
-    "또박또박 읽어 주세요. 과장된 감탄 없이:"
-)
-# 보조 선생님이 맡는 장: 원문 확인, 어휘, 맞춤법, 연습 문제, 추천 독서록 두 편 읽기
-ASSIST_KEYS = ("read", "vocab", "spelling", "practice", "model1", "model2")
 ROLES = {
-    "main": {"voice": VOICE, "style": VOICE_STYLE, "supertonic": "F1",
-             "models": ["gemini-2.5-flash-preview-tts", "gemini-3.1-flash-tts-preview",
-                        "gemini-3.1-flash-preview-tts", "gemini-2.5-pro-preview-tts"]},
-    "assist": {"voice": ASSIST_VOICE, "style": ASSIST_STYLE, "supertonic": "M1",
-               "models": ["gemini-3.1-flash-tts-preview", "gemini-3.1-flash-preview-tts",
-                          "gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]},
+    "main": {"name": "선생님", "voice": "Kore", "model": "gemini-2.5-flash-preview-tts",
+             "style": VOICE_STYLE},
+    "assist": {"name": "보조 선생님", "voice": "Charon", "model": "gemini-3.1-flash-tts-preview",
+               "style": "독서논술 학원의 보조 선생님이 옆에서 수업을 거들듯, 차분하고 친절하게, "
+                        "또박또박 읽어 주세요. 과장된 감탄 없이:"},
+    "reader": {"name": "독서록 선생님", "voice": "Leda", "model": "gemini-3.1-flash-tts-preview",
+               "style": "독서논술 학원에서 좋은 글을 낭독해 주는 선생님처럼, 맑고 차분하게, "
+                        "문장의 호흡을 살려 읽어 주세요:"},
+}
+ROLE_KEYS = {
+    "assist": ("read", "strength", "vocab", "spelling", "practice"),
+    "reader": ("question", "model1", "model2"),
 }
 
 
 def role_of(key: str) -> str:
-    return "assist" if key in ASSIST_KEYS else "main"
+    for role, keys in ROLE_KEYS.items():
+        if key in keys:
+            return role
+    return "main"
 
 
 class CoachError(Exception):
@@ -178,11 +183,13 @@ COMMON = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
 - 처방 대본(structure, style, vocab, spelling)은 학생 글의 실제 문장이나 낱말을 하나 이상 짚어 말하고, 왜 틀렸는지와 고친 모습을 함께 말합니다.
 - 숫자 낱말은 바르게 씁니다(네 가지, 세 문단, 다섯 개). 글자 수 같은 큰 숫자는 대본에서 말하지 않습니다.
 - 대본에서도 "훌륭하다", "대단하다", "멋지다", "최고", "완벽" 같은 감탄은 쓰지 않습니다.
-- 수업은 두 선생님이 함께 진행합니다. 주 선생님(여자)이 intro, diag, strength, structure, style, question, final, task, end 를 읽고,
-  보조 선생님(남자)이 read, vocab, spelling, practice, model1, model2 를 읽습니다.
-  주 선생님은 intro 에서 "원문 확인과 어휘, 맞춤법, 추천 독서록 읽기는 보조 선생님이 함께 도와줍니다"처럼 한 문장으로 소개합니다.
-  보조 선생님 대본은 "이번에는 제가 어휘를 짚어 보겠습니다"처럼 자연스럽게 이어받아 시작하고, 자기를 "보조 선생님이"라고 3인칭으로 부르지 않습니다.
-  보조 선생님 다음 장을 맡는 주 선생님은 "보조 선생님이 짚어 준 것처럼"처럼 짧게 이어받을 수 있습니다. 두 선생님 모두 존댓말을 씁니다.
+- 수업은 세 선생님이 함께 진행합니다.
+  주 선생님(여자): intro, diag, structure, style, final, task, end
+  보조 선생님(남자): read, strength, vocab, spelling, practice
+  독서록 선생님(여자): question, model1, model2
+  주 선생님은 intro 에서 "원문 확인과 어휘, 맞춤법은 보조 선생님이, 생각 질문과 추천 독서록은 독서록 선생님이 함께 맡아 줍니다"처럼 한두 문장으로 소개합니다.
+  다른 선생님 대본은 "이번에는 제가 어휘를 짚어 보겠습니다"처럼 자연스럽게 이어받아 시작하고, 자기를 "보조 선생님이"처럼 3인칭으로 부르지 않습니다.
+  앞 장을 다른 선생님이 맡았으면 "앞에서 보조 선생님이 짚어 준 것처럼"처럼 짧게 이어받을 수 있습니다. 모두 존댓말을 씁니다.
 """
 
 SYSTEM_COACH = COMMON + """
@@ -768,8 +775,13 @@ _RUN_LOCK = threading.Lock()
 
 
 def voice_done(lid: str, data: dict) -> bool:
-    status = read_status(lid)
-    return bool(status.get("done")) and all(k in status.get("files", {}) for k, _ in voice_items(data))
+    """음성 작업이 한 번 끝까지 돌았는지. 한도로 비운 장(waiting)은 GitHub Actions 가 다음 날 채운다."""
+    return bool(read_status(lid).get("done"))
+
+
+def voice_missing(lid: str, data: dict) -> list[str]:
+    files = read_status(lid).get("files", {})
+    return [k for k, _ in voice_items(data) if k not in files]
 
 
 def start_voice(lid: str, data: dict, on_done=None) -> None:
@@ -789,8 +801,12 @@ def start_voice(lid: str, data: dict, on_done=None) -> None:
 
 
 def make_voice_now(lid: str, data: dict) -> dict:
-    """음성을 지금 바로(이 스레드에서) 모두 만든다. GitHub Actions 에서 쓴다. 끝난 status 를 돌려준다."""
+    """음성을 지금 바로(이 스레드에서) 만든다. 이미 있는 장은 건너뛴다. GitHub Actions 에서 쓴다."""
     d = lesson_dir(lid)
+    st_ = read_status(lid)
+    if st_:
+        st_["done"] = False
+        _status_write(d, st_)
     with _RUN_LOCK:
         _RUNNING.add(lid)
     _voice_worker(lid, d, voice_items(data))
@@ -809,37 +825,30 @@ def _voice_worker(lid: str, d: Path, items: list[tuple[str, str]], on_done=None)
                   "pending": [k for k, _ in items if k not in files]}
         _status_write(d, status)
         exhausted: set[str] = set()
+        waiting: list[str] = []
+        status["waiting"] = waiting
         for k, text in items:
             if k in files:
                 continue
             role = ROLES[role_of(k)]
-            # 역할마다 정한 모델 순서. 이 키로 못 쓰는 모델은 뺀다.
-            models = [m for m in role["models"] if not available or m in available]
             pcm = None
-            if key and models:
+            if key and (not available or role["model"] in available):
                 try:
-                    raw, model = _gemini_tts(key, models, text, role["voice"], role["style"], exhausted)
+                    raw, model = _gemini_tts(key, [role["model"]], text, role["voice"], role["style"], exhausted)
                     pcm = _trim_pcm(raw)
                     engine[k] = f"{role['voice'].lower()}@{model}"
-                except _Quota:
-                    pcm = None
-                except Exception:
-                    pcm = None
-            if pcm is None:
-                try:
-                    pcm = _supertonic_pcm(text, role["supertonic"])
-                    engine[k] = f"supertonic-{role['supertonic']}"
-                except Exception:
+                except Exception:  # 한도 또는 일시 오류: 다른 목소리로 대신하지 않고 다음에 이어서
                     pcm = None
             if pcm:
                 path = _pcm_to_file(pcm, d / f"{k}.mp3")
                 files[k] = path.name
             else:
-                failed.append(k)
-            status["pending"] = [x for x, _ in items if x not in files and x not in failed]
+                waiting.append(k)
+            status["pending"] = [x for x, _ in items if x not in files and x not in waiting]
             _status_write(d, status)
-            if "@" in engine.get(k, ""):
+            if pcm:
                 time.sleep(3)  # 무료 키의 분당 요청 제한을 넘지 않도록
+        status["tried"] = time.time()
         status["done"] = True
         status["pending"] = []
         _status_write(d, status)

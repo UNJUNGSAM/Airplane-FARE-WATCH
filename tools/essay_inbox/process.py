@@ -2,6 +2,8 @@
 
     python tools/essay_inbox/process.py --pub   공개 열쇠 파일(inbox_pub.txt)을 Gemini 키에 맞게 쓴다
     python tools/essay_inbox/process.py         tools/essay_inbox/*.bin 을 모두 처리한다
+    python tools/essay_inbox/process.py --resume 보관함에서 선생님 목소리가 비어 있는 수업을 찾아 이어서 만든다
+                                                 (한도에 걸려 비워 둔 장. 매일 한도가 풀린 뒤 Actions 가 돌린다)
 
 처리한 것: streamlit_app/essay_store/<번호>.lesson/.meta 를 만들고 받은편지함 파일을 지운다.
 만든 수업 번호는 tools/essay_inbox/.made 에 한 줄씩 적는다 (워크플로가 main 에 올릴 때 쓴다).
@@ -72,7 +74,7 @@ def process(path: Path) -> str | None:
     status = essay_coach.make_voice_now(lid, result)
     eng = status.get("engine", {})
     from collections import Counter
-    print(f"[{lid}] 음성 {len(status.get('files', {}))}개, 못 만든 것 {status.get('failed')}")
+    print(f"[{lid}] 음성 {len(status.get('files', {}))}개, 한도로 다음에 만들 것 {status.get('waiting')}")
     for name, n in Counter(eng.values()).most_common():
         print(f"    {name}: {n}개")
     for k, v in eng.items():
@@ -84,9 +86,41 @@ def process(path: Path) -> str | None:
     return lid
 
 
+def resume() -> list[str]:
+    """보관된 수업 중 목소리가 빈 장이 있는 것을 이어서 채운다. 다시 보관한 수업 번호를 돌려준다."""
+    made = []
+    for meta in essay_store.list_saved():
+        lid = meta["id"]
+        d = essay_coach.lesson_dir(lid)
+        if not essay_store.restore(lid):
+            continue
+        saved = essay_coach.load_lesson(lid) or {}
+        lesson = saved.get("lesson", {})
+        missing = essay_coach.voice_missing(lid, lesson)
+        if not missing:
+            shutil.rmtree(d, ignore_errors=True)
+            continue
+        print(f"[{lid}] 비어 있는 목소리 {len(missing)}개: {missing}")
+        status = essay_coach.make_voice_now(lid, lesson)
+        filled = [k for k in missing if k in status.get("files", {})]
+        for k in filled:
+            print(f"    {k}: {status.get('engine', {}).get(k)}")
+        if filled:
+            essay_store.save_local(lid)
+            made.append(lid)
+        print(f"[{lid}] 채운 것 {len(filled)}개, 아직 남은 것 {status.get('waiting')}")
+        shutil.rmtree(d, ignore_errors=True)
+    return made
+
+
 def main() -> int:
     if "--pub" in sys.argv:
         write_pub()
+        return 0
+    if "--resume" in sys.argv:
+        made = resume()
+        (essay_store.INBOX_DIR / ".made").write_text("".join(f"{x}\n" for x in made))
+        print(f"다시 보관한 수업 {len(made)}개")
         return 0
     made, failed = [], 0
     for path in sorted(essay_store.INBOX_DIR.glob("*.bin")):

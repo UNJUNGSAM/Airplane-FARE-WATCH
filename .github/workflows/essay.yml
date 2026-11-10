@@ -6,11 +6,15 @@ name: essay
 #   2. 수업을 잠가 main 의 streamlit_app/essay_store/ 에 올린다 → 학습자료실 '지난 수업'에 나타난다.
 #   3. 작업 브랜치의 받은편지함 파일을 지운다.
 # 공개 열쇠(tools/essay_inbox/inbox_pub.txt)가 Gemini 키와 맞지 않으면 새로 써서 브랜치에 커밋한다.
+# 매일 예약 실행(main): 한도에 걸려 비워 둔 선생님 목소리를 같은 목소리·같은 모델로 이어서 만든다.
 on:
   push:
     branches: ["claude/**"]
     paths: ["tools/essay_inbox/**", ".github/workflows/essay.yml"]
   workflow_dispatch:
+  # 매일 17:40(한국 시간, 구글 무료 한도가 풀린 뒤) 한도 때문에 비워 둔 선생님 목소리를 이어서 만든다
+  schedule:
+    - cron: "40 8 * * *"
 
 permissions:
   contents: write
@@ -38,11 +42,16 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python tools/essay_inbox/process.py --pub
 
-      - name: 첨삭 수업 만들기
+      - name: 첨삭 수업 만들기 (예약 실행이면 비워 둔 목소리 채우기)
         id: make
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python tools/essay_inbox/process.py
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${GITHUB_REF_NAME}" = "main" ]; then
+            python tools/essay_inbox/process.py --resume
+          else
+            python tools/essay_inbox/process.py
+          fi
 
       - name: 수업을 main 보관함에 올리기
         id: upload

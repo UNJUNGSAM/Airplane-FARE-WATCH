@@ -298,8 +298,10 @@ textarea:focus{outline:none;border-color:var(--accent)}
     set(k, v) { try { localStorage.setItem('essay:' + LID + ':' + k, JSON.stringify(v)); } catch (e) {} }
   };
   const NARR = L.narration || {};
-  // 두 선생님: 이 장들은 보조 선생님(남성) 목소리로 만든다 (essay_coach.ASSIST_KEYS 와 같게)
-  const ASSIST = new Set(['read', 'vocab', 'spelling', 'practice', 'model1', 'model2']);
+  // 세 선생님 (essay_coach.ROLE_KEYS 와 같게). 예전 수업은 status 에 기록된 목소리를 따른다.
+  const ROLE_OF = { read: '보조 선생님', strength: '보조 선생님', vocab: '보조 선생님', spelling: '보조 선생님', practice: '보조 선생님',
+                    question: '독서록 선생님', model1: '독서록 선생님', model2: '독서록 선생님' };
+  const VOICE_NAME = { kore: '선생님', charon: '보조 선생님', leda: '독서록 선생님' };
   const name = L.student_name || META.name || '';
   const book = L.book_title || META.book || '';
   const IDLE = '재생 버튼을 누르면 선생님이 수업을 진행해요.';
@@ -641,9 +643,8 @@ textarea:focus{outline:none;border-color:var(--accent)}
   function play(key, text, onDone) {
     stopAll();
     const my = ++token; speaking = true; refreshButtons();
-    const eng = String((VST.engine || {})[key] || '');
-    const assist = eng ? /^charon|M1$/i.test(eng) : ASSIST.has(key);   // 예전 수업은 기록된 목소리를 따른다
-    $('#caption').dataset.who = assist ? '보조 선생님' : '선생님';
+    const eng = String((VST.engine || {})[key] || '').toLowerCase();
+    $('#caption').dataset.who = VOICE_NAME[eng.split('@')[0]] || (/m1$/.test(eng) ? '보조 선생님' : (ROLE_OF[key] || '선생님'));
     if (!text) { finish(my, onDone); return; }
     const parts = sentences(text);
     const total = parts.reduce((n, s) => n + s.length, 0);
@@ -652,6 +653,11 @@ textarea:focus{outline:none;border-color:var(--accent)}
       if (my !== token) return;
       const src = srcOf(key);
       if (!src) {
+        if (VST.done && (VST.waiting || []).includes(key)) {
+          // 무료 한도 때문에 이 장 목소리는 다음 날 같은 선생님 목소리로 채운다. 다른 목소리로 대신 읽지 않는다.
+          setCaption('이 장의 선생님 목소리는 오늘 오후 6시 무렵 준비돼요. 화면을 천천히 읽어 보세요.', true);
+          autoTimer = setTimeout(() => finish(my, onDone), 2500); return;
+        }
         if (isPending(key) && waited < 90000) {
           setCaption('선생님 목소리를 준비하고 있어요. 잠시만 기다려 주세요.', false);
           waited += 2500; autoTimer = setTimeout(() => pullStatus().then(start), 2500); return;
