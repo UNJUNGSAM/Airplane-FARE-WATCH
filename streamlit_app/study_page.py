@@ -260,8 +260,14 @@ def tq(sep: str = "?") -> str:
     return f"{sep}k={tok}" if isinstance(tok, str) and tok else ""
 
 
+# 학습자료 전용 앱(study_app.py)에서만 비밀번호를 묻는다. 항공권 앱 안의 학습자료 페이지는 그대로 둔다.
+GATE_KEY = "_study_gate"
+
+
 def gate() -> None:
     """비밀번호를 넣기 전에는 자료를 보여 주지 않는다. set_page_config 다음에 부른다."""
+    if not st.session_state.get(GATE_KEY):
+        return
     tok = st.session_state.get(_OK)
     if not tok:
         for cand in (st.query_params.get("k"), _cookie()):
