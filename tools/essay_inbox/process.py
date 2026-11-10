@@ -71,8 +71,12 @@ def process(path: Path) -> str | None:
     })
     status = essay_coach.make_voice_now(lid, result)
     eng = status.get("engine", {})
-    print(f"[{lid}] 음성 {len(status.get('files', {}))}개 (Kore {sum(v == 'kore' for v in eng.values())}, "
-          f"Supertonic {sum(v == 'supertonic' for v in eng.values())}), 못 만든 것 {status.get('failed')}")
+    from collections import Counter
+    print(f"[{lid}] 음성 {len(status.get('files', {}))}개, 못 만든 것 {status.get('failed')}")
+    for name, n in Counter(eng.values()).most_common():
+        print(f"    {name}: {n}개")
+    for k, v in eng.items():
+        print(f"    {k}: {v}")
     essay_store.save_local(lid)
     shutil.rmtree(essay_coach.lesson_dir(lid), ignore_errors=True)
     path.unlink()
