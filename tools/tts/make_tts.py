@@ -8,12 +8,12 @@ tools/tts/jobs/*.json 작업 파일을 읽어, 아직 없는 mp3만 새로 만�
   "out_dir": "streamlit_app/static/learning/science_xxx/audio",
   "voice": "Kore",                    # 기본 목소리 (사용자 선택) (항목마다 "voice"로 바꿀 수 있음)
   "style": "다정한 선생님처럼 읽어 주세요:",  # 읽는 말투 지시 (선택)
-  "assist_voice": "Charon",           # 보조 선생님 목소리 (남성, 기본값)
-  "assist_style": "옆에서 거드는 보조 선생님처럼:",  # 보조 선생님 말투 (선택)
+  "roles": {"assist": {"style": "옆에서 거드는 보조 선생님처럼:"}},  # 선생님별 바꿀 것 (선택)
   "items": [{"key": "n_cover", "text": "안녕하세요!"},
             {"key": "n_tip", "text": "제가 하나 덧붙일게요.", "role": "assist"}]
 }
-주 선생님은 Kore + gemini-2.5-flash-preview-tts, 보조 선생님은 Charon + gemini-3.1-flash-tts-preview 를 먼저 쓴다.
+주 선생님 Kore + gemini-2.5-flash-preview-tts, 보조 선생님 Charon / 읽어 주는 선생님 Leda + gemini-3.1-flash-tts-preview.
+선생님마다 모델을 고정하고, 한도에 걸린 항목은 비워 두었다가 다음 날 예약 실행이 채운다 (Supertonic 대체 작업은 더 만들지 않는다).
 
 사용법: GEMINI_API_KEY=... python tools/tts/make_tts.py [작업 파일 ...]
 """
@@ -46,17 +46,17 @@ PREFERRED_MODELS = [
 ]
 
 
-# 두 선생님 (보호자 지시 2026-11-10, 앞으로 만드는 모든 자료에 적용)
-#   주 선생님   작업 파일 "voice"(기본 Kore, 여성)  → gemini-2.5-flash-preview-tts 먼저
-#   보조 선생님 항목에 "role": "assist"            → "assist_voice"(기본 Charon, 남성), gemini-3.1-flash-tts-preview 먼저
-#   보조 선생님 말투는 "assist_style" (없으면 "style").
-# Supertonic 대체 작업에서는 보조 선생님 항목에 "voice": "M1"(남성)을 적는다.
-ASSIST_MODELS = [
-    "gemini-3.1-flash-tts-preview",
-    "gemini-3.1-flash-preview-tts",
-    "gemini-2.5-flash-preview-tts",
-    "gemini-2.5-pro-preview-tts",
-]
+# 선생님 (보호자 지시 2026-11-10, 앞으로 만드는 모든 자료에 적용)
+# 선생님마다 목소리와 모델을 하나로 고정한다. 한도에 걸려도 다른 모델·다른 목소리로 대신 만들지 않고
+# 비워 둔다. 매일 한도가 풀린 뒤 예약 실행(tts.yml)이 같은 선생님 목소리로 이어서 채운다.
+# 모델마다 하루 무료 한도가 따로라서, 주 선생님(2.5) 분량은 한도 안(하루 10장 안팎)으로 두고 나머지를 보조 선생님들에게 나눈다.
+#   항목 "role": "main"(생략 가능) | "assist" | "reader"
+#   작업 파일에 "roles": {"assist": {"voice": ..., "model": ..., "style": ...}} 로 바꿀 수 있다.
+ROLES = {
+    "main": {"voice": "Kore", "model": "gemini-2.5-flash-preview-tts"},      # 주 선생님 (여성)
+    "assist": {"voice": "Charon", "model": "gemini-3.1-flash-tts-preview"},  # 보조 선생님 (남성)
+    "reader": {"voice": "Leda", "model": "gemini-3.1-flash-tts-preview"},    # 읽어 주는 선생님 (여성)
+}
 
 
 class QuotaExceeded(Exception):
@@ -188,8 +188,11 @@ def run_job(path: Path, key: str, models: list[str]) -> bool:
         print(f"[{path.name}] Supertonic 으로 새로 만든 것 {made}개")
         return True
     style = job.get("style", "").strip()
-    assist_style = job.get("assist_style", style).strip()
-    assist_models = [m for m in ASSIST_MODELS if m in models] + [m for m in models if m not in ASSIST_MODELS]
+    roles = {k: dict(v) for k, v in ROLES.items()}
+    if job.get("voice"):
+        roles["main"]["voice"] = job["voice"]
+    for name, over in (job.get("roles") or {}).items():
+        roles.setdefault(name, {}).update(over)
     exhausted: set[str] = set()
     made = skipped = left = 0
     for item in job["items"]:
@@ -197,20 +200,26 @@ def run_job(path: Path, key: str, models: list[str]) -> bool:
         if dest.exists():
             skipped += 1
             continue
-        assist = item.get("role") == "assist"
-        st = assist_style if assist else style
+        role = roles.get(item.get("role", "main"), roles["main"])
+        st = role.get("style", style).strip()
         text = f"{st}\n{item['text']}" if st else item["text"]
-        voice = item.get("voice") or (job.get("assist_voice", "Charon") if assist else job.get("voice", "Kore"))
+        voice = item.get("voice") or role["voice"]
+        model = role["model"]
+        if models and model not in models:
+            print(f"  {item['key']}: {model} 을 이 키로 쓸 수 없어 비워 둬요.")
+            left += 1
+            continue
         try:
-            pcm, model = synthesize(key, assist_models if assist else models, text, voice, exhausted)
-        except QuotaExceeded:
-            left += 1  # 이 목소리 모델들은 오늘 한도. 다른 선생님 항목은 계속 만든다
+            pcm, model = synthesize(key, [model], text, voice, exhausted)
+        except Exception as e:  # 한도 또는 일시 오류: 다른 목소리로 대신하지 않고 다음 실행에서 이어서
+            print(f"  {item['key']}: 다음에 이어서 만들어요 ({voice}, {model}, {type(e).__name__})")
+            left += 1
             continue
         pcm_to_mp3(pcm, dest)
         made += 1
-        print(f"  만듦: {dest.relative_to(ROOT)} ({voice}, {model}{', 보조' if assist else ''})")
+        print(f"  만듦: {dest.relative_to(ROOT)} ({voice}, {model})")
         time.sleep(7)  # 무료 키의 분당 요청 제한을 넘지 않도록
-    print(f"[{path.name}] 새로 만든 것 {made}개, 이미 있던 것 {skipped}개, 한도로 못 만든 것 {left}개")
+    print(f"[{path.name}] 새로 만든 것 {made}개, 이미 있던 것 {skipped}개, 다음에 이어서 만들 것 {left}개")
     return left == 0
 
 
