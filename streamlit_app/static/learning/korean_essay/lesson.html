@@ -198,6 +198,8 @@ textarea:focus{outline:none;border-color:var(--accent)}
 .aprog i{display:block;height:100%;width:0;background:var(--accent)}
 .caption{min-height:2.9em;font-size:.98rem;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center;padding-inline:8px;line-height:1.45}
 .caption.on{color:var(--ink);font-weight:600}
+.caption.on[data-who]::before{content:attr(data-who);flex:none;margin-right:.6em;padding:1px 8px;border-radius:999px;font-size:.78em;font-weight:700;background:var(--paper);border:1px solid var(--line);color:var(--muted)}
+.caption.on[data-who="보조 선생님"]::before{color:#2f5f8f;border-color:#2f5f8f}
 .caption.reading{color:var(--ink);font-weight:700}
 .caption .rt{display:inline-block;min-width:2.6em;margin-left:.4em;padding:1px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--line);font-variant-numeric:tabular-nums;font-size:.9em}
 .aprog.read i{background:var(--muted);transition:width 1s linear}
@@ -293,6 +295,8 @@ textarea:focus{outline:none;border-color:var(--accent)}
     set(k, v) { try { localStorage.setItem('essay:' + LID + ':' + k, JSON.stringify(v)); } catch (e) {} }
   };
   const NARR = L.narration || {};
+  // 두 선생님: 이 장들은 보조 선생님(남성) 목소리로 만든다 (essay_coach.ASSIST_KEYS 와 같게)
+  const ASSIST = new Set(['read', 'vocab', 'spelling', 'practice', 'model1', 'model2']);
   const name = L.student_name || META.name || '';
   const book = L.book_title || META.book || '';
   const IDLE = '재생 버튼을 누르면 선생님이 수업을 진행해요.';
@@ -627,12 +631,16 @@ textarea:focus{outline:none;border-color:var(--accent)}
   function finish(my, onDone) {
     if (my !== token) return;
     speaking = false; refreshButtons(); $('#aprogBar').style.width = '0';
+    delete $('#caption').dataset.who;
     setCaption(auto ? '' : IDLE, false); onDone && onDone();
   }
   // 선생님 음성 재생. 아직 만드는 중이면 잠시 기다리고, 없으면 기기 목소리로 읽는다.
   function play(key, text, onDone) {
     stopAll();
     const my = ++token; speaking = true; refreshButtons();
+    const eng = String((VST.engine || {})[key] || '');
+    const assist = eng ? /^charon|M1$/i.test(eng) : ASSIST.has(key);   // 예전 수업은 기록된 목소리를 따른다
+    $('#caption').dataset.who = assist ? '보조 선생님' : '선생님';
     if (!text) { finish(my, onDone); return; }
     const parts = sentences(text);
     const total = parts.reduce((n, s) => n + s.length, 0);

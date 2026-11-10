@@ -54,11 +54,34 @@ TTS_MODELS = [
     "gemini-3.1-flash-preview-tts",
     "gemini-2.5-pro-preview-tts",
 ]
+# 두 선생님이 함께 진행한다 (보호자 지시 2026-11-10).
+#   주 선생님   Kore (여성)  + gemini-2.5-flash-preview-tts  ← '소수의 곱셈' 11번 장부터 나온 그 목소리
+#   보조 선생님 Charon (남성) + gemini-3.1-flash-tts-preview
+# 모델마다 하루 무료 한도가 따로라서, 두 모델로 나누면 한 수업을 끝까지 만들기도 쉬워진다.
 VOICE = "Kore"
 VOICE_STYLE = (
     "경력이 오래된 독서논술 학원 선생님이 학생 한 명과 마주 앉아 첨삭 수업을 하듯, "
     "차분하고 또렷하며 신뢰감 있게 읽어 주세요. 과장된 감탄 없이, 중요한 곳은 힘주어 천천히:"
 )
+ASSIST_VOICE = "Charon"
+ASSIST_STYLE = (
+    "독서논술 학원의 보조 선생님이 옆에서 수업을 거들듯, 차분하고 친절하게, "
+    "또박또박 읽어 주세요. 과장된 감탄 없이:"
+)
+# 보조 선생님이 맡는 장: 원문 확인, 어휘, 맞춤법, 연습 문제, 추천 독서록 두 편 읽기
+ASSIST_KEYS = ("read", "vocab", "spelling", "practice", "model1", "model2")
+ROLES = {
+    "main": {"voice": VOICE, "style": VOICE_STYLE, "supertonic": "F1",
+             "models": ["gemini-2.5-flash-preview-tts", "gemini-3.1-flash-tts-preview",
+                        "gemini-3.1-flash-preview-tts", "gemini-2.5-pro-preview-tts"]},
+    "assist": {"voice": ASSIST_VOICE, "style": ASSIST_STYLE, "supertonic": "M1",
+               "models": ["gemini-3.1-flash-tts-preview", "gemini-3.1-flash-preview-tts",
+                          "gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]},
+}
+
+
+def role_of(key: str) -> str:
+    return "assist" if key in ASSIST_KEYS else "main"
 
 
 class CoachError(Exception):
@@ -155,6 +178,11 @@ COMMON = """당신은 15년 차 초·중등 독서논술 전문 강사입니다.
 - 처방 대본(structure, style, vocab, spelling)은 학생 글의 실제 문장이나 낱말을 하나 이상 짚어 말하고, 왜 틀렸는지와 고친 모습을 함께 말합니다.
 - 숫자 낱말은 바르게 씁니다(네 가지, 세 문단, 다섯 개). 글자 수 같은 큰 숫자는 대본에서 말하지 않습니다.
 - 대본에서도 "훌륭하다", "대단하다", "멋지다", "최고", "완벽" 같은 감탄은 쓰지 않습니다.
+- 수업은 두 선생님이 함께 진행합니다. 주 선생님(여자)이 intro, diag, strength, structure, style, question, final, task, end 를 읽고,
+  보조 선생님(남자)이 read, vocab, spelling, practice, model1, model2 를 읽습니다.
+  주 선생님은 intro 에서 "원문 확인과 어휘, 맞춤법, 추천 독서록 읽기는 보조 선생님이 함께 도와줍니다"처럼 한 문장으로 소개합니다.
+  보조 선생님 대본은 "이번에는 제가 어휘를 짚어 보겠습니다"처럼 자연스럽게 이어받아 시작하고, 자기를 "보조 선생님이"라고 3인칭으로 부르지 않습니다.
+  보조 선생님 다음 장을 맡는 주 선생님은 "보조 선생님이 짚어 준 것처럼"처럼 짧게 이어받을 수 있습니다. 두 선생님 모두 존댓말을 씁니다.
 """
 
 SYSTEM_COACH = COMMON + """
@@ -655,21 +683,27 @@ class _Quota(Exception):
     pass
 
 
-def _gemini_tts(key: str, models: list[str], text: str) -> bytes:
+def _gemini_tts(key: str, models: list[str], text: str, voice: str = VOICE, style: str = VOICE_STYLE,
+                exhausted: set | None = None) -> tuple[bytes, str]:
+    """(PCM, 쓴 모델). exhausted: 오늘 한도가 찬 모델 이름을 모아 두는 곳 (다음 장부터 건너뛴다)."""
     body = {
-        "contents": [{"parts": [{"text": f"{VOICE_STYLE}\n{text}"}]}],
+        "contents": [{"parts": [{"text": f"{style}\n{text}"}]}],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
-            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": VOICE}}},
+            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
         },
     }
     quota = False
+    exhausted = exhausted if exhausted is not None else set()
     for model in models:
+        if model in exhausted:
+            quota = True
+            continue
         for attempt in range(3):
             try:
                 res = _post(f"{API}/models/{model}:generateContent?key={key}", body, timeout=150)
                 part = res["candidates"][0]["content"]["parts"][0]
-                return base64.b64decode(part["inlineData"]["data"])
+                return base64.b64decode(part["inlineData"]["data"]), model
             except urllib.error.HTTPError as e:
                 if e.code == 429:
                     # 분당 제한이면 잠깐 쉬면 풀린다. 두 번 연속이면 하루 한도로 본다.
@@ -677,6 +711,7 @@ def _gemini_tts(key: str, models: list[str], text: str) -> bytes:
                         time.sleep(25)
                         continue
                     quota = True
+                    exhausted.add(model)
                     break
                 if e.code in (500, 503) and attempt < 2:
                     time.sleep(4 * (attempt + 1))
@@ -697,8 +732,8 @@ _SUPERTONIC = None
 _SUPERTONIC_LOCK = threading.Lock()
 
 
-def _supertonic_pcm(text: str) -> bytes:
-    """공개 AI 성우 Supertonic 3 (F1, 한도 없음). 설치돼 있지 않으면 ImportError."""
+def _supertonic_pcm(text: str, voice: str = "F1") -> bytes:
+    """공개 AI 성우 Supertonic 3 (F1 여성 / M1 남성, 한도 없음). 설치돼 있지 않으면 ImportError."""
     global _SUPERTONIC
     import numpy as np
     from supertonic import TTS
@@ -707,7 +742,7 @@ def _supertonic_pcm(text: str) -> bytes:
         if _SUPERTONIC is None:
             _SUPERTONIC = TTS(auto_download=True)
         tts = _SUPERTONIC
-        wav, _ = tts.synthesize(text=text, voice_style=tts.get_voice_style(voice_name="F1"),
+        wav, _ = tts.synthesize(text=text, voice_style=tts.get_voice_style(voice_name=voice),
                                 total_steps=10, speed=1.0, lang="ko")
     wav = np.asarray(wav, dtype=np.float32).reshape(-1)
     sr = getattr(tts, "sample_rate", None) or 44100
@@ -765,7 +800,7 @@ def make_voice_now(lid: str, data: dict) -> dict:
 def _voice_worker(lid: str, d: Path, items: list[tuple[str, str]], on_done=None) -> None:
     try:
         key = api_key()
-        _, tts_models = _models(key) if key else ([], [])
+        _, available = _models(key) if key else ([], [])
         status = read_status(lid) or {}
         files: dict[str, str] = status.get("files", {})
         engine: dict[str, str] = status.get("engine", {})
@@ -773,23 +808,27 @@ def _voice_worker(lid: str, d: Path, items: list[tuple[str, str]], on_done=None)
         status = {"done": False, "files": files, "engine": engine, "failed": failed,
                   "pending": [k for k, _ in items if k not in files]}
         _status_write(d, status)
-        gemini_ok = bool(key)
+        exhausted: set[str] = set()
         for k, text in items:
             if k in files:
                 continue
+            role = ROLES[role_of(k)]
+            # 역할마다 정한 모델 순서. 이 키로 못 쓰는 모델은 뺀다.
+            models = [m for m in role["models"] if not available or m in available]
             pcm = None
-            if gemini_ok:
+            if key and models:
                 try:
-                    pcm = _trim_pcm(_gemini_tts(key, tts_models, text))
-                    engine[k] = "kore"
+                    raw, model = _gemini_tts(key, models, text, role["voice"], role["style"], exhausted)
+                    pcm = _trim_pcm(raw)
+                    engine[k] = f"{role['voice'].lower()}@{model}"
                 except _Quota:
-                    gemini_ok = False
+                    pcm = None
                 except Exception:
                     pcm = None
             if pcm is None:
                 try:
-                    pcm = _supertonic_pcm(text)
-                    engine[k] = "supertonic"
+                    pcm = _supertonic_pcm(text, role["supertonic"])
+                    engine[k] = f"supertonic-{role['supertonic']}"
                 except Exception:
                     pcm = None
             if pcm:
@@ -799,7 +838,7 @@ def _voice_worker(lid: str, d: Path, items: list[tuple[str, str]], on_done=None)
                 failed.append(k)
             status["pending"] = [x for x, _ in items if x not in files and x not in failed]
             _status_write(d, status)
-            if engine.get(k) == "kore":
+            if "@" in engine.get(k, ""):
                 time.sleep(3)  # 무료 키의 분당 요청 제한을 넘지 않도록
         status["done"] = True
         status["pending"] = []

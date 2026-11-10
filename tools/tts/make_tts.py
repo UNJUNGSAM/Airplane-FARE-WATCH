@@ -8,8 +8,12 @@ tools/tts/jobs/*.json 작업 파일을 읽어, 아직 없는 mp3만 새로 만�
   "out_dir": "streamlit_app/static/learning/science_xxx/audio",
   "voice": "Kore",                    # 기본 목소리 (사용자 선택) (항목마다 "voice"로 바꿀 수 있음)
   "style": "다정한 선생님처럼 읽어 주세요:",  # 읽는 말투 지시 (선택)
-  "items": [{"key": "n_cover", "text": "안녕하세요!"}]
+  "assist_voice": "Charon",           # 보조 선생님 목소리 (남성, 기본값)
+  "assist_style": "옆에서 거드는 보조 선생님처럼:",  # 보조 선생님 말투 (선택)
+  "items": [{"key": "n_cover", "text": "안녕하세요!"},
+            {"key": "n_tip", "text": "제가 하나 덧붙일게요.", "role": "assist"}]
 }
+주 선생님은 Kore + gemini-2.5-flash-preview-tts, 보조 선생님은 Charon + gemini-3.1-flash-tts-preview 를 먼저 쓴다.
 
 사용법: GEMINI_API_KEY=... python tools/tts/make_tts.py [작업 파일 ...]
 """
@@ -42,6 +46,19 @@ PREFERRED_MODELS = [
 ]
 
 
+# 두 선생님 (보호자 지시 2026-11-10, 앞으로 만드는 모든 자료에 적용)
+#   주 선생님   작업 파일 "voice"(기본 Kore, 여성)  → gemini-2.5-flash-preview-tts 먼저
+#   보조 선생님 항목에 "role": "assist"            → "assist_voice"(기본 Charon, 남성), gemini-3.1-flash-tts-preview 먼저
+#   보조 선생님 말투는 "assist_style" (없으면 "style").
+# Supertonic 대체 작업에서는 보조 선생님 항목에 "voice": "M1"(남성)을 적는다.
+ASSIST_MODELS = [
+    "gemini-3.1-flash-tts-preview",
+    "gemini-3.1-flash-preview-tts",
+    "gemini-2.5-flash-preview-tts",
+    "gemini-2.5-pro-preview-tts",
+]
+
+
 class QuotaExceeded(Exception):
     pass
 
@@ -66,7 +83,8 @@ def find_models(key: str) -> list[str]:
     return ordered
 
 
-def synthesize(key: str, models: list[str], text: str, voice: str) -> tuple[bytes, str]:
+def synthesize(key: str, models: list[str], text: str, voice: str,
+               exhausted: set | None = None) -> tuple[bytes, str]:
     """PCM(16bit, 24kHz, 모노)과 사용한 모델 이름을 돌려준다."""
     body = {
         "contents": [{"parts": [{"text": text}]}],
@@ -76,7 +94,11 @@ def synthesize(key: str, models: list[str], text: str, voice: str) -> tuple[byte
         },
     }
     quota_hit = False
+    exhausted = exhausted if exhausted is not None else set()
     for model in models:
+        if model in exhausted:
+            quota_hit = True
+            continue
         for attempt in range(3):
             try:
                 res = _request(f"{API}/models/{model}:generateContent?key={key}", body)
@@ -86,6 +108,7 @@ def synthesize(key: str, models: list[str], text: str, voice: str) -> tuple[byte
                 detail = e.read().decode(errors="replace")[:300]
                 if e.code == 429:
                     quota_hit = True
+                    exhausted.add(model)
                     print(f"  {model}: 사용 한도 도달 -> 다른 모델 시도")
                     break
                 if e.code in (500, 503) and attempt < 2:
@@ -165,25 +188,30 @@ def run_job(path: Path, key: str, models: list[str]) -> bool:
         print(f"[{path.name}] Supertonic 으로 새로 만든 것 {made}개")
         return True
     style = job.get("style", "").strip()
-    made = skipped = 0
+    assist_style = job.get("assist_style", style).strip()
+    assist_models = [m for m in ASSIST_MODELS if m in models] + [m for m in models if m not in ASSIST_MODELS]
+    exhausted: set[str] = set()
+    made = skipped = left = 0
     for item in job["items"]:
         dest = out_dir / f"{item['key']}.mp3"
         if dest.exists():
             skipped += 1
             continue
-        text = f"{style}\n{item['text']}" if style else item["text"]
-        voice = item.get("voice", job.get("voice", "Kore"))
+        assist = item.get("role") == "assist"
+        st = assist_style if assist else style
+        text = f"{st}\n{item['text']}" if st else item["text"]
+        voice = item.get("voice") or (job.get("assist_voice", "Charon") if assist else job.get("voice", "Kore"))
         try:
-            pcm, model = synthesize(key, models, text, voice)
+            pcm, model = synthesize(key, assist_models if assist else models, text, voice, exhausted)
         except QuotaExceeded:
-            print(f"[{path.name}] 오늘 한도에 걸려 멈춰요. 만든 것 {made}개, 남은 것은 다음 실행에서 이어서 만들어요.")
-            return False
+            left += 1  # 이 목소리 모델들은 오늘 한도. 다른 선생님 항목은 계속 만든다
+            continue
         pcm_to_mp3(pcm, dest)
         made += 1
-        print(f"  만듦: {dest.relative_to(ROOT)} ({voice}, {model})")
+        print(f"  만듦: {dest.relative_to(ROOT)} ({voice}, {model}{', 보조' if assist else ''})")
         time.sleep(7)  # 무료 키의 분당 요청 제한을 넘지 않도록
-    print(f"[{path.name}] 새로 만든 것 {made}개, 이미 있던 것 {skipped}개")
-    return True
+    print(f"[{path.name}] 새로 만든 것 {made}개, 이미 있던 것 {skipped}개, 한도로 못 만든 것 {left}개")
+    return left == 0
 
 
 def main() -> int:
@@ -193,15 +221,9 @@ def main() -> int:
         return 1
     jobs = [Path(p) for p in sys.argv[1:]] or sorted(JOBS_DIR.glob("*.json"))
     models = find_models(key) if key else []
-    gemini_ok = True
     for job in jobs:
-        is_gemini = json.loads(job.read_text(encoding="utf-8")).get("engine") != "supertonic"
-        if is_gemini and not gemini_ok:
-            print(f"[{job.name}] Gemini 한도가 다 차서 건너뛰어요. (Supertonic 작업은 계속)")
-            continue
-        if not run_job(job, key, models):
-            # 한도에 걸려도 뒤에 있는 Supertonic 대체 작업은 계속 돌려서 빈 음성을 채운다
-            gemini_ok = False
+        # 한도에 걸려도 멈추지 않는다. 다른 선생님(다른 모델) 항목과 뒤의 Supertonic 대체 작업이 빈 음성을 채운다.
+        run_job(job, key, models)
     return 0
 
 
