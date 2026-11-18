@@ -1,0 +1,53 @@
+name: tts
+
+# 학습자료 해설 음성을 Gemini TTS로 만든다.
+# 작업 브랜치에 tools/tts/jobs/*.json 을 올리면 실행되고, 만든 mp3를 그 브랜치에 커밋한다.
+# 매일 17:50(한국 시간, 무료 한도가 풀린 뒤)에는 main 에서 돌아, 한도 때문에 비워 둔 음성을
+# 같은 선생님 목소리로 이어서 만들어 main 에 커밋한다 (이미 있는 mp3 는 건드리지 않는다).
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["tools/tts/jobs/**", "tools/tts/make_tts.py"]
+  workflow_dispatch:
+  schedule:
+    - cron: "50 8 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tts-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # apt 설치는 가끔 멈춰서, pip로 받는 ffmpeg 실행 파일을 쓴다
+      - name: ffmpeg 준비
+        run: pip install imageio-ffmpeg supertonic
+
+      - name: 음성 만들기
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python tools/tts/make_tts.py
+
+      - name: 만든 음성 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- '*.mp3'
+          if git diff --cached --quiet; then
+            echo "새로 만든 음성이 없어요."
+            exit 0
+          fi
+          git commit -m "chore: 해설 음성 생성 [skip ci]"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -30,6 +30,8 @@ importlib.reload(study_page)
 
 # 이 앱에서는 목록이 첫 화면(/)이므로 자료 화면의 '학습자료' 링크가 첫 화면으로 가게 한다.
 st.session_state[study_page.HOME_KEY] = "./"
+# 이 앱(로운 학습자료실)에 들어올 때만 비밀번호를 묻는다 (study_page.gate).
+st.session_state[study_page.GATE_KEY] = True
 
 pages = [st.Page("pages/90_learning.py", title="학습자료", default=True)]
 for item in study_page.CATALOG:

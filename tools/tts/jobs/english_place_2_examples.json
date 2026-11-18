@@ -1,0 +1,138 @@
+{
+ "out_dir": "streamlit_app/static/learning/english_place/audio",
+ "voice": "Kore",
+ "items": [
+  {
+   "key": "e_c1",
+   "text": "Where is my pencil case?"
+  },
+  {
+   "key": "e_c2",
+   "text": "It's under your chair. There is a ruler next to it, too."
+  },
+  {
+   "key": "e_p1",
+   "text": "The cookies are in the jar."
+  },
+  {
+   "key": "e_p2",
+   "text": "My cat is sleeping on the sofa."
+  },
+  {
+   "key": "e_p3",
+   "text": "My shoes are under the bed."
+  },
+  {
+   "key": "e_p4",
+   "text": "A kite is flying above the house."
+  },
+  {
+   "key": "e_p5",
+   "text": "A boy is standing in front of the door."
+  },
+  {
+   "key": "e_p6",
+   "text": "The sun is behind the clouds."
+  },
+  {
+   "key": "e_p7",
+   "text": "The bank is next to the bakery."
+  },
+  {
+   "key": "e_p8",
+   "text": "Our school is between the park and the library."
+  },
+  {
+   "key": "e_t1",
+   "text": "The lamp is on the table."
+  },
+  {
+   "key": "e_t2",
+   "text": "The lamp is above the table."
+  },
+  {
+   "key": "e_t3",
+   "text": "I sit between Mina and Jun."
+  },
+  {
+   "key": "e_t4",
+   "text": "My socks are under the desk."
+  },
+  {
+   "key": "e_h1",
+   "text": "There is a cat on the sofa."
+  },
+  {
+   "key": "e_h2",
+   "text": "There are two cats on the sofa."
+  },
+  {
+   "key": "e_h3",
+   "text": "There isn't a cloud in the sky."
+  },
+  {
+   "key": "e_h4",
+   "text": "There aren't many people in the park."
+  },
+  {
+   "key": "e_q1",
+   "text": "Is there a library in your town?"
+  },
+  {
+   "key": "e_q2",
+   "text": "Yes, there is. It's next to the post office."
+  },
+  {
+   "key": "e_q3",
+   "text": "Are there swings in the park?"
+  },
+  {
+   "key": "e_q4",
+   "text": "No, there aren't. But there is a slide."
+  },
+  {
+   "key": "e_w1",
+   "text": "Is there a desk in your room?"
+  },
+  {
+   "key": "e_w2",
+   "text": "Where is your bed?"
+  },
+  {
+   "key": "e_w3",
+   "text": "Are there many books in your room?"
+  },
+  {
+   "key": "e_g1",
+   "text": "The ball is in the box."
+  },
+  {
+   "key": "e_g2",
+   "text": "The ball is on the box."
+  },
+  {
+   "key": "e_g3",
+   "text": "The ball is under the table."
+  },
+  {
+   "key": "e_g4",
+   "text": "The ball is above the table."
+  },
+  {
+   "key": "e_g5",
+   "text": "The ball is in front of the box."
+  },
+  {
+   "key": "e_g6",
+   "text": "The ball is behind the box."
+  },
+  {
+   "key": "e_g7",
+   "text": "The ball is next to the box."
+  },
+  {
+   "key": "e_g8",
+   "text": "The ball is between the boxes."
+  }
+ ]
+}

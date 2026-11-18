@@ -20,6 +20,8 @@ importlib.reload(study_page)
 
 st.set_page_config(page_title="로운 학습자료실", page_icon=":material/menu_book:", layout="wide",
                    initial_sidebar_state="collapsed")
+study_page.gate()
+T = study_page.tq("&")
 
 # 이모지 없이 글꼴·여백·카드만으로 차분하게 꾸민다.
 # 크기는 모두 em 단위라서 화면 폭에 따라 .lr 글자 크기만 바꾸면 TV 에서도 비율 그대로 커진다.
@@ -177,7 +179,7 @@ def card(item: dict) -> str:
     subj = study_page.SUBJECTS[study_page.subject_of(item)]
     meta = f'{item["slides"]}장 · 해설 약 {item["minutes"]}분' if item.get("slides") else ""
     return (
-        f'<a class="lr-card" href="learning_{escape(item["slug"])}" target="_self">'
+        f'<a class="lr-card" href="learning_{escape(item["slug"])}{study_page.tq()}" target="_self">'
         f'<div class="lr-cover" style="background:{subj["color"]}">'
         f'<span class="tag">{escape(subj["name"])} · {escape(study_page.grade_label(item))}</span>'
         f'<span class="unit">{escape(item["unit"])}</span></div>'
@@ -203,7 +205,7 @@ def index_row(key: str, subj: dict) -> str:
     if key not in by_subject:
         return f'<li class="off">{dot}{escape(subj["name"])}<span class="c">준비 중</span></li>'
     return (
-        f'<li><a href="?l={level}&s={key}" target="_self">{dot}{escape(subj["name"])}'
+        f'<li><a href="?l={level}&s={key}{T}" target="_self">{dot}{escape(subj["name"])}'
         f'<span class="c">{len(by_subject[key])}개</span></a></li>'
     )
 
@@ -214,7 +216,7 @@ index = "".join(
 
 # 학교급 버튼: 자료가 없는 학교급은 '준비 중'으로 흐리게 (누를 수 없음).
 levels = "".join(
-    f'<a class="lr-lv{" on" if key == level else ""}" href="?l={key}" target="_self">{escape(name)}</a>'
+    f'<a class="lr-lv{" on" if key == level else ""}" href="?l={key}{T}" target="_self">{escape(name)}</a>'
     if count_by_level[key]
     else f'<span class="lr-lv off" title="준비 중">{escape(name)}</span>'
     for key, name in study_page.LEVELS.items()
@@ -224,7 +226,7 @@ tabs = [("", "전체", len(level_items))] + [
     (key, study_page.SUBJECTS[key]["name"], len(found)) for key, found in by_subject.items()
 ]
 nav = f'<div class="lr-lvs" role="group" aria-label="학교급">{levels}</div><span class="lr-sep"></span>' + "".join(
-    f'<a class="lr-tab{" on" if key == picked else ""}" href="?l={level}{"&s=" + key if key else ""}" target="_self">'
+    f'<a class="lr-tab{" on" if key == picked else ""}" href="?l={level}{"&s=" + key if key else ""}{T}" target="_self">'
     f'{escape(name)}<span class="n">{n}</span></a>'
     for key, name, n in tabs
 )
