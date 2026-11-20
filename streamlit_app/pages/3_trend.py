@@ -72,7 +72,7 @@ with shared.util_bar():
                               horizontal=True, key="trend_period")
 
     st.markdown(
-        '<div style="font-size:12.5px;color:#6c7585;padding:2px 0 4px;">'
+        '<div style="font-size:12.5px;color:var(--ink-3);padding:2px 0 4px;">'
         '점선은 설정한 목표가를 나타냅니다.</div>',
         unsafe_allow_html=True,
     )
@@ -86,7 +86,7 @@ if not shown_watches:
     st.info("선택한 필터 조건에 일치하는 감시 조건이 없습니다.")
     st.stop()
 
-INK3, LINE, BLUE, NAVY = "#6c7585", "#dde2e9", "#1380b8", "#243050"
+INK3, LINE, BLUE, NAVY = "#5f6878", "#dde2e9", "#0f72a6", "#243050"
 MONO = "IBM Plex Mono, Consolas, monospace"
 
 
@@ -107,9 +107,9 @@ def _render_trend_card(w):
             st.markdown(
                 f'<div style="font-size:16.5px;font-weight:700;color:#131b30;margin-bottom:4px;">'
                 f'<span style="font-size:16px;margin-right:2px;">{flag}</span> '
-                f'<span class="mono" style="color:#1380b8;">{shared.watch_code(w)}</span> · '
+                f'<span class="mono" style="color:var(--blue);">{shared.watch_code(w)}</span> · '
                 f'{w.origin} → {w.destination} · {shared.route_title(w)} '
-                f'<span style="font-size:13px;color:#6c7585;font-weight:500;">({shared.schedule_text(w)})</span> '
+                f'<span style="font-size:13px;color:var(--ink-3);font-weight:500;">({shared.schedule_text(w)})</span> '
                 f'{shared.deal_badge_html(deal)}'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -125,7 +125,7 @@ def _render_trend_card(w):
 
         if not hist:
             st.markdown(
-                '<div class="ap-panel" style="padding:18px 16px;color:#6c7585;font-size:13px;">'
+                '<div class="ap-panel" style="padding:18px 16px;color:var(--ink-3);font-size:13px;">'
                 '아직 가격 데이터가 충분하지 않습니다. 대시보드에서 <b>지금 다시 조회</b>를 누르시면 즉시 기록됩니다.</div>',
                 unsafe_allow_html=True,
             )

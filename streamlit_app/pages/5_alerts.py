@@ -62,7 +62,7 @@ with shared.util_bar():
             width="stretch",
         )
     a4.markdown(
-        f'<div style="font-size:12.5px;color:#6c7585;padding-bottom:8px;">'
+        f'<div style="font-size:12.5px;color:var(--ink-3);padding-bottom:8px;">'
         f'최근 {len(notis):,}건을 표시합니다.</div>',
         unsafe_allow_html=True,
     )
@@ -87,18 +87,18 @@ shown = [
 rows = "".join(
     f'<tr><td class="mono">{shared.ts(n["sent_at"])}</td>'
     f'<td><b>{html.escape(str(n["label"] or "-"))}</b></td>'
-    f'<td class="num mono" style="font-weight:600;color:#131b30;">{shared.num(n["price"])}</td>'
+    f'<td class="num mono" style="font-weight:600;color:var(--ink);">{shared.num(n["price"])}</td>'
     f'<td>{html.escape(str(n["reason"] or "-"))}</td></tr>'
     for n in shown
 )
 st.markdown(
     f'<div class="ap-panel"><div class="ap-panel-h">알림 기록'
     f'<span class="n">{len(shown):,}건</span></div>'
-    f'<table class="ap-simple"><thead><tr>'
+    f'<div class="ap-scroll"><table class="ap-simple"><thead><tr>'
     f'<th style="width:160px;">발송 시각</th><th style="width:200px;">노선</th>'
     f'<th class="num" style="width:120px;">가격</th>'
     f'<th>판정 사유</th></tr></thead>'
-    f'<tbody>{rows}</tbody></table></div>',
+    f'<tbody>{rows}</tbody></table></div></div>',
     unsafe_allow_html=True,
 )
 st.markdown(

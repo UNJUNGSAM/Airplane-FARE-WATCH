@@ -69,7 +69,7 @@ with shared.util_bar():
         help="가동 중인 모든 조건의 가격을 지금 다시 조회합니다.",
     )
     f5.markdown(
-        f'<div style="font-size:11.5px;color:#8a94a6;padding-bottom:6px;text-align:right;">'
+        f'<div style="font-size:12px;color:var(--ink-3);padding-bottom:6px;text-align:right;line-height:1.5;">'
         f'자동 감시: GitHub Actions {shared.CHECK_INTERVAL_TEXT} 주기</div>',
         unsafe_allow_html=True,
     )
@@ -129,6 +129,7 @@ notis = db.list_notifications(limit=200)
 
 active_n = sum(1 for w in watches if w.active)
 best_n = sum(1 for d in data.values() if d["deal"]["level"] == "best")
+good_n = sum(1 for d in data.values() if d["deal"]["level"] == "good")
 checked_n = shared.today_checked(watches)
 
 # 검색·국가 필터는 페이지마다 같은 규칙이어야 하므로 shared.watch_matches 하나로 통일한다
@@ -144,8 +145,8 @@ shown = [
 shared.tiles([
     {"label": "감시 중인 조건", "value": f"{active_n:,}", "unit": "건",
      "sub": f"등록 전체 {len(watches):,}건"},
-    {"label": "최저가 구간", "value": f"{best_n:,}", "unit": "건",
-     "sub": "최근 30일 이력 기준"},
+    {"label": "평균보다 싼 조건", "value": f"{best_n + good_n:,}", "unit": "건",
+     "sub": f"그중 30일 최저가 구간 {best_n:,}건"},
     {"label": "누적 알림 발송", "value": f"{len(notis):,}", "unit": "건",
      "sub": "텔레그램 발송 기록"},
     {"label": "오늘 확인", "value": f"{checked_n:,}/{active_n:,}", "unit": "건",
@@ -209,11 +210,12 @@ def left_content():
             pass
         st.switch_page("pages/4_watches.py")
 
-    st.markdown(
-        f'<div style="font-size:12.5px;color:#6c7585;margin-bottom:8px;font-weight:600;">'
-        f'💡 감시 조건 행(노선, 일정, 가격 등)을 <b>클릭</b>하면 최근 항공편 목록과 가격 요약이 그 자리에서 펼쳐집니다.</div>',
-        unsafe_allow_html=True,
-    )
+    if shown:
+        st.markdown(
+            '<div style="font-size:12.5px;color:var(--ink-3);margin-bottom:8px;">'
+            '행을 누르면 최근 항공편 목록과 가격 요약이 그 자리에서 펼쳐집니다.</div>',
+            unsafe_allow_html=True,
+        )
     st.markdown(table_body, unsafe_allow_html=True)
 
 
@@ -243,7 +245,7 @@ def _state(ok: bool, on: str = "연동", off: str = "미설정") -> str:
 
 
 slab = (
-    '<div class="ap-slab"><h4>감시 엔진 상태</h4>'
+    '<div class="ap-slab"><h2>감시 엔진 상태</h2>'
     f'<div class="kv"><span>운영 상태</span>'
     f'<span class="st"><span class="ap-dot {eng["dot"]}"></span>{eng["label"]}</span></div>'
     f'<div class="kv"><span>감시 주기</span><b class="mono">{shared.CHECK_INTERVAL_TEXT}</b></div>'
@@ -257,21 +259,50 @@ slab = (
     '</div>'
 )
 
-# 여행 테마 핫딜 비주얼 카드
-travel_card = """
-<div style="background: linear-gradient(rgba(19,27,48,0.35), rgba(19,27,48,0.88)), url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=600&q=80') center/cover no-repeat;
-            border-radius: 12px; padding: 18px 16px; color: #ffffff; box-shadow: 0 4px 12px rgba(19,27,48,.12); margin-bottom: 12px;">
-  <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#44beaf;font-family:var(--font-mono);">
-    TRAVEL INSIGHT ✈️
-  </div>
-  <div style="font-size:15px;font-weight:700;margin-top:5px;line-height:1.3;color:#ffffff;">
-    설레는 여행의 시작,<br>최저가 타이밍을 잡으세요!
-  </div>
-  <div style="font-size:12px;color:#d8e2f0;margin-top:6px;line-height:1.4;">
-    직항·선호 시간대 필터를 모두 통과한 진짜 특가만 텔레그램으로 바로 알려드립니다.
-  </div>
-</div>
-"""
+# 지금 가장 좋은 가격 - 대시보드에서 가장 먼저 알고 싶은 한 가지를 레일 맨 위에 둔다
+# (예전에는 외부 사진에 기대는 홍보 문구 카드였다)
+def _best_pick():
+    cands = []
+    for w in watches:
+        if not w.active:
+            continue
+        st_ = data[w.id]["stats"]
+        last, avg = st_.get("last"), st_.get("avg")
+        if last and avg:
+            cands.append((last / avg, w))
+    return min(cands, key=lambda c: c[0]) if cands else None
+
+
+pick = _best_pick()
+if pick:
+    ratio, bw = pick
+    bd = data[bw.id]
+    gap = (1 - ratio) * 100
+    gap_txt = (f"30일 평균보다 {gap:.0f}% 저렴" if gap >= 0.5
+               else "30일 평균과 비슷한 수준" if gap > -0.5
+               else f"30일 평균보다 {abs(gap):.0f}% 비쌈")
+    best_card = (
+        '<div class="ap-slab" style="margin-bottom:12px;">'
+        '<h2>지금 가장 좋은 가격</h2>'
+        f'<div style="font-size:14px;font-weight:700;color:#fff;margin-top:4px;">'
+        f'{html.escape(shared.route_title(bw))}</div>'
+        f'<div class="mono" style="font-size:12px;color:#c9d2e3;margin-top:2px;">'
+        f'{html.escape(bw.origin)} → {html.escape(bw.destination)} · '
+        f'{html.escape(shared.schedule_compact(bw))}</div>'
+        f'<div style="display:flex;align-items:baseline;gap:6px;margin-top:10px;">'
+        f'<span class="mono" style="font-size:24px;font-weight:600;color:#fff;">'
+        f'{shared.num(bd["stats"].get("last"))}</span>'
+        f'<span style="font-size:12px;color:#c9d2e3;font-weight:600;">{html.escape(bw.currency)}</span></div>'
+        f'<div style="font-size:12.5px;color:#dfe4ee;margin-top:4px;">{gap_txt} · '
+        f'{html.escape(shared.deal_text(bd["deal"]))}</div>'
+        '</div>'
+    )
+else:
+    best_card = (
+        '<div class="ap-panel" style="margin-bottom:12px;"><div class="ap-panel-h">지금 가장 좋은 가격</div>'
+        '<div class="ap-empty">가동 중인 조건의 가격이 확인되면 '
+        '30일 평균과 비교해 가장 싼 조건을 여기에 보여 드립니다.</div></div>'
+    )
 
 # 2열 레이아웃 배치
 col_main, col_rail = st.columns([2.7, 1.0], gap="medium")
@@ -279,7 +310,7 @@ with col_main:
     left_content()
 
 with col_rail:
-    st.markdown(travel_card, unsafe_allow_html=True)
+    st.markdown(best_card, unsafe_allow_html=True)
     st.markdown(noti_panel, unsafe_allow_html=True)
     st.markdown(slab, unsafe_allow_html=True)
 
